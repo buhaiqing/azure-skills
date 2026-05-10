@@ -1,0 +1,30 @@
+# Example Azure Credentials Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (recommended for SDK and CLI)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Default location (optional)
+AZURE_DEFAULT_LOCATION=eastus
+
+# Alternative: Azure CLI login (interactive)
+# Run: az login
+# Then: az account set --subscription "{{subscription-id}}"
+
+# Creating a Service Principal (one-time setup)
+# Run: az ad sp create-for-rbac --name "my-sp" --role "Contributor" --scopes "/subscriptions/{{sub-id}}"
+# Output provides: appId (CLIENT_ID), password (CLIENT_SECRET), tenant (TENANT_ID)
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/{provider}/{resource-type}/{resource-name}
+
+# Example Resource IDs:
+# VM: /subscriptions/abc123/resourceGroups/my-rg/providers/Microsoft.Compute/virtualMachines/my-vm
+# Storage: /subscriptions/abc123/resourceGroups/my-rg/providers/Microsoft.Storage/storageAccounts/my-storage
+# VNet: /subscriptions/abc123/resourceGroups/my-rg/providers/Microsoft.Network/virtualNetworks/my-vnet
