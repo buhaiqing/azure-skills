@@ -285,6 +285,153 @@ az vm delete \
   --output json
 ```
 
+### Operation: Run Command on VM (Cloud Assistant)
+
+Azure RunCommand allows executing commands on VMs without SSH/RDP login. This is Azure's "cloud assistant" feature for remote command execution.
+
+#### Execute — Azure CLI (Primary)
+```bash
+# Execute shell script on Linux VM
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunShellScript \
+  --scripts "whoami" "hostname" "df -h" \
+  --output json
+
+# Execute PowerShell script on Windows VM
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunPowerShellScript \
+  --scripts "Get-Process" "Get-Service" \
+  --output json
+
+# Execute multi-line script
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunShellScript \
+  --scripts @- <<'EOF'
+#!/bin/bash
+apt update
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+EOF
+
+# Check script execution status
+az vm run-command show \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --run-command-name "{{command_name}}" \
+  --output json
+```
+
+#### Execute — Azure SDK (Fallback)
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.compute import ComputeManagementClient
+import os
+
+credential = DefaultAzureCredential()
+client = ComputeManagementClient(
+    credential,
+    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
+)
+
+# Run command on VM
+result = client.virtual_machine_run_commands.begin_create_or_update(
+    resource_group_name='{{user.resource_group}}',
+    vm_name='{{user.vm_name}}',
+    run_command_name='my-run-command',
+    parameters={
+        'location': '{{user.location}}',
+        'source': {
+            'script': 'whoami && hostname && df -h'
+        },
+        'timeout_in_seconds': 3600
+    }
+).result()
+
+# Get run command result
+run_command = client.virtual_machine_run_commands.get(
+    resource_group_name='{{user.resource_group}}',
+    vm_name='{{user.vm_name}}',
+    run_command_name='my-run-command'
+)
+```
+
+#### Available Command IDs
+
+| OS | Command ID | Description |
+|----|------------|-------------|
+| **Linux** | RunShellScript | Execute bash shell script |
+| **Linux** | RunPowerShellScript | Execute PowerShell (if installed) |
+| **Linux** | ifconfig | Network interface info |
+| **Windows** | RunPowerShellScript | Execute PowerShell script |
+
+#### Validate
+```bash
+# Verify command execution result
+az vm run-command list \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --output json
+
+# View execution output
+az vm run-command show \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --run-command-name "{{command_name}}" \
+  --query "instanceView" \
+  --output json
+```
+
+#### Recover
+| Error | Action |
+|-------|--------|
+| CommandTimeout | Increase timeout; retry with shorter script |
+| ScriptExecutionFailed | Fix script syntax; check VM logs |
+| VMNotRunning | Start VM first |
+| AccessDenied | Check RBAC permissions |
+| AgentNotReady | Wait for VM agent to start |
+
+### Operation: Install VM Extension
+
+VM Extensions are persistent agents that can run scripts or configure settings.
+
+```bash
+# Install CustomScript extension (persistent)
+az vm extension set \
+  --name CustomScript \
+  --publisher Microsoft.Azure.Extensions \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --settings '{"fileUris":["https://example.com/setup.sh"]}' \
+  --protected-settings '{"commandToExecute":"bash setup.sh"}' \
+  --output json
+
+# Install Azure Monitor Agent
+az vm extension set \
+  --name AzureMonitorLinuxAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}"
+
+# List installed extensions
+az vm extension list \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --output json
+
+# Remove extension
+az vm extension delete \
+  --name CustomScript \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}"
+```
+
 ## VM Sizes Categories
 
 | Category | Series | Use Case |
@@ -318,6 +465,24 @@ az vm delete \
 | CentOS 8 | OpenLogic | CentOS | 8_5 |
 | Debian 11 | Debian | Debian | 11 |
 | RHEL 8 | RedHat | RHEL | 8_8 |
+
+## VM Extensions
+
+Common extensions:
+| Extension | Purpose | CLI Command |
+|-----------|---------|-------------|
+| **VMAccessAgent** | Reset password/SSH | `az vm user reset-ssh` |
+| **CustomScript** | Run scripts on VM | `az vm extension set --name CustomScript` |
+| **AzureMonitorAgent** | Monitoring integration | `az vm extension set --name AzureMonitorLinuxAgent` |
+| **AzureDiskEncryption** | Disk encryption | `az vm extension set --name AzureDiskEncryption` |
+
+## Remote Command Execution (Cloud Assistant)
+
+| Method | Description | Use Case |
+|--------|-------------|----------|
+| **RunCommand** | One-time command execution | Quick diagnostics, one-off tasks |
+| **VM Extension** | Persistent agent with scripts | Long-running config, monitoring |
+| **SSH/RDP** | Direct interactive access | Full interactive session |
 
 ## VM Power States
 
