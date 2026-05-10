@@ -1,0 +1,62 @@
+# Example Azure Front Door Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Front Door configuration example
+# resource_group: my-resource-group
+# profile_name: my-frontdoor-profile
+# endpoint_name: my-endpoint (globally unique)
+
+# SKU options
+# Standard_AzureFrontDoor: Global load balancing + CDN
+# Premium_AzureFrontDoor: Standard + WAF + Private Link origins
+
+# Origin group example
+# origin_group:
+#   name: origin-group
+#   origins:
+#     - name: origin-1
+#       host: myapp.azurewebsites.net
+#       priority: 1
+#       weight: 1000
+
+# Health probe example
+# health_probe:
+#   name: health-probe
+#   protocol: Https
+#   path: /
+#   interval: 60
+
+# Route example
+# route:
+#   name: route
+#   endpoint: my-endpoint
+#   origin_group: origin-group
+#   patterns: /*
+#   protocols: Http,Https
+
+# Custom domain example
+# custom_domain:
+#   name: my-custom-domain
+#   host: www.example.com
+#   certificate_type: ManagedCertificate
+
+# WAF configuration (Premium SKU)
+# waf_policy:
+#   name: waf-policy
+#   ruleset: OWASP CRS 3.2
+#   mode: Prevention
+
+# Endpoint hostname format (reference)
+# {{endpoint-name}}-{{hash}}.azurefd.net
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Cdn/profiles/{profile-name}

@@ -1,0 +1,112 @@
+# Example Azure Blob Storage Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Storage Account configuration example
+# resource_group: my-storage-rg
+# location: eastus
+# storage_account_name: mystorageaccount123 (3-24 chars, lowercase alphanumeric only)
+
+# Basic storage account example
+# ---
+# sku: Standard_LRS
+# kind: StorageV2
+# access_tier: Hot
+# allow_blob_public_access: false
+#
+# az storage account create --name mystorageaccount --resource-group my-rg --location eastus --sku Standard_LRS --kind StorageV2 --access-tier Hot --allow-blob-public-access false --output json
+
+# Production storage account with redundancy
+# ---
+# sku: Standard_GRS (Geo-redundant)
+# kind: StorageV2
+# access_tier: Hot
+# min_tls_version: TLS1_2
+# enable_soft_delete: true
+# soft_delete_retention_days: 14
+#
+# az storage account create --name prodstorage --resource-group prod-rg --location eastus --sku Standard_GRS --kind StorageV2 --min-tls-version TLS1_2 --output json
+
+# Premium storage account (high performance)
+# ---
+# sku: Premium_LRS
+# kind: BlockBlobStorage
+#
+# az storage account create --name premiumstorage --resource-group my-rg --location eastus --sku Premium_LRS --kind BlockBlobStorage --output json
+
+# Container configuration
+# ---
+# container_name: my-container
+# public_access: off (private)
+#
+# az storage container create --name my-container --account-name mystorageaccount --public-access off
+
+# Blob upload example
+# ---
+# blob_name: mydocument.pdf
+# local_file: ./documents/report.pdf
+# blob_type: block
+#
+# az storage blob upload --account-name mystorageaccount --container-name my-container --name mydocument.pdf --file ./documents/report.pdf --type block
+
+# Large file upload (use AzCopy)
+# ---
+# azcopy copy "./large-file.zip" "https://mystorageaccount.blob.core.windows.net/my-container/large-file.zip?{{sas_token}}"
+
+# Lifecycle policy example (archive after 90 days)
+# ---
+# policy_json: |
+#   {
+#     "rules": [
+#       {
+#         "name": "archive-old",
+#         "enabled": true,
+#         "type": "Lifecycle",
+#         "definition": {
+#           "filters": {"blobTypes": ["blockBlob"]},
+#           "actions": {
+#             "baseBlob": {
+#               "tierToCool": {"daysAfterModificationGreaterThan": 30},
+#               "tierToArchive": {"daysAfterModificationGreaterThan": 90},
+#               "delete": {"daysAfterModificationGreaterThan": 365}
+#             }
+#           }
+#         }
+#       }
+#     ]
+#   }
+
+# SAS Token generation
+# ---
+# permissions: rwdl (read, write, delete, list)
+# services: b (blob only)
+# expiry: 2026-12-31T23:59:00Z
+#
+# az storage account generate-sas --account-name mystorageaccount --permissions rwdl --services b --resource-types sco --expiry 2026-12-31T23:59:00Z --output tsv
+
+# Static website configuration
+# ---
+# enable_static_website: true
+# index_document: index.html
+# error_document: 404.html
+#
+# az storage blob service-properties update --account-name mystorageaccount --static-website true --index-document index.html
+
+# RBAC assignment example
+# ---
+# role: Storage Blob Data Contributor
+# assignee: user-or-sp-id
+#
+# az role assignment create --assignee {{user-id}} --role "Storage Blob Data Contributor" --scope "/subscriptions/{{sub-id}}/resourceGroups/{{rg}}/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
+
+# Verify credentials
+# Run: az account show --output json
+# Run: az storage account list --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-account-name}

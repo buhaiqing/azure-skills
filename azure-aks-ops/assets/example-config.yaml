@@ -1,0 +1,117 @@
+# Example Azure AKS (Kubernetes Service) Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# AKS cluster configuration example
+# resource_group: my-aks-rg
+# location: eastus
+# aks_name: my-production-aks
+# dns_prefix: myprodaks
+
+# Node pool configuration
+# node_count: 3
+# node_vm_size: Standard_DS2_v2
+# nodepool_name: agentpool
+
+# Basic cluster example
+# ---
+# az aks create \
+#   --name my-basic-aks \
+#   --resource-group my-rg \
+#   --location eastus \
+#   --node-count 2 \
+#   --node-vm-size Standard_B2s \
+#   --generate-ssh-keys \
+#   --output json
+
+# Production cluster with Azure CNI
+# ---
+# vnet_name: aks-vnet
+# subnet_name: aks-subnet
+# network_plugin: azure
+# network_policy: calico
+#
+# az network vnet create --name aks-vnet --resource-group my-rg --location eastus --address-prefixes 10.0.0.0/16
+# az network vnet subnet create --name aks-subnet --vnet-name aks-vnet --resource-group my-rg --address-prefixes 10.0.0.0/24 --delegations Microsoft.ContainerService/managedClusters
+# az aks create --name my-aks --resource-group my-rg --location eastus --network-plugin azure --vnet-subnet-id /subscriptions/.../resourceGroups/my-rg/providers/Microsoft.Network/virtualNetworks/aks-vnet/subnets/aks-subnet --enable-addons monitoring --enable-managed-identity --output json
+
+# Multi-node pool example
+# ---
+# system_pool:
+#   name: systempool
+#   node_count: 3
+#   vm_size: Standard_DS2_v2
+#   mode: System
+# user_pool:
+#   name: userpool
+#   node_count: 5
+#   vm_size: Standard_DS3_v2
+#   mode: User
+#
+# az aks nodepool add --cluster-name my-aks --resource-group my-rg --name userpool --node-count 5 --node-vm-size Standard_DS3_v2
+
+# Private cluster example
+# ---
+# enable_private_cluster: true
+# private_dns_zone: private
+# authorized_ip_ranges: 10.0.0.0/8,192.168.1.0/24
+#
+# az aks create --name my-private-aks --resource-group my-rg --location eastus --enable-private-cluster --private-dns-zone private --api-server-authorized-ip-ranges "10.0.0.0/8"
+
+# ACR integration example
+# ---
+# acr_name: myacr
+# acr_sku: Standard
+#
+# az acr create --name myacr --resource-group my-rg --location eastus --sku Standard
+# az aks update --name my-aks --resource-group my-rg --attach-acr myacr
+
+# Kubernetes version configuration
+# ---
+# Check available versions: az aks get-versions --location eastus --output json
+# Specify version: --kubernetes-version 1.28
+# Upgrade: az aks upgrade --name my-aks --resource-group my-rg --kubernetes-version 1.29
+
+# Autoscaling configuration
+# ---
+# min_count: 1
+# max_count: 10
+# enable_cluster_autoscaler: true
+#
+# az aks create --name my-aks --resource-group my-rg --location eastus --enable-cluster-autoscaler --min-count 1 --max-count 10
+
+# Addons configuration
+# ---
+# monitoring: azure-monitor-containers
+# http_app_routing: enabled
+# azure_policy: enabled
+# keyvault_secrets_provider: enabled
+#
+# az aks enable-addons --addons monitoring,azure-policy --name my-aks --resource-group my-rg
+
+# kubectl access example
+# ---
+# Get credentials: az aks get-credentials --name my-aks --resource-group my-rg
+# Verify access: kubectl get nodes
+# Check pods: kubectl get pods -A
+# Deploy: kubectl create deployment nginx --image=nginx
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.ContainerService/managedClusters/{aks-name}
+
+# Common VM sizes for AKS nodes
+# ---
+# Development: Standard_B2s, Standard_B2ms
+# Production: Standard_DS2_v2, Standard_DS3_v2, Standard_DS4_v2
+# High performance: Standard_F2s_v2, Standard_F4s_v2
+# Memory optimized: Standard_E2s_v3, Standard_E4s_v3
+# Spot instances: Use with --priority Spot --eviction-policy Delete
+
+# Verify credentials
+# Run: az account show --output json
+# Run: az aks list --output json

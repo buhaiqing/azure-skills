@@ -1,0 +1,132 @@
+# Example Azure Virtual Machine Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# VM configuration example
+# resource_group: my-vm-rg
+# location: eastus
+# vm_name: my-production-vm
+# vm_size: Standard_DS2_v2
+# admin_username: azureuser
+
+# Basic Linux VM example
+# ---
+# image: Ubuntu2204 (Ubuntu 22.04 LTS)
+# vm_size: Standard_DS2_v2
+# generate_ssh_keys: true
+#
+# az vm create --name my-linux-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_DS2_v2 --admin-username azureuser --generate-ssh-keys --output json
+
+# Basic Windows VM example
+# ---
+# image: Win2022Datacenter (Windows Server 2022)
+# vm_size: Standard_DS2_v2
+# admin_password: {{secure_password}}
+#
+# az vm create --name my-windows-vm --resource-group my-rg --location eastus --image Win2022Datacenter --size Standard_DS2_v2 --admin-username azureuser --admin-password "{{password}}" --output json
+
+# Production VM with existing VNet
+# ---
+# vnet_name: production-vnet
+# subnet_name: app-subnet
+# vm_size: Standard_DS3_v2
+# os_disk_type: Premium_LRS
+# data_disk_size: 256GB
+#
+# az vm create --name prod-vm --resource-group prod-rg --location eastus --image Ubuntu2204 --size Standard_DS3_v2 --vnet-name production-vnet --subnet app-subnet --os-disk-size 128 --data-disk-sizes-gb 256 --storage-sku Premium_LRS --admin-username azureuser --generate-ssh-keys --output json
+
+# High-performance VM
+# ---
+# vm_size: Standard_F4s_v2 (compute optimized)
+# os_disk_type: Premium_LRS
+# enable_accelerated_networking: true
+#
+# az vm create --name compute-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_F4s_v2 --storage-sku Premium_LRS --accelerated-networking true --admin-username azureuser --generate-ssh-keys --output json
+
+# Memory-optimized VM (for databases)
+# ---
+# vm_size: Standard_E4s_v3
+# data_disks: [256GB, 512GB]
+#
+# az vm create --name db-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_E4s_v3 --data-disk-sizes-gb 256 512 --storage-sku Premium_LRS --admin-username azureuser --generate-ssh-keys --output json
+
+# Spot VM (cost savings, eviction risk)
+# ---
+# priority: Spot
+# eviction_policy: Delete
+# max_price: 0.05 (USD/hour or use -1 for on-demand price cap)
+#
+# az vm create --name spot-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_DS2_v2 --priority Spot --eviction-policy Delete --max-price -1 --admin-username azureuser --generate-ssh-keys --output json
+
+# VM with public IP and DNS name
+# ---
+# dns_name: myapp-server
+# public_ip_allocation: Static
+#
+# az vm create --name web-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_DS2_v2 --public-ip-address-dns-name myapp-server --admin-username azureuser --generate-ssh-keys --output json
+
+# VM sizing reference
+# ---
+# Development/Testing:
+#   Standard_B2s: 2 vCPU, 4GB RAM, low cost
+#   Standard_B2ms: 2 vCPU, 8GB RAM
+#
+# Production General Purpose:
+#   Standard_DS2_v2: 2 vCPU, 7GB RAM
+#   Standard_DS3_v2: 4 vCPU, 14GB RAM
+#   Standard_D4s_v3: 4 vCPU, 16GB RAM
+#
+# Compute Optimized:
+#   Standard_F2s_v2: 2 vCPU, 4GB RAM
+#   Standard_F4s_v2: 4 vCPU, 8GB RAM
+#
+# Memory Optimized:
+#   Standard_E2s_v3: 2 vCPU, 16GB RAM
+#   Standard_E4s_v3: 4 vCPU, 32GB RAM
+#
+# Storage Optimized:
+#   Standard_L4s: 4 vCPU, 32GB RAM, high disk throughput
+
+# Common VM images reference
+# ---
+# Linux:
+#   Ubuntu 22.04 LTS: Ubuntu2204
+#   Ubuntu 20.04 LTS: Ubuntu2004
+#   CentOS 8: OpenLogic:CentOS:8_5
+#   Debian 11: Debian:debian-11:11
+#   RHEL 8: RedHat:RHEL:8_8
+#
+# Windows:
+#   Windows Server 2022: Win2022Datacenter
+#   Windows Server 2019: Win2019Datacenter
+#   Windows 11 Pro: MicrosoftWindowsDesktop:windows-11:win11-pro
+
+# SSH key configuration
+# ---
+# Generate SSH key: ssh-keygen -t rsa -b 4096 -f ~/.ssh/azure_vm_key
+# Public key path: ~/.ssh/azure_vm_key.pub
+# Private key path: ~/.ssh/azure_vm_key
+#
+# Connect to VM: ssh -i ~/.ssh/azure_vm_key azureuser@{{vm_public_ip}}
+
+# VM operations reference
+# ---
+# Start VM: az vm start --name {{vm}} --resource-group {{rg}}
+# Stop VM (deallocate - stops billing): az vm stop --name {{vm}} --resource-group {{rg}}
+# Restart VM: az vm restart --name {{vm}} --resource-group {{rg}}
+# Resize VM: az vm resize --name {{vm}} --resource-group {{rg}} --size {{new_size}}
+# Get VM info: az vm show --name {{vm}} --resource-group {{rg}}
+# List VMs: az vm list --resource-group {{rg}}
+# Delete VM: az vm delete --name {{vm}} --resource-group {{rg}} --yes
+
+# Verify credentials
+# Run: az account show --output json
+# Run: az vm list --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Compute/virtualMachines/{vm-name}

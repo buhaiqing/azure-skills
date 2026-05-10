@@ -1,0 +1,74 @@
+# Example Azure Traffic Manager Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Traffic Manager configuration example
+# resource_group: my-resource-group
+# profile_name: my-tm-profile
+# dns_name: myapp-tm (globally unique)
+
+# Routing methods
+# Performance: Route to lowest latency endpoint
+# Priority: Route to primary, failover to backup
+# Weighted: Distribute traffic by weight
+# Geographic: Route based on user geography
+# Subnet: Route based on IP subnet
+# MultiValue: Return multiple endpoints
+
+# Priority routing example (failover)
+# routing_method: Priority
+# endpoints:
+#   - name: primary
+#     type: externalEndpoints
+#     target: myapp-primary.azurewebsites.net
+#     priority: 1
+#   - name: secondary
+#     type: externalEndpoints
+#     target: myapp-secondary.azurewebsites.net
+#     priority: 2
+
+# Weighted routing example (load distribution)
+# routing_method: Weighted
+# endpoints:
+#   - name: endpoint-1
+#     type: externalEndpoints
+#     target: myapp-region1.azurewebsites.net
+#     weight: 100
+#   - name: endpoint-2
+#     type: externalEndpoints
+#     target: myapp-region2.azurewebsites.net
+#     weight: 100
+
+# Geographic routing example
+# routing_method: Geographic
+# endpoints:
+#   - name: us-endpoint
+#     type: externalEndpoints
+#     target: myapp-us.azurewebsites.net
+#     geo_mapping: US
+#   - name: eu-endpoint
+#     type: externalEndpoints
+#     target: myapp-eu.azurewebsites.net
+#     geo_mapping: EU
+
+# Health probe configuration
+# monitor_config:
+#   protocol: Https
+#   port: 443
+#   path: /
+#   interval: 30
+#   timeout: 10
+
+# DNS name format (reference)
+# {{dns-name}}.trafficmanager.net
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/trafficmanagerprofiles/{profile-name}

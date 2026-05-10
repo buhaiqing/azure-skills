@@ -1,0 +1,60 @@
+# Example Azure Application Gateway Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Application Gateway configuration example
+# resource_group: my-resource-group
+# location: eastus
+# agw_name: my-app-gateway
+
+# Prerequisites
+# subnet: dedicated-agw-subnet (minimum 32 IPs, dedicated for AGW only)
+# vnet: my-vnet
+# public_ip: agw-public-ip (optional for public gateway)
+
+# SKU options
+# Standard_v2: Auto-scaling, zone-redundant, no WAF
+# WAF_v2: Standard_v2 + WAF protection
+# Basic: Fixed capacity, limited features
+
+# Backend pool example
+# backend_pool:
+#   name: backend-pool
+#   servers:
+#     - fqdn: myapp.azurewebsites.net
+#     - ip: 10.0.2.10
+
+# HTTP settings example
+# http_settings:
+#   name: http-settings
+#   port: 80
+#   protocol: Http
+
+# Listener example
+# listener:
+#   name: listener
+#   port: 80
+#   protocol: Http
+
+# SSL configuration example (for HTTPS)
+# ssl_cert:
+#   name: my-ssl-cert
+#   file: /path/to/cert.pfx
+#   password_env: SSL_CERT_PASSWORD
+
+# WAF configuration (WAF_v2 SKU)
+# waf_policy:
+#   name: waf-policy
+#   mode: Prevention
+#   ruleset: OWASP CRS 3.2
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/applicationGateways/{agw-name}

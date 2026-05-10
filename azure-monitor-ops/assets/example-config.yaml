@@ -1,0 +1,82 @@
+# Example Azure Monitor Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Log Analytics Workspace configuration
+# workspace_id: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{workspace}
+# workspace_name: my-workspace
+# retention_days: 30
+
+# Metric Alert configuration example
+# alert_rule:
+#   name: high-cpu-alert
+#   scope: /subscriptions/.../providers/Microsoft.Compute/virtualMachines/my-vm
+#   condition: avg Percentage CPU > 80
+#   window_size: 5m
+#   evaluation_frequency: 1m
+#   severity: 2 (Warning)
+#   description: VM CPU usage exceeds 80%
+
+# Action Group configuration example
+# action_group:
+#   name: ops-team-alerts
+#   short_name: opsalert
+#   email_actions:
+#     - name: email-notification
+#       email: ops-team@example.com
+#   webhook_actions:
+#     - name: webhook-notification
+#       uri: https://automation.example.com/webhook
+
+# Log Alert (Scheduled Query Rule) example
+# log_alert:
+#   name: vm-restart-alert
+#   scope: workspace-id
+#   query: AzureActivity | where OperationName == 'RestartVM' | count
+#   threshold: 1
+#   evaluation_frequency: 5m
+#   window_size: 15m
+
+# Diagnostic Settings configuration example
+# diagnostic_setting:
+#   name: vm-logs-to-workspace
+#   resource: /subscriptions/.../providers/Microsoft.Compute/virtualMachines/my-vm
+#   workspace: workspace-id
+#   logs:
+#     - category: Administrative
+#       enabled: true
+#     - category: Security
+#       enabled: true
+#   metrics:
+#     - category: AllMetrics
+#       enabled: true
+#       timegrain: PT1M
+
+# KQL Query examples
+# # Recent activity
+# AzureActivity | take 10
+#
+# # VM restarts
+# AzureActivity | where OperationName == 'RestartVM' | where TimeGenerated > ago(24h)
+#
+# # CPU performance
+# Perf | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | avg(CounterValue)
+
+# Application Insights configuration example
+# app_insights:
+#   name: my-app-insights
+#   instrumentation_key: xxx-xxx-xxx
+#   sampling_percentage: 100
+#   enable_request_tracking: true
+#   enable_exception_tracking: true
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Insights/components/{app-insights-name}

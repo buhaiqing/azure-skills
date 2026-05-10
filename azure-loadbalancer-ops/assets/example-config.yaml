@@ -1,0 +1,38 @@
+# Example Azure Load Balancer Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Load Balancer configuration example
+# resource_group: my-resource-group
+# location: eastus
+# lb_name: my-load-balancer
+
+# Public Load Balancer example
+# frontend_ip: public-ip-name
+# backend_pool: backend-pool
+# health_probe:
+#   name: health-probe
+#   protocol: Tcp
+#   port: 80
+#   interval: 15
+# lb_rule:
+#   name: lb-rule
+#   protocol: Tcp
+#   frontend_port: 80
+#   backend_port: 80
+
+# Internal Load Balancer example
+# frontend_ip: private-ip-in-subnet
+# subnet: internal-subnet
+# vnet: my-vnet
+
+# Verify credentials
+# Run: az account show --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Network/loadBalancers/{lb-name}
