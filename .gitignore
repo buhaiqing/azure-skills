@@ -150,6 +150,9 @@ activemq-data/
 # Environments
 .env
 .envrc
+
+# Skill generator config (contains credentials from .env)
+azure-skill-generator/config.yaml
 .venv
 env/
 venv/

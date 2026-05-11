@@ -38,6 +38,54 @@ This **meta-skill** scaffolds new Azure operational skills (`azure-[service]-ops
 Input → Analyze Sources → Create Layout → Populate Files → Verify
 ```
 
+## Environment Setup (.env Support)
+
+This meta-skill uses `.env` for credential management. The setup script automates initialization and config generation.
+
+### One-time Setup
+
+```bash
+# Initialize .env from .env.example and generate config
+python azure-skill-generator/scripts/setup_env.py
+```
+
+This will:
+1. Copy `.env.example` → `.env` (if `.env` does not exist)
+2. Validate that required Azure credentials are set
+3. Generate `azure-skill-generator/config.yaml` with actual values from `.env`
+4. Render `assets/example-config.yaml` with `{{env.*}}` placeholders resolved
+
+### Subsequent Updates
+
+```bash
+# After editing .env, re-render config files
+python azure-skill-generator/scripts/setup_env.py --render
+
+# Check if credentials are valid
+python azure-skill-generator/scripts/setup_env.py --check
+
+# Show current environment status
+python azure-skill-generator/scripts/setup_env.py --status
+```
+
+### How It Works
+
+| Step | Action |
+|------|--------|
+| `.env.example` → `.env` | Auto-copy on first run; user fills in credentials |
+| `.env` → `config.yaml` | Script reads `.env` and generates the generator's own config |
+| `{{env.*}}` → actual values | Placeholders in templates are resolved from `.env` at render time |
+| Skill runtime | Generated skills use `{{env.*}}` placeholders resolved from shell env or `.env` |
+
+### Required Azure Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription GUID |
+| `AZURE_TENANT_ID` | Azure AD tenant GUID |
+| `AZURE_CLIENT_ID` | Service Principal application ID |
+| `AZURE_CLIENT_SECRET` | Service Principal client secret |
+
 ## Quick Start Checklist
 
 ### P0 — MUST Complete

@@ -10,6 +10,8 @@ Azure 云资源/云服务操作技能集合，用于 AI Agent 自动化运维场
 azure-skills/
 ├── azure-skill-generator/           # Meta Skill (技能生成器)
 │   ├── SKILL.md                     # 精简版 - What to do
+│   ├── scripts/
+│   │   └── setup_env.py             # .env → 配置生成器
 │   ├── references/                  # 详细实现 - How to do
 │   │   ├── azure-skill-template.md  # 技能骨架模板
 │   │   ├── azure-cli-conventions.md # CLI 行为规范
@@ -130,6 +132,23 @@ az network traffic-manager endpoint create --name endpoint-1 --profile-name my-t
 ## 环境设置
 
 **前置要求**: Python >= 3.10
+
+### 使用 .env 快速设置（推荐）
+
+```bash
+# 一次性设置：从 .env.example 复制 → .env 并生成配置
+python azure-skill-generator/scripts/setup_env.py
+
+# 编辑 .env 填入你的 Azure 凭证，然后重新渲染
+python azure-skill-generator/scripts/setup_env.py --render
+
+# 验证凭证是否有效
+python azure-skill-generator/scripts/setup_env.py --check
+```
+
+这会生成 `azure-skill-generator/config.yaml`（包含你的实际凭证值），并解析模板文件中的 `{{env.*}}` 占位符。
+
+### 手动设置
 
 ```bash
 # 安装 Azure CLI

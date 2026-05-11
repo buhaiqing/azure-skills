@@ -1,14 +1,16 @@
 # Example Azure Credentials Configuration
-# This file is for documentation only - NEVER commit real credentials
+# This file uses {{env.*}} placeholders that get resolved from .env at runtime.
+# Run `python azure-skill-generator/scripts/setup_env.py --render` to replace placeholders with actual values.
+# NEVER commit real credentials to version control.
 
 # Environment variables (recommended for SDK and CLI)
-AZURE_SUBSCRIPTION_ID=your_subscription_id_here
-AZURE_TENANT_ID=your_tenant_id_here
-AZURE_CLIENT_ID=your_client_id_here
-AZURE_CLIENT_SECRET=your_client_secret_here
+AZURE_SUBSCRIPTION_ID={{env.AZURE_SUBSCRIPTION_ID}}
+AZURE_TENANT_ID={{env.AZURE_TENANT_ID}}
+AZURE_CLIENT_ID={{env.AZURE_CLIENT_ID}}
+AZURE_CLIENT_SECRET={{env.AZURE_CLIENT_SECRET}}
 
 # Default location (optional)
-AZURE_DEFAULT_LOCATION=eastus
+AZURE_DEFAULT_LOCATION={{env.AZURE_DEFAULT_LOCATION}}
 
 # Alternative: Azure CLI login (interactive)
 # Run: az login

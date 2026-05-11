@@ -10,6 +10,8 @@ A collection of Azure cloud resource/service operation skills for AI Agent autom
 azure-skills/
 ├── azure-skill-generator/           # Meta Skill (Skill Generator)
 │   ├── SKILL.md                     # Concise - What to do
+│   ├── scripts/
+│   │   └── setup_env.py             # .env → config generator
 │   ├── references/                  # Detailed - How to do
 │   │   ├── azure-skill-template.md  # Skill skeleton template
 │   │   ├── azure-cli-conventions.md # CLI behavior conventions
@@ -172,6 +174,23 @@ az vm stop --name my-vm --resource-group my-rg  # Stop and deallocate (stops bil
 ## Environment Setup
 
 **Prerequisites**: Python >= 3.10
+
+### Quick Setup with .env (Recommended)
+
+```bash
+# One-time: copy .env.example → .env and generate config
+python azure-skill-generator/scripts/setup_env.py
+
+# Edit .env and fill in your Azure credentials, then re-render
+python azure-skill-generator/scripts/setup_env.py --render
+
+# Verify credentials are valid
+python azure-skill-generator/scripts/setup_env.py --check
+```
+
+This generates `azure-skill-generator/config.yaml` with your actual credential values and resolves `{{env.*}}` placeholders in template files.
+
+### Manual Setup
 
 ```bash
 # Install Azure CLI

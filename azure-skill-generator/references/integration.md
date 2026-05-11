@@ -1,5 +1,20 @@
 # Integration Setup (Azure Skills)
 
+## Quick Start with .env
+
+The recommended way to manage Azure credentials is via `.env` file:
+
+```bash
+# One-time setup: copy .env.example → .env and generate config
+python azure-skill-generator/scripts/setup_env.py
+
+# Edit .env and fill in your Azure credentials
+# Then re-render config files
+python azure-skill-generator/scripts/setup_env.py --render
+```
+
+This generates `azure-skill-generator/config.yaml` with your actual credential values, and resolves `{{env.*}}` placeholders in template files.
+
 ## Environment Setup
 
 Azure CLI and Azure SDK require authentication via Azure AD. Use **Service Principal** for automation.
