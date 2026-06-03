@@ -220,3 +220,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .omc/
+
+# macOS
+.DS_Store
+**/.DS_Store
