@@ -1,0 +1,22 @@
+# Azure Audit — Example Audit Report
+
+## Activity Log Audit (Last 7 Days)
+```bash
+az monitor activity-log list --start-time "2026-05-28T00:00:00Z" --end-time "2026-06-04T00:00:00Z" --output json
+```
+
+## RBAC Audit
+```bash
+az role assignment list --include-inherited --output json
+```
+
+## Resource Lock Audit
+```bash
+az lock list --output json
+```
+
+## Diagnostic Settings Audit
+```bash
+# Requires iterating through resources; example for a VM:
+az monitor diagnostic-settings list --resource "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Compute/virtualMachines/{{user.vm_name}}" --output json
+```

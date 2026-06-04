@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -307,11 +307,37 @@ az network traffic-manager profile delete --name "{{user.tm_name}}" --resource-g
 | **Inactive** | Profile disabled or below min endpoints |
 | **CheckingEndpoint** | Initial health check in progress |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE profile (`az network traffic-manager profile delete`) → **required**; DNS impact warning + Safety=0 → ABORT
+- DELETE endpoint → **required**; traffic reroute to remaining endpoints communicated
+- DISABLE endpoint (last healthy) → **required**; check if any other endpoint is Online; degradation warning + Safety=0 → ABORT
+- CHANGE routing method → **required**; traffic redistribution impact communicated
+- CREATE profile / ADD endpoint / ENABLE endpoint / UPDATE → recommended
+
+### Note on DNS Propagation
+
+Traffic Manager is DNS-based — changes propagate gradually based on `--ttl` (default 30s, but client DNS caches may be longer).
+The GCL trace should note TTL value and propagation characteristics.
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

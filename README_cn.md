@@ -67,7 +67,25 @@ azure-skills/
 │   │   └ integration.md             # SDK包、权限配置
 │   └ assets/
 │       └ example-config.yaml       # 告警/操作组/诊断设置示例
-
+│
+├── azure-audit-ops/                # Azure Audit 操作技能
+│   ├── SKILL.md                     # 精简版 - 跨产品审计
+│   ├── references/
+│   │   ├── core-concepts.md         # Activity Log, RBAC, 锁, 策略, 安全
+│   │   ├── troubleshooting.md      # 权限、限流、空结果
+│   │   └ integration.md             # Reader 角色设置、SDK 包
+│   └ assets/
+│       └ example-config.yaml       # 审计报告示例
+│
+├── azure-cost-ops/                  # Azure Cost 操作技能
+│   ├── SKILL.md                     # 精简版 - 成本管理与账单
+│   ├── references/
+│   │   ├── core-concepts.md         # 成本范围、账单模型、FinOps
+│   │   ├── troubleshooting.md      # 权限、空结果、预算
+│   │   └ integration.md             # Cost Management Reader 角色
+│   └ assets/
+│       └ example-config.yaml       # 成本分析与预算示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -175,6 +193,8 @@ az account show --output json
 
 | 技能 | 服务 | 状态 |
 |------|------|------|
+| azure-cost-ops | Azure Cost Management (账单, 预算, 预留实例) | ✅ 完成 |
+| azure-audit-ops | Azure Audit (操作日志, RBAC, 资源锁, 策略合规, 安全审计) | ✅ 完成 |
 | azure-skill-generator | Meta Skill | ✅ 完成 |
 | azure-loadbalancer-ops | Load Balancer (L4 负载均衡) | ✅ 完成 |
 | azure-appgateway-ops | Application Gateway (L7 + WAF) | ✅ 完成 |

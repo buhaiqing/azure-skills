@@ -1,0 +1,37 @@
+# Azure Cost — Example Config
+
+## Cost Analysis (by service, current month)
+```bash
+az costmanagement query \
+  --type ActualCost \
+  --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ServiceName" type "Dimension" \
+  --output json
+```
+
+## Budget (monthly, with email alert at 80% and 100%)
+```bash
+az consumption budget create \
+  --budget-name "monthly-budget" \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --amount 5000 \
+  --time-grain Monthly \
+  --time-period start-date "2026-06-01" end-date "2026-12-31" \
+  --category Cost \
+  --notification-group threshold 80,100 \
+  --notification-group operator GreaterThan \
+  --notification-group email "finops@example.com" \
+  --notification-group enabled true \
+  --output json
+```
+
+## Cost by Resource Group (current month)
+```bash
+az costmanagement query \
+  --type ActualCost \
+  --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ResourceGroupName" type "Dimension" \
+  --output json
+```

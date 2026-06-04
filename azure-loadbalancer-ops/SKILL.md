@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -223,11 +223,33 @@ az network lb delete --name "{{user.lb_name}}" --resource-group "{{user.resource
 | **Inbound NAT Rule** | Port forwarding | `az network lb inbound-nat-rule create` |
 | **Outbound Rule** | Outbound SNAT | `az network lb outbound-rule create` |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE LB (`az network lb delete`) → **required**; traffic impact (port list) warning + Safety=0 → ABORT
+- DELETE rule (`az network lb rule delete`) → **required**; port-specific traffic disruption warning
+- DELETE probe (`az network lb probe delete`) → **required**; check rule references first
+- VM removal from backend pool → **required**; traffic disruption to that VM warned
+- DELETE inbound NAT rule → **required**; port forwarding impact communicated
+- CREATE LB / ADD VM to pool / LIST → recommended
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints and VMs.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -495,11 +495,32 @@ Common extensions:
 | **Updating** | Yes | Configuration change |
 | **Deleting** | No | Deletion in progress |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE (`az vm delete`) → **required**; Safety=0 → ABORT
+- STOP/DEALLOCATE (`az vm stop --skip-deallocation?`) → **required**; Safety=0 → ABORT
+- RESIZE (`az vm resize`) → **required**; confirm VM state before mutation
+- CREATE (`az vm create`) → **required**; validate pre-flight + idempotency
+- START/RESTART/RUNCOMMAND → recommended
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

@@ -12,8 +12,8 @@ compatibility: >-
   frontmatter conventions.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent, Claude Code, Cursor, or compatible Agent runtimes
   type: meta-skill
 ---
@@ -166,17 +166,41 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-## Reference Files (How to Details)
+## Quality Gate
 
-| Reference | Content |
-|-----------|---------|
-| [azure-skill-template.md](references/azure-skill-template.md) | Full skill template structure |
-| [azure-cli-conventions.md](references/azure-cli-conventions.md) | CLI behavioral notes, output handling, retry strategy |
-| [azure-sdk-usage.md](references/azure-sdk-usage.md) | Azure SDK patterns, error handling, polling |
-| [integration.md](references/integration.md) | Environment setup (Service Principal, credentials) |
-| [core-concepts-template.md](references/core-concepts-template.md) | Service architecture template |
-| [troubleshooting-template.md](references/troubleshooting-template.md) | Error codes, diagnostics template |
-| [governance-review.md](references/governance-review.md) | Pre-merge checklist, adversarial scenarios |
+This meta-skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **optional** |
+| max_iterations | 3 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- Scaffold a **new** skill → recommended (GCL helps catch missing safety gates in generated output)
+- Audit an existing skill → recommended
+- Read template / reference files → optional (skip GCL)
+
+### Meta-Skill Note
+
+This skill generates *markdown that an Agent will follow at runtime*. The most critical GCL check
+is that every destructive operation in the generated skill has a proper Safety Gate.
+A generated skill without safety gates receives safety=0 → ABORT, even though the meta-skill
+itself never touches live resources.
+
+## Reference Files
+
+- [azure-skill-template.md](references/azure-skill-template.md)
+- [azure-cli-conventions.md](references/azure-cli-conventions.md)
+- [azure-sdk-usage.md](references/azure-sdk-usage.md)
+- [core-concepts-template.md](references/core-concepts-template.md)
+- [troubleshooting-template.md](references/troubleshooting-template.md)
+- [integration.md](references/integration.md)
+- [governance-review.md](references/governance-review.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

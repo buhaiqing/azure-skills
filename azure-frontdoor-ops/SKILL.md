@@ -10,8 +10,8 @@ compatibility: >-
   network access to Azure endpoints.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -272,11 +272,38 @@ az afd profile delete --profile-name "{{user.fd_name}}" --resource-group "{{user
 | SSL | Global certificate | Regional certificate |
 | Routing | Global latency-based | URL-based |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE profile (`az afd profile delete`) → **required**; all components traffic impact + Safety=0 → ABORT
+- DELETE endpoint (`az afd endpoint delete`) → **required**; hostname traffic impact warned
+- DELETE route (`az afd route delete`) → **required**; path/origin-group impact communicated
+- PURGE cache (`az afd endpoint purge`) → **required**; load spike on origins warned
+- DELETE custom domain → **required**; DNS resolution impact communicated
+- CREATE profile / WAF / LIST → recommended
+
+### Command Family Enforcement
+
+This skill uses `az afd` commands (Front Door Standard/Premium). The deprecated
+`az network front-door` MUST NOT be used. Violation → spec_compliance = 0.
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

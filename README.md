@@ -96,6 +96,24 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Linux/Windows VM examples
 │
+├── azure-audit-ops/                # Azure Audit Operations Skill
+│   ├── SKILL.md                     # Concise - Cross-product audit
+│   ├── references/
+│   │   ├── core-concepts.md         # Activity Log, RBAC, Locks, Policy, Security
+│   │   ├── troubleshooting.md      # Permissions, throttling, empty results
+│   │   └── integration.md           # Reader role setup, SDK packages
+│   ├── assets/
+│   │   └── example-config.yaml      # Audit report examples
+│   │
+├── azure-cost-ops/                  # Azure Cost Operations Skill
+│   ├── SKILL.md                     # Concise - Cost management & billing
+│   ├── references/
+│   │   ├── core-concepts.md         # Cost scopes, billing models, FinOps
+│   │   ├── troubleshooting.md      # Permissions, empty results, budgets
+│   │   └── integration.md           # Cost Management Reader role
+│   └── assets/
+│       └── example-config.yaml      # Cost analysis & budget examples
+│
 └── azure-[service]-ops/             # More service skills...
 ```
 
@@ -217,6 +235,8 @@ az account show --output json
 
 | Skill | Service | Status |
 |------|------|------|
+| azure-cost-ops | Azure Cost Management (Billing, Budgets, Reservations) | ✅ Complete |
+| azure-audit-ops | Azure Audit (Activity Log, RBAC, Locks, Policy, Security) | ✅ Complete |
 | azure-skill-generator | Meta Skill | ✅ Complete |
 | azure-loadbalancer-ops | Load Balancer (L4) | ✅ Complete |
 | azure-appgateway-ops | Application Gateway (L7 + WAF) | ✅ Complete |

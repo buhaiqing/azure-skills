@@ -10,8 +10,8 @@ compatibility: >-
   network access to Azure endpoints.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -271,11 +271,37 @@ az monitor metrics alert delete --name "{{user.alert_rule_name}}" --resource-gro
 | `Microsoft.Network/loadBalancers` | VipAvailability, DipAvailability, ByteCount |
 | `Microsoft.Insights/components` | Requests, Exceptions, Availability, Dependencies |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **recommended** |
+| max_iterations | 3 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE alert rule (`az monitor metrics alert delete`) → **required**; monitoring gap warning + Safety=0 → ABORT
+- DELETE action group (`az monitor action-group delete`) → **required**; check rule references + affected rules listed
+- DELETE diagnostic setting → **required**; data flow gap communicated
+- CREATE alert rule / action group / diagnostic setting → recommended
+- QUERY metrics / logs / activity log (read-only) → optional (GCL may be skipped)
+
+### Read-Only vs Write
+
+Most Monitor operations are read-only (query, list, show). GCL is encouraged but not required
+for read-only operations. All **delete** operations are required to go through GCL.
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

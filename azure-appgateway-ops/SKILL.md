@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -284,11 +284,39 @@ az network application-gateway delete --name "{{user.agw_name}}" --resource-grou
 | **URL Path Map** | URL-based routing | `az network application-gateway url-path-map create` |
 | **WAF Policy** | Security policy | `az network application-gateway waf-policy create` |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE gateway (`az network application-gateway delete`) → **required**; traffic impact warning + Safety=0 → ABORT
+- BACKEND POOL REMOVE (referenced by rule) → **required**; traffic disruption warning + Safety=0 → ABORT
+- WAF POLICY enable/create → **required**; Detection vs Prevention mode confirmed
+- SSL CERTIFICATE upload → **required**; password handled securely — NEVER in trace
+- URL PATH MAP / LISTENER / RULE changes affecting active traffic → **required**; disruption warning
+- CREATE gateway / LIST / SHOW → recommended
+
+### SSL Certificate Password Security
+
+SSL certificate passwords are sensitive credentials. The GCL trace MUST NOT contain
+the `--cert-password` value. The Critic scans for password strings in command args
+and output. If detected, safety=0 → ABORT, regardless of operation success.
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

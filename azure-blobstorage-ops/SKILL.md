@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints and storage accounts.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -309,11 +309,39 @@ az storage account delete \
 | **Append Blob** | Append-only operations | Logs, audit trails |
 | **Page Blob** | 512-byte pages | VHDs, random write |
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE storage account (`az storage account delete`) → **required**; Safety=0 → ABORT
+- DELETE container (`az storage container delete`) → **required**; data-loss warning + Safety=0 → ABORT
+- DELETE blob (`az storage blob delete`) → **required**; exact name confirmation + Safety=0 → ABORT
+- CREATE storage account → **required**; security defaults enforced (`--allow-blob-public-access false`)
+- UPLOAD with overwrite → **required**; explicit `--overwrite true` consent
+- LIST / SHOW / DOWNLOAD (read-only) → recommended
+
+### Account Key Security
+
+Storage account commands use `--account-key` for authentication. The GCL trace MUST NOT contain
+the account key value. The Critic scans for base64-encoded key strings in output. If detected,
+safety=0 → ABORT, regardless of operation success.
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 

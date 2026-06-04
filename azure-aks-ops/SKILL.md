@@ -9,8 +9,8 @@ compatibility: >-
   network access to Azure endpoints and AKS clusters.
 metadata:
   author: azure
-  version: "1.0.0"
-  last_updated: "2026-05-10"
+  version: "1.1.0"
+  last_updated: "2026-06-04"
   runtime: Harness AI Agent
   cli_applicability: dual-path
   environment:
@@ -294,11 +294,33 @@ kubectl scale deployment nginx --replicas=3
 kubectl expose deployment nginx --port=80 --type=LoadBalancer
 ```
 
+## Quality Gate
+
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
+See `AGENTS.md §3–§8` for the spec.
+
+| Parameter | Value |
+|-----------|-------|
+| GCL | **required** |
+| max_iterations | 2 |
+| Rubric | [references/rubric.md](references/rubric.md) |
+| Prompt templates | [references/prompt-templates.md](references/prompt-templates.md) |
+
+### GCL Trigger Conditions
+- DELETE cluster (`az aks delete`) → **required**; Safety=0 → ABORT
+- STOP cluster (`az aks stop`) → **required**; workload downtime warning + Safety=0 → ABORT
+- SCALE node pool to 0 → **required**; pod eviction warning + Safety=0 → ABORT
+- NODEPOOL DELETE → **required**; pod disruption warning + Safety=0 → ABORT
+- UPGRADE cluster → **required**; pre-check (`az aks get-upgrades`) + rollback strategy
+- CREATE / SCALE (non-zero) → recommended
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Integration Setup](references/integration.md)
+- [Rubric](references/rubric.md)
+- [Prompt Templates](references/prompt-templates.md)
 
 ## See Also
 
