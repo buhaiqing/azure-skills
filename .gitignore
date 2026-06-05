@@ -224,3 +224,7 @@ __marimo__/
 # macOS
 .DS_Store
 **/.DS_Store
+
+# GCL audit traces (generated at runtime)
+audit-results/
+!audit-results/.gitkeep

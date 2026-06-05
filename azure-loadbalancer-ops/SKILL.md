@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Azure Load Balancer provides **Layer 4 (L4)** load balancing for VMs and internal services. This skill is an operational runbook with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure Load Balancer provides **L4** load balancing for VMs/internal services. Operational runbook: Pre-flight → Execute → Validate → Recover.
 
 ## Trigger & Scope
 

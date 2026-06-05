@@ -7,7 +7,7 @@ description: >-
   "cost analysis", "FinOps", "chargeback", or "cost optimization".
 license: MIT
 compatibility: >-
-  Azure CLI 2.0+, Azure SDK for Python (3.10+), valid Azure credentials
+  Azure CLI, Azure SDK for Python (3.10+), valid Azure credentials
   (Cost Management Reader role or higher), network access to Azure endpoints.
 metadata:
   author: azure
@@ -62,6 +62,18 @@ It does NOT modify resource configurations (use the specific service skill for t
 | `{{output.cost_summary}}` | Last API response | Parsed cost data |
 | `{{output.budget_status}}` | Last API response | Budget current spend vs threshold |
 
+## JSON Paths (集中声明)
+
+```yaml
+# JMESPath queries
+QUERY_COST_BY_SERVICE: "'[?category==''Cost'']'"
+QUERY_RESERVATION_UTILIZATION: "'[].{Name:name, Utilization:properties.utilization, Sku:sku.name}'"
+
+# Filter JSON
+FILTER_BY_RESOURCE_GROUP: >-
+  "{\"dimensions\":[{\"name\":\"ResourceGroupName\",\"operator\":\"In\",\"values\":[\"{{user.resource_group}}\"]}]}"
+```
+
 ## Execution Flow Pattern
 
 Every operation follows: **Scope → Query → Analyze → Report**
@@ -78,7 +90,7 @@ Every operation follows: **Scope → Query → Analyze → Report**
 #### Pre-flight
 | Check | Method | On Failure |
 |-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
+| CLI available | `az version --query '"azure-cli"'` | Install Azure CLI |
 | Credentials | `az account show` | HALT; configure env |
 | Subscription valid | `az account list --output json` | Suggest valid subscription |
 | Cost Management provider | `az provider show --namespace Microsoft.CostManagement` | HALT; register provider |
@@ -173,7 +185,7 @@ response = client.query.usage(
             'grouping': [{'name': 'ServiceName', 'type': 'Dimension'}]
         }
     }
-)
+):
 
 for row in response.rows:
     print(f"{row[0]}: {row[1]} {row[2]}")
@@ -191,11 +203,13 @@ az costmanagement query --type ActualCost --timeframe MonthToDate \
 #### Recover
 | Error | Action |
 |-------|--------|
-| 403 Forbidden | HALT; assign Cost Management Reader role |
+| AuthorizationFailed | HALT; assign Cost Management Reader role |
 | ProviderNotRegistered | HALT; run `az provider register --namespace Microsoft.CostManagement` |
 | InvalidTimeframe | Fix timeframe; retry once |
-| Throttling (429) | Backoff, retry 3x |
-| 5xx Internal | Retry 3x, then HALT |
+| Throttling | Backoff, retry 3x |
+| 5xx | Retry 3x, then HALT |
+
+See [references/troubleshooting.md](references/troubleshooting.md) for complete error codes.
 
 ### Operation: Budget Management
 
@@ -367,7 +381,7 @@ See `AGENTS.md §3–§8` for the spec.
 
 ## See Also
 
-- [Azure Cost Management Docs](https://docs.microsoft.com/azure/cost-management-billing/)
-- [Azure CLI Cost Management](https://docs.microsoft.com/cli/azure/costmanagement)
-- [Azure CLI Consumption](https://docs.microsoft.com/cli/azure/consumption)
+- [Azure Cost Management Docs](https://learn.microsoft.com/azure/cost-management-billing/)
+- [Azure CLI Cost Management](https://learn.microsoft.com/cli/azure/costmanagement)
+- [Azure CLI Consumption](https://learn.microsoft.com/cli/azure/consumption)
 - [FinOps Framework](https://www.finops.org/)

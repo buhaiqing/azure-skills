@@ -50,6 +50,9 @@ Typical issues that surface in self-review:
 - Cross-service work that should delegate to a sibling skill instead of inlining
 - JSON output paths not verified (`--output json` assumed but field names guessed)
 - Recovery table missing HALT-vs-retry decision for quota / throttling / 5xx
+- **Token Efficiency**: TE-1~TE-7 violations (see [docs/token-efficiency.md](./docs/token-efficiency.md))
+
+**自检流程**：Round 1 基础检查 → Round 2 关键分析。详见 [docs/token-efficiency.md](./docs/token-efficiency.md)。
 
 ## Setup script — known footguns
 
@@ -257,25 +260,14 @@ Each skill may override `max_iter` in its own `SKILL.md` (under `## Quality Gate
 
 ### 9. Anti-Patterns (banned)
 
-- ❌ **Shared context G+C** — defeats independence → banned
-- ❌ **Subjective scoring** — Critic must use the rubric, not "vibes" → banned
-- ❌ **Unbounded loop** — always hard-cap iterations → banned
-- ❌ **Critic sees the user request** — encourages rubber-stamping → banned
-- ❌ **Silently downgrade on Safety fail** — must ABORT visibly → banned
-- ❌ **Trace not persisted** — no post-mortem possible → banned
-- ❌ **Critic mutates resources** — Critic is read-only by definition → banned
+- ❌ Shared context G+C | Subjective scoring | Unbounded loop
+- ❌ Critic sees user request | Silently downgrade on Safety fail
+- ❌ Trace not persisted | Critic mutates resources | Skip self-review
+- ❌ Print real credentials in trace → mask `***` always
 
 ### 10. Rollout Roadmap
 
-- **Phase 1 (this commit)** — add this section to `AGENTS.md`; pilot on **`azure-vm-ops`** only
-  (most representative destructive workload: `az vm delete`, `az vm deallocate`, `az vm stop`)
-  with its `references/prompt-templates.md` and `references/rubric.md`. `azure-aks-ops` and
-  `azure-blobstorage-ops` follow in the next PR.
-- **Phase 2** — add `scripts/gcl_runner.py` as a reusable Orchestrator (wraps `az` calls
-  with isolated sub-agent Critic).
-- **Phase 3** — feed `gcl-trace-*.json` into `azure-monitor-ops` for quality dashboards
-  (custom metrics via Azure Monitor).
-- **Phase 4** — wire rubric pass-rate to Azure Monitor alerts (real incidents refine thresholds).
+Phase 1: pilot on `azure-vm-ops` | Phase 2: reusable Orchestrator | Phase 3-4: Azure Monitor integration
 
 ### 11. Relationship to existing 2-round self-review
 
@@ -294,10 +286,12 @@ does not exempt a sloppy skill update.
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0.0 | 2026-06-04 | Initial GCL specification added to `AGENTS.md` (adapted from `qcloud-skills/AGENTS.md`; per-skill defaults remapped to azure skill set; `az` / `azure.mgmt.*` execution path; Phase 1 pilot scoped to `azure-vm-ops`) |
+| 1.0.0 | 2026-06-04 | Initial GCL specification added to `AGENTS.md` |
+| 1.1.0 | 2026-06-05 | Added TE/GCL/LI rules; moved detail to [docs/](./docs/) |
 
 ### 13. See also
 
-- Each skill's `references/rubric.md` (when shipped) — the rubric instance
-- Each skill's `references/prompt-templates.md` (when shipped) — the G/C/O prompt skeletons
-- `azure-skill-generator/references/governance-review.md` — build-time governance review (sister gate)
+- Each skill's `references/rubric.md` / `references/prompt-templates.md` — rubric + G/C/O prompts
+- [docs/token-efficiency.md](./docs/token-efficiency.md) — TE-1~TE-7 规则 + 内容去重
+- [docs/link-integrity.md](./docs/link-integrity.md) — LI-1~LI-4 链接检测
+- `azure-skill-generator/references/governance-review.md` — build-time governance review
