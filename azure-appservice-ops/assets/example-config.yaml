@@ -1,0 +1,39 @@
+# Example Azure App Service Configuration
+# Documentation only - NEVER commit real credentials
+
+credentials:
+  subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+  tenant_id: "{{env.AZURE_TENANT_ID}}"
+  client_id: "{{env.AZURE_CLIENT_ID}}"
+  client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+app_service_plan:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.plan_name}}"
+  os: "linux"
+  sku: "B1"
+  worker_count: 1
+
+web_app:
+  name: "{{user.webapp_name}}"
+  runtime: "PYTHON:3.11"
+  https_only: true
+  app_settings:
+    ENVIRONMENT: "production"
+    LOG_LEVEL: "info"
+    DATABASE_URL: "{{user.database_url_placeholder}}"
+  slots:
+    - name: "staging"
+
+commands:
+  create_plan: >-
+    az appservice plan create --name "{{user.plan_name}}" --resource-group "{{user.resource_group}}" --location "{{user.location}}" --sku B1 --is-linux --output json
+  create_webapp: >-
+    az webapp create --name "{{user.webapp_name}}" --resource-group "{{user.resource_group}}" --plan "{{user.plan_name}}" --runtime "PYTHON:3.11" --output json
+  show_webapp: >-
+    az webapp show --name "{{user.webapp_name}}" --resource-group "{{user.resource_group}}" --output json
+
+resource_id_format:
+  webapp: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Web/sites/{{user.webapp_name}}"
+  plan: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Web/serverfarms/{{user.plan_name}}"

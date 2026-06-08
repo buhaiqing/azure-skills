@@ -1,0 +1,36 @@
+# Example Azure Virtual Network Configuration
+# Documentation only - NEVER commit real credentials
+
+credentials:
+  subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+  tenant_id: "{{env.AZURE_TENANT_ID}}"
+  client_id: "{{env.AZURE_CLIENT_ID}}"
+  client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+vnet:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.vnet_name}}"
+  address_prefixes:
+    - "10.20.0.0/16"
+  subnets:
+    - name: "app-subnet"
+      prefix: "10.20.1.0/24"
+    - name: "data-subnet"
+      prefix: "10.20.2.0/24"
+    - name: "agw-subnet"
+      prefix: "10.20.10.0/26"
+
+peering:
+  local_vnet: "{{user.vnet_name}}"
+  remote_vnet_id: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.remote_resource_group}}/providers/Microsoft.Network/virtualNetworks/{{user.remote_vnet_name}}"
+
+commands:
+  create_vnet: >-
+    az network vnet create --name "{{user.vnet_name}}" --resource-group "{{user.resource_group}}" --location "{{user.location}}" --address-prefixes "10.20.0.0/16" --subnet-name "app-subnet" --subnet-prefixes "10.20.1.0/24" --output json
+  show_vnet: >-
+    az network vnet show --name "{{user.vnet_name}}" --resource-group "{{user.resource_group}}" --output json
+
+resource_id_format:
+  vnet: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Network/virtualNetworks/{{user.vnet_name}}"
+  subnet: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Network/virtualNetworks/{{user.vnet_name}}/subnets/{{user.subnet_name}}"

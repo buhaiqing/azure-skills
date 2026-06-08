@@ -23,6 +23,17 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml
 
+├── azure-vnet-ops/                  # Virtual Network Operations Skill
+│   ├── SKILL.md                     # Concise - VNet, subnet, peering
+│   ├── references/
+│   │   ├── core-concepts.md         # Address spaces, subnets, peering
+│   │   ├── troubleshooting.md      # CIDR overlap, dependencies, peering issues
+│   │   ├── integration.md           # Network Contributor setup
+│   │   ├── rubric.md                # GCL scoring rubric
+│   │   └── prompt-templates.md      # GCL Generator/Critic prompts
+│   └── assets/
+│       └── example-config.yaml      # VNet/subnet examples
+
 ├── azure-loadbalancer-ops/          # Load Balancer Operations Skill
 │   ├── SKILL.md                     # Concise - L4 load balancing
 │   ├── references/
@@ -95,6 +106,17 @@ azure-skills/
 │   │   └── integration.md           # SSH setup, extensions, resizing
 │   └── assets/
 │       └── example-config.yaml      # Linux/Windows VM examples
+│
+├── azure-appservice-ops/            # Azure App Service Operations Skill
+│   ├── SKILL.md                     # Concise - Web Apps and plans
+│   ├── references/
+│   │   ├── core-concepts.md         # Plans, Web Apps, slots, settings
+│   │   ├── troubleshooting.md      # Runtime, scale, slot, log issues
+│   │   ├── integration.md           # Website Contributor setup
+│   │   ├── rubric.md                # GCL scoring rubric
+│   │   └── prompt-templates.md      # GCL Generator/Critic prompts
+│   └── assets/
+│       └── example-config.yaml      # Web App/plan examples
 │
 ├── azure-redis-ops/                 # Azure Redis Operations Skill
 │   ├── SKILL.md                     # Concise - Cache operations and RCA
@@ -214,6 +236,14 @@ az afd endpoint create --endpoint-name my-endpoint --profile-name my-fd --resour
 az network traffic-manager profile create --name my-tm --resource-group my-rg --routing-method Performance --output json
 az network traffic-manager endpoint create --name endpoint-1 --profile-name my-tm --resource-group my-rg --type externalEndpoints --target myapp.azurewebsites.net
 
+# Virtual Network Examples
+az network vnet create --name my-vnet --resource-group my-rg --location eastus --address-prefixes 10.20.0.0/16 --subnet-name app-subnet --subnet-prefixes 10.20.1.0/24 --output json
+az network vnet subnet list --vnet-name my-vnet --resource-group my-rg --output json
+
+# App Service Examples
+az appservice plan create --name my-plan --resource-group my-rg --location eastus --sku B1 --is-linux --output json
+az webapp create --name my-webapp --resource-group my-rg --plan my-plan --runtime "PYTHON:3.11" --output json
+
 # AKS Examples
 az aks create --name my-aks --resource-group my-rg --location eastus --node-count 3 --generate-ssh-keys --output json
 az aks get-credentials --name my-aks --resource-group my-rg
@@ -278,6 +308,7 @@ az account show --output json
 | azure-cost-ops | Azure Cost Management (Billing, Budgets, Reservations) | ✅ Complete |
 | azure-audit-ops | Azure Audit (Activity Log, RBAC, Locks, Policy, Security) | ✅ Complete |
 | azure-skill-generator | Meta Skill | ✅ Complete |
+| azure-vnet-ops | Virtual Network (VNet, subnets, peering) | ✅ Complete |
 | azure-loadbalancer-ops | Load Balancer (L4) | ✅ Complete |
 | azure-appgateway-ops | Application Gateway (L7 + WAF) | ✅ Complete |
 | azure-frontdoor-ops | Front Door (Global + CDN) | ✅ Complete |
@@ -286,6 +317,7 @@ az account show --output json
 | azure-aks-ops | Azure Kubernetes Service (AKS) | ✅ Complete |
 | azure-blobstorage-ops | Azure Blob Storage | ✅ Complete |
 | azure-vm-ops | Azure Virtual Machine | ✅ Complete |
+| azure-appservice-ops | Azure App Service (Web Apps, plans, slots) | ✅ Complete |
 | azure-redis-ops | Azure Redis (Cache operations, AIOps, RCA) | ✅ Complete |
 | azure-postgres-ops | Azure PostgreSQL Flexible Server (DB operations, AIOps, RCA) | ✅ Complete |
 | azure-acr-ops | Azure Container Registry (Image operations, AIOps, RCA) | ✅ Complete |
@@ -293,13 +325,13 @@ az account show --output json
 
 ## Compute Services Comparison
 
-| Feature | Virtual Machine | AKS | Container Instances |
-|---------|-----------------|-----|---------------------|
-| **Type** | IaaS (full server) | Managed K8s | Serverless containers |
-| **Control** | Full OS control | Container orchestration | Single containers |
-| **Scale** | Manual/auto-scale | Auto-scaling clusters | Manual scaling |
-| **Persistence** | Persistent disks | Persistent volumes | Ephemeral |
-| **Use Case** | Traditional apps, full control | Microservices, complex apps | Simple tasks, batch jobs |
+| Feature | Virtual Machine | App Service | AKS | Container Instances |
+|---------|-----------------|-------------|-----|---------------------|
+| **Type** | IaaS (full server) | PaaS web hosting | Managed K8s | Serverless containers |
+| **Control** | Full OS control | Managed runtime/platform | Container orchestration | Single containers |
+| **Scale** | Manual/auto-scale | Plan workers/SKU/autoscale | Auto-scaling clusters | Manual scaling |
+| **Persistence** | Persistent disks | App config + mounted storage | Persistent volumes | Ephemeral |
+| **Use Case** | Traditional apps, full control | Web apps/APIs | Microservices, complex apps | Simple tasks, batch jobs |
 
 ## Storage Services Comparison
 
@@ -319,6 +351,16 @@ az account show --output json
 | **Management** | Managed K8s | Serverless containers |
 | **Use Case** | Microservices, complex apps | Simple tasks, batch jobs |
 | **Integration** | ACR, Helm, Istio | ACR, simple deployments |
+
+## Networking Services Comparison
+
+| Feature | Virtual Network | Load Balancer | App Gateway | Front Door | Traffic Manager |
+|---------|-----------------|---------------|-------------|------------|-----------------|
+| **Layer** | Network foundation | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
+| **Scope** | Single Location / peered VNets | Single Location | Single Location | Global | Global |
+| **Primary Use** | Address spaces, subnets, private connectivity | VM/backend load balancing | Web ingress + WAF | Global acceleration | DNS failover/routing |
+| **Owns Subnets** | Yes | No | Requires dedicated subnet | No | No |
+| **Destructive Risk** | Breaks attached resources | Traffic disruption | Traffic disruption | Global traffic impact | DNS routing impact |
 
 ## Load Balancing Services Comparison
 
