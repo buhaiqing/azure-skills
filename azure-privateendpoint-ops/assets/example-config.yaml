@@ -1,0 +1,26 @@
+skill: azure-privateendpoint-ops
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+private_endpoint:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.private_endpoint_name}}"
+  subnet_id: "{{user.subnet_id}}"
+  private_link_resource_id: "{{user.private_link_resource_id}}"
+  group_id: "{{user.group_id}}"
+  connection_name: "{{user.connection_name}}"
+  tags:
+    owner: "{{user.owner}}"
+    environment: "{{user.environment}}"
+
+private_dns_zone_group:
+  name: "{{user.dns_zone_group_name}}"
+  private_dns_zone_id: "{{user.private_dns_zone_id}}"
+  private_dns_zone_name: "{{user.private_dns_zone_name}}"
+
+outputs:
+  private_endpoint_id: "{{output.private_endpoint_id}}"
+  connection_state: "{{output.connection_state}}"

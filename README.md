@@ -43,6 +43,28 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Public/Internal LB examples
 
+├── azure-nsg-ops/                   # Network Security Group Operations Skill
+│   ├── SKILL.md                     # Concise - NSG rules and associations
+│   ├── references/
+│   │   ├── core-concepts.md         # Rules, priorities, associations
+│   │   ├── troubleshooting.md      # Effective rules and traffic diagnosis
+│   │   ├── integration.md           # Network Contributor setup
+│   │   ├── rubric.md                # GCL scoring rubric
+│   │   └── prompt-templates.md      # GCL Generator/Critic prompts
+│   └── assets/
+│       └── example-config.yaml      # NSG/rule/association examples
+
+├── azure-privateendpoint-ops/       # Private Endpoint Operations Skill
+│   ├── SKILL.md                     # Concise - Private Link connectivity
+│   ├── references/
+│   │   ├── core-concepts.md         # Private Endpoint, DNS, connection states
+│   │   ├── troubleshooting.md      # Approval, DNS, subnet issues
+│   │   ├── integration.md           # Network and DNS RBAC setup
+│   │   ├── rubric.md                # GCL scoring rubric
+│   │   └── prompt-templates.md      # GCL Generator/Critic prompts
+│   └── assets/
+│       └── example-config.yaml      # Private Endpoint/DNS examples
+
 ├── azure-appgateway-ops/            # Application Gateway Operations Skill
 │   ├── SKILL.md                     # Concise - L7 load balancing + WAF
 │   ├── references/
@@ -289,7 +311,7 @@ brew install azure-cli
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # Create Service Principal for automation
-az ad sp create-for-rbac --name "my-automation-sp" --role "Contributor" --scopes "/subscriptions/{{subscription-id}}" --output json
+az ad sp create-for-rbac --name "my-automation-sp" --role "Contributor" --scopes "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
 
 # Configure credentials
 export AZURE_SUBSCRIPTION_ID="your_subscription_id"
@@ -310,6 +332,8 @@ az account show --output json
 | azure-skill-generator | Meta Skill | ✅ Complete |
 | azure-vnet-ops | Virtual Network (VNet, subnets, peering) | ✅ Complete |
 | azure-loadbalancer-ops | Load Balancer (L4) | ✅ Complete |
+| azure-nsg-ops | Network Security Group (NSG rules and associations) | ✅ Complete |
+| azure-privateendpoint-ops | Private Endpoint (Private Link and DNS integration) | ✅ Complete |
 | azure-appgateway-ops | Application Gateway (L7 + WAF) | ✅ Complete |
 | azure-frontdoor-ops | Front Door (Global + CDN) | ✅ Complete |
 | azure-trafficmanager-ops | Traffic Manager (DNS Routing) | ✅ Complete |
@@ -354,20 +378,20 @@ az account show --output json
 
 ## Networking Services Comparison
 
-| Feature | Virtual Network | Load Balancer | App Gateway | Front Door | Traffic Manager |
-|---------|-----------------|---------------|-------------|------------|-----------------|
-| **Layer** | Network foundation | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
-| **Scope** | Single Location / peered VNets | Single Location | Single Location | Global | Global |
-| **Primary Use** | Address spaces, subnets, private connectivity | VM/backend load balancing | Web ingress + WAF | Global acceleration | DNS failover/routing |
-| **Owns Subnets** | Yes | No | Requires dedicated subnet | No | No |
-| **Destructive Risk** | Breaks attached resources | Traffic disruption | Traffic disruption | Global traffic impact | DNS routing impact |
+| Feature | Virtual Network | NSG | Private Endpoint | Load Balancer | App Gateway | Front Door | Traffic Manager |
+|---------|-----------------|-----|------------------|---------------|-------------|------------|-----------------|
+| **Layer** | Network foundation | L3/L4 filtering | Private Link access | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
+| **Scope** | Single Location / peered VNets | Subnet/NIC | Subnet to target resource | Single Location | Single Location | Global | Global |
+| **Primary Use** | Address spaces, subnets, private connectivity | Allow/deny traffic rules | Private service connectivity | VM/backend load balancing | Web ingress + WAF | Global acceleration | DNS failover/routing |
+| **Owns Subnets** | Yes | Associates to subnets/NICs | Allocates private IP in subnet | No | Requires dedicated subnet | No | No |
+| **Destructive Risk** | Breaks attached resources | Blocks or exposes traffic | Breaks private connectivity | Traffic disruption | Traffic disruption | Global traffic impact | DNS routing impact |
 
 ## Load Balancing Services Comparison
 
 | Feature | Load Balancer | App Gateway | Front Door | Traffic Manager |
 |---------|---------------|-------------|------------|-----------------|
 | **Layer** | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
-| **Scope** | Single region | Single region | Global | Global |
+| **Scope** | Single Location | Single Location | Global | Global |
 | **CDN** | No | No | Yes | No |
 | **WAF** | No | Yes | Premium | No |
 | **SSL Termination** | No | Yes | Yes | At endpoint |

@@ -43,6 +43,28 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # 公网/内网负载均衡器示例
 
+├── azure-nsg-ops/                   # Network Security Group 操作技能
+│   ├── SKILL.md                     # 精简版 - NSG 规则与关联
+│   ├── references/
+│   │   ├── core-concepts.md         # 规则、优先级、关联
+│   │   ├── troubleshooting.md      # 有效规则与流量诊断
+│   │   ├── integration.md           # Network Contributor 设置
+│   │   ├── rubric.md                # GCL 评分规则
+│   │   └── prompt-templates.md      # GCL Generator/Critic 提示词
+│   └ assets/
+│       └ example-config.yaml       # NSG/规则/关联示例
+
+├── azure-privateendpoint-ops/       # Private Endpoint 操作技能
+│   ├── SKILL.md                     # 精简版 - Private Link 连接
+│   ├── references/
+│   │   ├── core-concepts.md         # Private Endpoint、DNS、连接状态
+│   │   ├── troubleshooting.md      # 审批、DNS、子网问题
+│   │   ├── integration.md           # 网络与 DNS RBAC 设置
+│   │   ├── rubric.md                # GCL 评分规则
+│   │   └── prompt-templates.md      # GCL Generator/Critic 提示词
+│   └ assets/
+│       └ example-config.yaml       # Private Endpoint/DNS 示例
+
 ├── azure-appgateway-ops/            # Application Gateway 操作技能
 │   ├── SKILL.md                     # 精简版 - L7 负载均衡 + WAF
 │   ├── references/
@@ -78,6 +100,33 @@ azure-skills/
 │   │   └ integration.md             # SDK包、权限配置
 │   └ assets/
 │       └ example-config.yaml       # 告警/操作组/诊断设置示例
+│
+├── azure-aks-ops/                   # Azure Kubernetes Service (AKS) 操作技能
+│   ├── SKILL.md                     # 精简版 - 托管 Kubernetes
+│   ├── references/
+│   │   ├── core-concepts.md         # AKS 架构、节点池、网络
+│   │   ├── troubleshooting.md      # 集群/节点池问题、升级失败
+│   │   └── integration.md           # kubectl 设置、ACR 集成、监控
+│   └ assets/
+│       └ example-config.yaml       # 基础/生产/私有集群示例
+│
+├── azure-blobstorage-ops/           # Azure Blob Storage 操作技能
+│   ├── SKILL.md                     # 精简版 - 对象存储
+│   ├── references/
+│   │   ├── core-concepts.md         # 存储层、Blob 类型、复制
+│   │   ├── troubleshooting.md      # 鉴权、上传/下载问题
+│   │   └ integration.md             # AzCopy、SAS、生命周期管理
+│   └ assets/
+│       └ example-config.yaml       # 存储账户/容器示例
+│
+├── azure-vm-ops/                    # Azure Virtual Machine 操作技能
+│   ├── SKILL.md                     # 精简版 - 计算实例
+│   ├── references/
+│   │   ├── core-concepts.md         # VM 规格、镜像、存储选项
+│   │   ├── troubleshooting.md      # 预配、连接、调整规格问题
+│   │   └── integration.md           # SSH 设置、扩展、调整规格
+│   └ assets/
+│       └ example-config.yaml       # Linux/Windows VM 示例
 │
 ├── azure-appservice-ops/            # Azure App Service 操作技能
 │   ├── SKILL.md                     # 精简版 - Web App 与计划
@@ -247,7 +296,7 @@ brew install azure-cli
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # 创建 Service Principal 用于自动化
-az ad sp create-for-rbac --name "my-automation-sp" --role "Contributor" --scopes "/subscriptions/{{subscription-id}}" --output json
+az ad sp create-for-rbac --name "my-automation-sp" --role "Contributor" --scopes "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
 
 # 配置凭证
 export AZURE_SUBSCRIPTION_ID="your_subscription_id"
@@ -268,10 +317,15 @@ az account show --output json
 | azure-skill-generator | Meta Skill | ✅ 完成 |
 | azure-vnet-ops | Virtual Network (VNet、子网、对等互连) | ✅ 完成 |
 | azure-loadbalancer-ops | Load Balancer (L4 负载均衡) | ✅ 完成 |
+| azure-nsg-ops | Network Security Group (NSG 规则与关联) | ✅ 完成 |
+| azure-privateendpoint-ops | Private Endpoint (Private Link 与 DNS 集成) | ✅ 完成 |
 | azure-appgateway-ops | Application Gateway (L7 + WAF) | ✅ 完成 |
 | azure-frontdoor-ops | Front Door (全球加速 + CDN) | ✅ 完成 |
 | azure-trafficmanager-ops | Traffic Manager (DNS 路由) | ✅ 完成 |
 | azure-monitor-ops | Azure Monitor (指标/告警/日志) | ✅ 完成 |
+| azure-aks-ops | Azure Kubernetes Service (AKS) | ✅ 完成 |
+| azure-blobstorage-ops | Azure Blob Storage | ✅ 完成 |
+| azure-vm-ops | Azure Virtual Machine | ✅ 完成 |
 | azure-appservice-ops | Azure App Service (Web App、计划、槽位) | ✅ 完成 |
 | azure-redis-ops | Azure Redis (缓存运维、AIOps、RCA) | ✅ 完成 |
 | azure-postgres-ops | Azure PostgreSQL Flexible Server (数据库运维、AIOps、RCA) | ✅ 完成 |
@@ -288,15 +342,34 @@ az account show --output json
 | **持久化** | 持久磁盘 | 应用配置 + 挂载存储 | 持久卷 | 临时 |
 | **适用场景** | 传统应用、完整控制 | Web 应用/API | 微服务、复杂应用 | 简单任务、批处理 |
 
+## 存储服务对比
+
+| 功能 | Blob Storage | File Storage | Disk Storage |
+|------|--------------|--------------|--------------|
+| **类型** | 对象存储 | SMB 文件共享 | 块存储 |
+| **访问方式** | REST API/SAS | SMB/NFS 协议 | VM 挂载 |
+| **规模** | 海量规模 (5 PB+) | 单共享限制 | 受 VM 限制 |
+| **适用场景** | 文档、图片、备份 | 文件共享、迁移 | VM OS/数据磁盘 |
+
+## 容器服务对比
+
+| 功能 | AKS | Container Instances |
+|------|-----|---------------------|
+| **编排** | 完整 Kubernetes | 单容器 |
+| **扩缩容** | 集群自动扩缩容 | 手动扩缩容 |
+| **管理方式** | 托管 Kubernetes | Serverless 容器 |
+| **适用场景** | 微服务、复杂应用 | 简单任务、批处理 |
+| **集成** | ACR、Helm、Istio | ACR、简单部署 |
+
 ## 网络服务对比
 
-| 功能 | Virtual Network | Load Balancer | App Gateway | Front Door | Traffic Manager |
-|------|-----------------|---------------|-------------|------------|-----------------|
-| **层级** | 网络基础 | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
-| **范围** | 单 Location / 对等 VNet | 单 Location | 单 Location | 全球 | 全球 |
-| **主要用途** | 地址空间、子网、私有连接 | VM/后端负载均衡 | Web 入口 + WAF | 全球加速 | DNS 故障转移/路由 |
-| **管理子网** | 是 | 否 | 需要专用子网 | 否 | 否 |
-| **破坏风险** | 影响附加资源 | 流量中断 | 流量中断 | 全球流量影响 | DNS 路由影响 |
+| 功能 | Virtual Network | NSG | Private Endpoint | Load Balancer | App Gateway | Front Door | Traffic Manager |
+|------|-----------------|-----|------------------|---------------|-------------|------------|-----------------|
+| **层级** | 网络基础 | L3/L4 过滤 | Private Link 访问 | L4 (TCP/UDP) | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) | DNS |
+| **范围** | 单 Location / 对等 VNet | 子网/NIC | 子网到目标资源 | 单 Location | 单 Location | 全球 | 全球 |
+| **主要用途** | 地址空间、子网、私有连接 | 允许/拒绝流量规则 | 私有服务连接 | VM/后端负载均衡 | Web 入口 + WAF | 全球加速 | DNS 故障转移/路由 |
+| **管理子网** | 是 | 关联子网/NIC | 在子网分配私有 IP | 否 | 需要专用子网 | 否 | 否 |
+| **破坏风险** | 影响附加资源 | 阻断或暴露流量 | 中断私有连接 | 流量中断 | 流量中断 | 全球流量影响 | DNS 路由影响 |
 
 ## 负载均衡服务对比
 

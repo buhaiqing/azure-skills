@@ -1,0 +1,32 @@
+skill: azure-nsg-ops
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+network_security_group:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.nsg_name}}"
+  tags:
+    owner: "{{user.owner}}"
+    environment: "{{user.environment}}"
+
+security_rule:
+  name: "{{user.rule_name}}"
+  priority: "{{user.priority}}"
+  direction: "{{user.direction}}"
+  access: "{{user.access}}"
+  protocol: "{{user.protocol}}"
+  source_address_prefixes: "{{user.source_address_prefixes}}"
+  source_port_ranges: "{{user.source_port_ranges}}"
+  destination_address_prefixes: "{{user.destination_address_prefixes}}"
+  destination_port_ranges: "{{user.destination_port_ranges}}"
+
+association:
+  subnet_id: "{{user.subnet_id}}"
+  nic_id: "{{user.nic_id}}"
+
+outputs:
+  nsg_id: "{{output.nsg_id}}"
+  rule_id: "{{output.rule_id}}"
