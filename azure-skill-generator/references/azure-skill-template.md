@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Azure [Service Name] provides [brief description]. This skill is an **operational runbook** with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure [Service Name] provides [brief description]. This `SKILL.md` is the slim entrypoint (~100-150 lines): keep triggers, scope, flow, safety gates, and links here; move detailed commands, SDK snippets, RCA rules, AIOps playbooks, and design detail into `references/`.
 
 ## Trigger & Scope
 

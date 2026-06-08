@@ -36,8 +36,9 @@ You generate markdown files — you do NOT execute cloud operations.
 8. Use `{{output.*}}` for parsed API response values.
 9. Every execution flow must have Pre-flight → Execute → Validate → Recover sections.
 10. Both Azure CLI (primary) and Azure SDK (fallback) paths documented.
-11. Include a recovery table with ≥ 4 error codes and HALT vs retry decision.
-12. Capture source references: Azure docs URL, `az [service] --help` output, SDK module name.
+11. Keep `SKILL.md` slim (~100-150 lines). Put detailed commands, SDK snippets, RCA rules, AIOps playbooks, long tables, and design details in `references/`.
+12. Include a recovery table with ≥ 4 error codes and HALT vs retry decision.
+13. Capture source references: Azure docs URL, `az [service] --help` output, SDK module name.
 
 ## Output format
 Return a JSON trace of files generated:
@@ -86,6 +87,7 @@ Do NOT consider the original user request — judge only what was actually gener
 - [ ] Template match: `azure-skill-template.md` structure followed
 - [ ] Frontmatter: name, description, version, metadata.* all present and valid YAML
 - [ ] Safety gates: every delete/terminate/stop has explicit confirmation
+- [ ] SKILL.md size: concise (~100-150 lines); details live in `references/`
 - [ ] Credentials: `{{env.*}}` only; no real secrets
 - [ ] Dual-path: CLI + SDK documented per operation
 - [ ] Variable convention: `{{env.*}}` / `{{user.*}}` / `{{output.*}}`

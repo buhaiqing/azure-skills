@@ -86,6 +86,46 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # 成本分析与预算示例
 │
+├── azure-redis-ops/                 # Azure Redis 操作技能
+│   ├── SKILL.md                     # 精简版 - 缓存运维与 RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # SKU、网络、指标
+│   │   ├── troubleshooting.md      # 延迟、内存、驱逐、连接 RCA
+│   │   ├── aiops.md                # 异常关联与 RCA 报告
+│   │   └ integration.md             # CLI/SDK、RBAC、轮询
+│   └ assets/
+│       └ example-config.yaml       # Redis 缓存示例
+│
+├── azure-postgres-ops/              # Azure PostgreSQL 操作技能
+│   ├── SKILL.md                     # 精简版 - Flexible Server 运维与 RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Flexible Server、HA、备份、网络
+│   │   ├── troubleshooting.md      # 连接、CPU、存储、查询 RCA
+│   │   ├── aiops.md                # 指标/查询关联与 DBA 审核
+│   │   └ integration.md             # CLI/SDK、RBAC、轮询
+│   └ assets/
+│       └ example-config.yaml       # PostgreSQL 服务示例
+│
+├── azure-acr-ops/                   # Azure Container Registry 操作技能
+│   ├── SKILL.md                     # 精简版 - 镜像仓库运维与拉取 RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Registry、Repository、Tag、身份、网络
+│   │   ├── troubleshooting.md      # ImagePullBackOff、鉴权、网络、清理 RCA
+│   │   ├── aiops.md                # 拉取/鉴权异常关联
+│   │   └ integration.md             # CLI/SDK、RBAC、轮询
+│   └ assets/
+│       └ example-config.yaml       # ACR 示例
+│
+├── azure-keyvault-ops/              # Azure Key Vault 操作技能
+│   ├── SKILL.md                     # 精简版 - 密钥库运维与访问 RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Secret、Key、Certificate、RBAC/访问策略
+│   │   ├── troubleshooting.md      # 403、网络、过期、生命周期 RCA
+│   │   ├── aiops.md                # 拒绝请求与证书过期关联
+│   │   └ integration.md             # CLI/SDK、RBAC、轮询
+│   └ assets/
+│       └ example-config.yaml       # Key Vault 示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -201,6 +241,10 @@ az account show --output json
 | azure-frontdoor-ops | Front Door (全球加速 + CDN) | ✅ 完成 |
 | azure-trafficmanager-ops | Traffic Manager (DNS 路由) | ✅ 完成 |
 | azure-monitor-ops | Azure Monitor (指标/告警/日志) | ✅ 完成 |
+| azure-redis-ops | Azure Redis (缓存运维、AIOps、RCA) | ✅ 完成 |
+| azure-postgres-ops | Azure PostgreSQL Flexible Server (数据库运维、AIOps、RCA) | ✅ 完成 |
+| azure-acr-ops | Azure Container Registry (镜像运维、AIOps、RCA) | ✅ 完成 |
+| azure-keyvault-ops | Azure Key Vault (Secret、Key、Certificate、AIOps、RCA) | ✅ 完成 |
 
 ## 负载均衡服务对比
 

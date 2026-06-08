@@ -39,6 +39,7 @@ When generating or modifying a skill, the source of truth for structure, frontma
 3. **Destructive operations** (`delete`, `terminate`, `purge`, scaling down to 0) MUST include an explicit human-confirmation gate in the skill text. Reviewers reject skills missing this.
 4. **Azure terminology**: always "Resource Group" (required for nearly every resource) and "Location" (not "region"). Resource IDs use full `/subscriptions/.../providers/...` form.
 5. **Variable convention** is enforced: `{{env.*}}` for secrets (never ask user), `{{user.*}}` for inputs (ask once, reuse), `{{output.*}}` for parsed API responses. See `azure-skill-generator/SKILL.md` "Variable Convention".
+6. **Keep `SKILL.md` slim.** Target ~100–150 lines focused on triggers, scope, flow, safety gates, and reference links. Move detailed commands, SDK snippets, RCA rules, AIOps playbooks, long tables, and design detail into `references/`.
 
 ## Skill update workflow (project directive)
 
@@ -50,6 +51,7 @@ Typical issues that surface in self-review:
 - Cross-service work that should delegate to a sibling skill instead of inlining
 - JSON output paths not verified (`--output json` assumed but field names guessed)
 - Recovery table missing HALT-vs-retry decision for quota / throttling / 5xx
+- Bloated `SKILL.md` that embeds detailed commands, SDK snippets, RCA rules, or AIOps playbooks instead of linking to `references/`
 - **Token Efficiency**: TE-1~TE-7 violations (see [docs/token-efficiency.md](./docs/token-efficiency.md))
 
 **自检流程**：Round 1 基础检查 → Round 2 关键分析。详见 [docs/token-efficiency.md](./docs/token-efficiency.md)。

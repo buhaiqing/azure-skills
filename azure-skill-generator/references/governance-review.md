@@ -16,10 +16,12 @@ This document defines lightweight governance for `azure-*-ops` skills in this re
 | **Execution surface** | Dual path: Azure CLI (primary) + Azure SDK (fallback) |
 | **Source of truth** | Azure official REST API docs and CLI documentation |
 | **Secrets** | Never commit real keys; use `{{env.*}}` placeholders |
+| **Skill size** | Keep `SKILL.md` concise (~100-150 lines); move detailed commands, SDK snippets, RCA rules, AIOps playbooks, and design details into `references/` |
 
 ## Pre-Merge Checklist (Reviewer)
 
 - [ ] **Triggers**: SHOULD/SHOULD-NOT concrete; delegation names match existing skills
+- [ ] **SKILL.md size**: concise (~100-150 lines); detailed commands, SDK snippets, RCA rules, AIOps playbooks, and design details live in `references/`
 - [ ] **Credentials**: `{{env.*}}` rules explicit; no instruction to paste secrets
 - [ ] **Destructive ops**: Delete/terminate includes explicit human confirmation step
 - [ ] **API fidelity**: Operation names, fields traceable to Azure REST API docs

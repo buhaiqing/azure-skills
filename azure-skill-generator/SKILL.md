@@ -94,6 +94,7 @@ python azure-skill-generator/scripts/setup_env.py --status
 - [ ] Azure CLI support verified (`az [service] --help`)
 - [ ] SDK (Azure SDK for Python/JavaScript) module identified
 - [ ] Trigger & Scope with SHOULD/SHOULD-NOT defined
+- [ ] `SKILL.md` kept concise (~100-150 lines); details moved to `references/`
 - [ ] `{{env.*}}` placeholders (no secret literals)
 - [ ] Execution flows: Pre-flight → Execute → Validate → Recover
 - [ ] Safety gates for destructive operations
@@ -128,6 +129,7 @@ azure-[service]-ops/
 | **CLI-first with SDK fallback** | Primary path: Azure CLI; fallback: Azure SDK after 3 CLI failures |
 | **OpenAPI accuracy** | All fields traceable to Azure REST API docs |
 | **Safety gates** | Human confirmation before destructive operations |
+| **Slim entrypoint** | `SKILL.md` stays ~100-150 lines; detailed commands, SDK snippets, RCA/AIOps playbooks, and design detail live in `references/` |
 | **Credential isolation** | Only `{{env.*}}` placeholders; never real secrets |
 
 ## Azure vs AWS Key Differences

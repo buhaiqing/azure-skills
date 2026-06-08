@@ -1,0 +1,49 @@
+# Azure PostgreSQL skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials or database passwords.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+postgres:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  server_name: "{{user.server_name}}"
+  database_name: "{{user.database_name}}"
+  postgres_version: "{{user.postgres_version}}"
+  sku_name: "{{user.sku_name}}"
+  storage_size_gb: "{{user.storage_size_gb}}"
+  backup_retention_days: "{{user.backup_retention_days}}"
+
+network:
+  access_mode: "{{user.access_mode}}"
+  firewall_rule_name: "{{user.rule_name}}"
+  start_ip: "{{user.start_ip}}"
+  end_ip: "{{user.end_ip}}"
+  private_dns_zone: "{{user.private_dns_zone}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - cpu_percent
+    - memory_percent
+    - storage_percent
+    - active_connections
+    - connections_failed
+    - iops
+    - deadlocks
+
+safety:
+  require_confirmation_for:
+    - delete
+    - stop
+    - restart
+    - restore_cutover
+    - scale_down
+    - broaden_firewall
+    - server_parameter_change
+    - ddl_or_session_kill

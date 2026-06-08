@@ -1,0 +1,48 @@
+# Azure Container Registry skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+acr:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  registry_name: "{{user.registry_name}}"
+  sku: "{{user.sku}}"
+  repository: "{{user.repository}}"
+  tag: "{{user.tag}}"
+  digest: "{{user.digest}}"
+
+aks_integration:
+  cluster_name: "{{user.cluster_name}}"
+  kubelet_identity_object_id: "{{user.kubelet_identity_object_id}}"
+  required_role: "AcrPull"
+
+network:
+  public_network_access: "{{user.public_network_access}}"
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  private_dns_zone: "privatelink.azurecr.io"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  signals:
+    - pull_failures
+    - auth_failures
+    - not_found_errors
+    - network_timeouts
+    - repository_growth
+
+safety:
+  require_confirmation_for:
+    - delete_registry
+    - delete_repository_or_manifest
+    - purge_images
+    - regenerate_credentials
+    - enable_admin_user
+    - broaden_firewall
+    - overwrite_production_tag

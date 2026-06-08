@@ -1,0 +1,51 @@
+# Azure Key Vault skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials or secret values.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+keyvault:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  vault_name: "{{user.vault_name}}"
+  access_model: "{{user.access_model}}"
+  purge_protection: true
+  soft_delete_retention_days: "{{user.soft_delete_retention_days}}"
+
+objects:
+  secret_name: "{{user.secret_name}}"
+  key_name: "{{user.key_name}}"
+  certificate_name: "{{user.certificate_name}}"
+
+identity:
+  principal_id: "{{user.principal_id}}"
+  required_role: "{{user.required_role}}"
+
+network:
+  public_network_access: "{{user.public_network_access}}"
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  private_dns_zone: "privatelink.vaultcore.azure.net"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  signals:
+    - denied_requests
+    - network_failures
+    - certificate_expiry
+    - delete_or_purge_attempts
+    - unusual_operation_volume
+
+safety:
+  require_confirmation_for:
+    - delete_or_purge
+    - overwrite_secret
+    - rotate_or_delete_key
+    - import_or_delete_certificate
+    - rbac_or_access_policy_change
+    - network_acl_change
+    - weaken_protection

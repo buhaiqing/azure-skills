@@ -96,6 +96,46 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Linux/Windows VM examples
 │
+├── azure-redis-ops/                 # Azure Redis Operations Skill
+│   ├── SKILL.md                     # Concise - Cache operations and RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # SKUs, networking, metrics
+│   │   ├── troubleshooting.md      # Latency, memory, eviction, connectivity RCA
+│   │   ├── aiops.md                # Anomaly correlation and RCA reports
+│   │   └── integration.md           # CLI/SDK, RBAC, polling
+│   └── assets/
+│       └── example-config.yaml      # Redis cache examples
+│
+├── azure-postgres-ops/              # Azure PostgreSQL Operations Skill
+│   ├── SKILL.md                     # Concise - Flexible Server operations and RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Flexible Server, HA, backup, networking
+│   │   ├── troubleshooting.md      # Connections, CPU, storage, query RCA
+│   │   ├── aiops.md                # Metrics/query correlation and DBA review
+│   │   └── integration.md           # CLI/SDK, RBAC, polling
+│   └── assets/
+│       └── example-config.yaml      # PostgreSQL server examples
+│
+├── azure-acr-ops/                   # Azure Container Registry Operations Skill
+│   ├── SKILL.md                     # Concise - Registry operations and image pull RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Registry, repository, tag, identity, networking
+│   │   ├── troubleshooting.md      # ImagePullBackOff, auth, network, purge RCA
+│   │   ├── aiops.md                # Pull/auth anomaly correlation
+│   │   └── integration.md           # CLI/SDK, RBAC, polling
+│   └── assets/
+│       └── example-config.yaml      # ACR registry examples
+│
+├── azure-keyvault-ops/              # Azure Key Vault Operations Skill
+│   ├── SKILL.md                     # Concise - Vault operations and access RCA
+│   ├── references/
+│   │   ├── core-concepts.md         # Secrets, keys, certs, RBAC/access policies
+│   │   ├── troubleshooting.md      # 403, network, expiry, lifecycle RCA
+│   │   ├── aiops.md                # Denied request and expiry correlation
+│   │   └── integration.md           # CLI/SDK, RBAC, polling
+│   └── assets/
+│       └── example-config.yaml      # Key Vault examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -246,6 +286,10 @@ az account show --output json
 | azure-aks-ops | Azure Kubernetes Service (AKS) | ✅ Complete |
 | azure-blobstorage-ops | Azure Blob Storage | ✅ Complete |
 | azure-vm-ops | Azure Virtual Machine | ✅ Complete |
+| azure-redis-ops | Azure Redis (Cache operations, AIOps, RCA) | ✅ Complete |
+| azure-postgres-ops | Azure PostgreSQL Flexible Server (DB operations, AIOps, RCA) | ✅ Complete |
+| azure-acr-ops | Azure Container Registry (Image operations, AIOps, RCA) | ✅ Complete |
+| azure-keyvault-ops | Azure Key Vault (Secrets, keys, certificates, AIOps, RCA) | ✅ Complete |
 
 ## Compute Services Comparison
 

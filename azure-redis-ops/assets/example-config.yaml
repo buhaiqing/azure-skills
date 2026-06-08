@@ -1,0 +1,46 @@
+# Azure Redis skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+redis:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.redis_name}}"
+  sku: "{{user.sku}}"
+  capacity: "{{user.capacity}}"
+  enable_non_ssl_port: false
+  minimum_tls_version: "1.2"
+
+network:
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+  private_dns_zone: "privatelink.redis.cache.windows.net"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - usedmemorypercentage
+    - serverload
+    - connectedclients
+    - cachehits
+    - cachemisses
+    - evictedkeys
+    - operationsPerSecond
+    - cacheRead
+    - cacheWrite
+
+safety:
+  require_confirmation_for:
+    - delete
+    - flush
+    - reboot
+    - regenerate_keys
+    - scale_down
+    - broaden_firewall
+    - weaken_tls
