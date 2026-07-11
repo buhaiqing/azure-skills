@@ -1,0 +1,64 @@
+# Recovery Services Vault — Example Configuration
+
+> All placeholder values use `{{env.*}}` syntax. Never commit real credentials.
+
+```yaml
+# Azure Backup Recovery Services Vault Configuration
+# Uses {{env.*}} placeholders only — resolved at runtime by Agent
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+vault_name: "production-backup-vault-01"
+resource_group: "rg-backup-production"
+location: "eastus"
+
+backup_policies:
+  - name: "vm-daily-30day-retention"
+    type: "AzureVM"
+    schedule:
+      frequency: "Daily"
+      time: "23:00"
+      timezone: "UTC"
+    retention:
+      daily:
+        count: 30
+      weekly:
+        count: 12
+      monthly:
+        count: 6
+      yearly:
+        count: 2
+
+  - name: "sql-log-15min"
+    type: "AzureWorkload"
+    schedule:
+      full_backup:
+        frequency: "Weekly"
+        day: "Sunday"
+        time: "01:00"
+      log_backup:
+        frequency_minutes: 15
+    retention:
+      daily:
+        count: 30
+      weekly:
+        count: 12
+      monthly:
+        count: 6
+
+soft_delete:
+  enabled: true
+  retention_days: 14
+
+storage_replication:
+  type: "GeoRedundant"  # Options: LocallyRedundant, GeoRedundant, ZoneRedundant
+
+encryption:
+  type: "PlatformManaged"  # Options: PlatformManaged, CustomerManaged
+  # For CustomerManaged:
+  # key_vault_id: "/subscriptions/.../providers/Microsoft.KeyVault/vaults/..."
+  # key_uri: "https://...vault.azure.net/keys/..."
+
+network_acls:
+  default_action: "Allow"  # Options: Allow, Deny
+  bypass: "AzureServices"
+```
