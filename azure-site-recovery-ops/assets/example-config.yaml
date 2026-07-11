@@ -1,0 +1,56 @@
+# Recovery Services Vault (DR-enabled) — Example Configuration
+
+> All placeholder values use `{{env.*}}` syntax. Never commit real credentials.
+
+```yaml
+# Azure Site Recovery Configuration
+# Uses {{env.*}} placeholders only — resolved at runtime by Agent
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+vault_name: "production-dr-vault-01"
+resource_group: "rg-dr-production"
+location: "eastus"
+
+disaster_recovery:
+  enabled: true
+  cross_region_restore: true
+
+replication_settings:
+  default_policy:
+    name: "24-hour-retention-policy"
+    recovery_point_retention_in_minutes: 1440
+    app_consistent_snapshot_frequency_in_minutes: 60
+    multi_vm_sync_status: "Enable"  # Options: Enable, Disable
+
+target_config:
+  location: "westus"
+  resource_group: "rg-dr-target-westus"
+  virtual_network: "vnet-dr-target-westus"
+  subnet: "default"
+  storage_account_type: "Standard_LRS"  # Options: Standard_LRS, Premium_LRS, StandardSSD_LRS
+
+test_failover:
+  default_test_vnet: "vnet-dr-test-westus"
+  cleanup_after_minutes: 120  # Auto-cleanup not available; manual step
+
+recovery_plan_defaults:
+  pre_script_timeout_seconds: 300
+  post_script_timeout_seconds: 600
+  group_order: "sequential"  # Options: sequential, parallel
+
+notification:
+  alert_settings:
+    email_subscription_owner: true
+    custom_email_addresses:
+      - "dr-team@example.com"
+    locale: "en-US"
+
+storage_replication:
+  type: "GeoRedundant"  # Options: LocallyRedundant, GeoRedundant
+
+encryption:
+  type: "PlatformManaged"  # Options: PlatformManaged, CustomerManaged
+  # For CustomerManaged:
+  # key_vault_id: "/subscriptions/.../providers/Microsoft.KeyVault/vaults/..."
+  # key_uri: "https://...vault.azure.net/keys/..."
+```
