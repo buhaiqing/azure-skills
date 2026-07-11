@@ -1,0 +1,62 @@
+# Example Azure API Management Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# APIM instance configuration example
+# resource_group: my-resource-group
+# location: eastus
+# apim_name: my-apim-instance   # globally unique; 1-50 alphanum + hyphens
+# apim_sku: Developer           # Consumption / Developer / Basic / Standard / Premium / Isolated
+# publisher_email: admin@example.com
+# publisher_name: My Organization
+
+# Required RBAC role for automation
+# API Management Service Contributor
+
+# API example
+# api_id: my-backend-api
+# api_display_name: My Backend API
+# api_path: /myapi
+# service_url: https://my-function-app.azurewebsites.net/api
+
+# Product example
+# product_id: standard-product
+# product_display_name: Standard Product
+# subscription_required: true
+# approval_required: false
+# state: published
+
+# Subscription example (SDK only - no CLI equivalent)
+# subscription_id: my-subscription
+# scope: /products/standard-product
+# state: active
+
+# Policy XML example (SDK only)
+# policy_xml: |
+#   <policies>
+#     <inbound>
+#       <rate-limit calls="100" renewal-period="60" />
+#       <base />
+#     </inbound>
+#     <backend><base /></backend>
+#     <outbound><base /></outbound>
+#     <on-error><base /></on-error>
+#   </policies>
+
+# Verify credentials
+# Run: az account show --output json
+
+# CLI vs SDK coverage reminder:
+# - Use `az apim ...` for Service/API/Product/Backend/NamedValue CRUD
+# - Use Azure SDK (azure.mgmt.apimanagement) for Subscription + Policy operations
+
+# Azure Resource ID format (reference)
+# /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{apim-name}
+# /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{apim-name}/apis/{api-id}
+# /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{apim-name}/products/{product-id}
+# /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{apim-name}/subscriptions/{sid}
