@@ -197,6 +197,16 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # Key Vault 示例
 │
+├── azure-sqldb-ops/                 # Azure SQL 数据库操作技能
+│   ├── SKILL.md                     # 精简版 - 逻辑服务器、弹性池
+│   ├── references/
+│   │   ├── core-concepts.md         # 逻辑服务器、数据库、弹性池
+│   │   ├── troubleshooting.md      # 连接、DTU/CPU、死锁、查询 RCA
+│   │   ├── aiops.md                # 指标/查询关联与 RCA 报告
+│   │   └── integration.md           # CLI/SDK、RBAC、轮询
+│   └ assets/
+│       └ example-config.yaml       # SQL 数据库/弹性池示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -331,6 +341,7 @@ az account show --output json
 | azure-postgres-ops | Azure PostgreSQL Flexible Server (数据库运维、AIOps、RCA) | ✅ 完成 |
 | azure-acr-ops | Azure Container Registry (镜像运维、AIOps、RCA) | ✅ 完成 |
 | azure-keyvault-ops | Azure Key Vault (Secret、Key、Certificate、AIOps、RCA) | ✅ 完成 |
+| azure-sqldb-ops | Azure SQL 数据库（含弹性池） | ✅ 完成 |
 
 ## 计算服务对比
 

@@ -1,0 +1,55 @@
+# Azure SQL Database skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials or database passwords.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+sqldb:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  server_name: "{{user.server_name}}"
+  admin_login: "{{user.admin_login}}"
+  database_name: "{{user.database_name}}"
+  service_objective: "{{user.service_objective}}"
+  vcore_count: "{{user.vcore_count}}"
+  max_size: "{{user.max_size}}"
+  elastic_pool_name: "{{user.elastic_pool_name}}"
+  pool_edition: "{{user.pool_edition}}"
+  pool_capacity: "{{user.pool_capacity}}"
+
+network:
+  access_mode: "{{user.access_mode}}"
+  firewall_rule_name: "{{user.rule_name}}"
+  start_ip: "{{user.start_ip}}"
+  end_ip: "{{user.end_ip}}"
+  private_dns_zone: "{{user.private_dns_zone}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - dtu_consumption_percent
+    - cpu_percent
+    - storage_percent
+    - storage
+    - sessions_percent
+    - workers_percent
+    - connection_failed
+    - deadlock
+
+safety:
+  require_confirmation_for:
+    - delete_server
+    - delete_database
+    - delete_elastic_pool
+    - stop_server
+    - start_server
+    - scale_down
+    - shrink_max_size
+    - broaden_firewall
+    - server_parameter_change
+    - tsql_or_session_kill
