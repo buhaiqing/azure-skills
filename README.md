@@ -190,6 +190,35 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # SQL DB/elastic pool examples
 │
+├── azure-function-ops/              # Azure Functions Operations Skill
+│   ├── SKILL.md                     # Concise - Serverless functions
+│   ├── references/
+│   │   ├── cli-reference.md         # CLI commands + SDK fallback
+│   │   ├── core-concepts.md         # Hosting plans, triggers, bindings
+│   │   ├── troubleshooting.md      # Cold start, timeout, deploy failures
+│   │   └── integration.md          # SDK/CLI, RBAC (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Consumption/Premium/Dedicated examples
+│
+├── azure-cosmos-ops/                # Azure Cosmos DB Operations Skill
+│   ├── SKILL.md                     # Concise - NoSQL database
+│   ├── references/
+│   │   ├── core-concepts.md         # API models, RU/s, partition key, global dist
+│   │   ├── troubleshooting.md      # 429, partition hot key, cross-region conflict
+│   │   ├── aiops.md                # RU tuning, partition skew, throughput
+│   │   └── integration.md          # SDK/CLI, data-plane (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # SQL API/manual-autoscale examples
+│
+├── azure-aci-ops/                   # Azure Container Instances Operations Skill
+│   ├── SKILL.md                     # Concise - Serverless containers
+│   ├── references/
+│   │   ├── core-concepts.md         # Container groups, images, networking, volumes
+│   │   ├── troubleshooting.md      # Image pull, OOM, crash, network, quota
+│   │   └── integration.md          # SDK/CLI, registry auth (verified SDK)
+│   └── assets/
+│       └── example-config.yaml      # Public/private/registry container examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -357,6 +386,9 @@ az account show --output json
 | azure-acr-ops | Azure Container Registry (Image operations, AIOps, RCA) | ✅ Complete |
 | azure-keyvault-ops | Azure Key Vault (Secrets, keys, certificates, AIOps, RCA) | ✅ Complete |
 | azure-sqldb-ops | Azure SQL Database (with Elastic Pool) | ✅ Complete |
+| azure-function-ops | Azure Functions (Serverless, dual-path, GCL) | ✅ Complete |
+| azure-cosmos-ops | Azure Cosmos DB (RU/s, partition, global dist, GCL) | ✅ Complete |
+| azure-aci-ops | Azure Container Instances (Serverless containers, GCL) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
@@ -366,10 +398,6 @@ az account show --output json
 
 | Skill | Service | 备注 |
 |------|------|------|
-| azure-function-ops | Azure Functions (Serverless) | 最大计算类缺口；触发器/绑定/部署槽/消费计划 |
-| azure-sqldb-ops | Azure SQL Database (含 Elastic Pool) | 与 postgres-ops 互补，关系库覆盖才完整 |
-| azure-cosmos-ops | Azure Cosmos DB | RU/s 调优、分区键、全局分布；AIOps/RCA 价值高 |
-| azure-aci-ops | Azure Container Instances | 对比表已提及但无 skill；最轻量容器部署 |
 | azure-servicebus-ops | Azure Service Bus | 消息/死信队列/配额排障 |
 | azure-eventhub-ops | Azure Event Hubs | 事件流式摄取，分区与吞吐排障 |
 

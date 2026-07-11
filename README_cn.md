@@ -207,6 +207,35 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # SQL 数据库/弹性池示例
 │
+├── azure-function-ops/              # Azure Functions 操作技能
+│   ├── SKILL.md                     # 精简版 - Serverless 函数
+│   ├── references/
+│   │   ├── cli-reference.md         # CLI 命令 + SDK 回退
+│   │   ├── core-concepts.md         # 托管计划、触发器、绑定
+│   │   ├── troubleshooting.md      # 冷启动、超时、部署失败
+│   │   └ integration.md             # SDK/CLI、RBAC（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # Consumption/Premium/Dedicated 示例
+│
+├── azure-cosmos-ops/                # Azure Cosmos DB 操作技能
+│   ├── SKILL.md                     # 精简版 - NoSQL 数据库
+│   ├── references/
+│   │   ├── core-concepts.md         # API 模型、RU/s、分区键、全局分布
+│   │   ├── troubleshooting.md      # 429、分区热点、跨区域冲突
+│   │   ├── aiops.md                # RU 调优、分区倾斜、归一化吞吐
+│   │   └ integration.md             # SDK/CLI、数据面（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # SQL API/手动-自动缩放示例
+│
+└── azure-aci-ops/                   # Azure Container Instances 操作技能
+│   ├── SKILL.md                     # 精简版 - Serverless 容器
+│   ├── references/
+│   │   ├── core-concepts.md         # 容器组、镜像、网络、卷
+│   │   ├── troubleshooting.md      # 镜像拉取、OOM、崩溃、网络、配额
+│   │   └ integration.md             # SDK/CLI、Registry 认证（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 公共/私有/registry 容器示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -342,6 +371,9 @@ az account show --output json
 | azure-acr-ops | Azure Container Registry (镜像运维、AIOps、RCA) | ✅ 完成 |
 | azure-keyvault-ops | Azure Key Vault (Secret、Key、Certificate、AIOps、RCA) | ✅ 完成 |
 | azure-sqldb-ops | Azure SQL 数据库（含弹性池） | ✅ 完成 |
+| azure-function-ops | Azure Functions (Serverless 函数、双路径、GCL) | ✅ 完成 |
+| azure-cosmos-ops | Azure Cosmos DB (RU/s、分区键、全局分布、GCL) | ✅ 完成 |
+| azure-aci-ops | Azure Container Instances (Serverless 容器、GCL) | ✅ 完成 |
 
 ## 计算服务对比
 
