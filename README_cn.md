@@ -303,6 +303,15 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # DR 配置示例
 │
+├── azure-eventgrid-ops/             # Azure Event Grid 操作技能
+│   ├── SKILL.md                     # 精简版 - 事件路由服务
+│   ├── references/
+│   │   ├── core-concepts.md         # 主题、系统主题、事件订阅、过滤器
+│   │   ├── troubleshooting.md      # 投递失败、死信、过滤错误
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 主题/订阅示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -448,6 +457,7 @@ az account show --output json
 | azure-file-storage-ops | Azure File Storage (SMB/NFS 文件共享、GCL 强制) | ✅ 完成 |
 | azure-queue-storage-ops | Azure Queue Storage (消息队列、GCL 强制) | ✅ 完成 |
 | azure-site-recovery-ops | Azure Site Recovery (容灾编排、GCL 强制) | ✅ 完成 |
+| azure-eventgrid-ops | Azure Event Grid (主题/订阅、事件路由、GCL 强制) | ✅ 完成 |
 
 ## 计算服务对比
 

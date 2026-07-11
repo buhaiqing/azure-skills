@@ -286,6 +286,15 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # DR configuration examples
 │
+├── azure-eventgrid-ops/             # Azure Event Grid Operations Skill
+│   ├── SKILL.md                     # Concise - Event routing service
+│   ├── references/
+│   │   ├── core-concepts.md         # Topics, system topics, event subscriptions, filters
+│   │   ├── troubleshooting.md      # Delivery failure, dead-letter, filter errors
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Topic/subscription examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -463,6 +472,7 @@ az account show --output json
 | azure-file-storage-ops | Azure File Storage (SMB/NFS shares, GCL required) | ✅ Complete |
 | azure-queue-storage-ops | Azure Queue Storage (Messages, GCL required) | ✅ Complete |
 | azure-site-recovery-ops | Azure Site Recovery (DR orchestration, GCL required) | ✅ Complete |
+| azure-eventgrid-ops | Azure Event Grid (Topics/Subscriptions, GCL required) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
