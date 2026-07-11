@@ -1,0 +1,66 @@
+# Example Azure Container Instances Configuration
+# Documentation only — NEVER commit real credentials. Use {{env.*}} placeholders.
+
+# Environment variables (required, never ask user; fail if unset)
+AZURE_SUBSCRIPTION_ID: "{{env.AZURE_SUBSCRIPTION_ID}}"
+AZURE_TENANT_ID: "{{env.AZURE_TENANT_ID}}"
+AZURE_CLIENT_ID: "{{env.AZURE_CLIENT_ID}}"
+AZURE_CLIENT_SECRET: "{{env.AZURE_CLIENT_SECRET}}"
+# Registry password for private images (delegate registry ops to azure-acr-ops)
+REGISTRY_PASSWORD: "{{env.REGISTRY_PASSWORD}}"
+
+# Reusable base (YAML anchor, TE-5)
+base_container: &base_container
+  resource_group: my-aci-rg
+  location: eastus
+  os_type: Linux
+
+# Public image, batch job
+public_job:
+  <<: *base_container
+  container_group: my-batch-cg
+  container_name: worker
+  image: mcr.microsoft.com/azuredocs/aci-helloworld
+  cpu: 1.0
+  memory_in_gb: 1.5
+  restart_policy: OnFailure
+  # az container create --name my-batch-cg --resource-group my-aci-rg --location eastus \
+  #   --image mcr.microsoft.com/azuredocs/aci-helloworld --cpu 1 --memory 1.5 --restart-policy OnFailure --output json
+
+# Public web front-end
+web_frontend:
+  <<: *base_container
+  container_group: my-web-cg
+  container_name: web
+  image: nginx
+  cpu: 1.0
+  memory_in_gb: 1.5
+  restart_policy: Always
+  ip_address_type: Public
+  ports: [80, 443]
+  # az container create --name my-web-cg --resource-group my-aci-rg --location eastus \
+  #   --image nginx --cpu 1 --memory 1.5 --restart-policy Always --ip-address public --ports 80 443 --output json
+
+# Private registry pull (credentials from env, never pasted)
+private_pull:
+  <<: *base_container
+  container_group: my-private-cg
+  container_name: app
+  image: "{{user.registry_login_server}}/app:latest"
+  cpu: 1.0
+  memory_in_gb: 2.0
+  restart_policy: Always
+  registry_login_server: "{{user.registry_login_server}}"
+  registry_username: "{{user.registry_username}}"
+  registry_password: "{{env.REGISTRY_PASSWORD}}"
+  # For ACR auth/role issues → delegate to azure-acr-ops
+
+# Operations reference
+# Show:      az container show --name {{user.container_group}} --resource-group {{user.resource_group}} --output json
+# List:      az container list --resource-group {{user.resource_group}} --output json
+# Restart:   az container restart --name {{user.container_group}} --resource-group {{user.resource_group}}
+# Logs:      az container logs --name {{user.container_group}} --resource-group {{user.resource_group}} --container-name {{user.container_name}}
+# Delete:    az container delete --name {{user.container_group}} --resource-group {{user.resource_group}} --yes   # requires explicit confirm
+
+# Azure Resource ID format
+# /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{cg}
