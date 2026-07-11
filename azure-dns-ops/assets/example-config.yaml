@@ -1,0 +1,55 @@
+# Example DNS Zone Configuration
+
+```yaml
+# Azure DNS Zone — example configuration
+# Uses {{env.*}} placeholders only — never write real credentials
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+zone_name: "example.com"
+resource_group: "{{user.resource_group}}"
+zone_type: "public"  # public | private
+
+# For private DNS zones:
+# zone_type: "private"
+# registration_vnets:
+#   - "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Network/virtualNetworks/{{user.vnet_name}}"
+
+# Name server delegation (auto-assigned by Azure)
+name_servers:
+  - "ns1-01.azure-dns.com"
+  - "ns2-01.azure-dns.net"
+  - "ns3-01.azure-dns.org"
+  - "ns4-01.azure-dns.info"
+
+# Record sets
+record_sets:
+  - name: "@"         # Zone apex
+    type: "A"
+    ttl: 300
+    records:
+      - "10.0.0.1"
+
+  - name: "www"
+    type: "CNAME"
+    ttl: 300
+    records:
+      - "example.com"
+
+  - name: "mail"
+    type: "MX"
+    ttl: 3600
+    records:
+      - preference: 10
+        exchange: "mail.example.com"
+
+  - name: "@"
+    type: "TXT"
+    ttl: 3600
+    records:
+      - "v=spf1 include:_spf.google.com ~all"
+
+  - name: "api"
+    type: "A"
+    ttl: 60
+    alias_target_resource_id: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Network/publicIPAddresses/api-pip"
+```
