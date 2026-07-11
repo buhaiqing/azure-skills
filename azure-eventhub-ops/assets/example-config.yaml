@@ -1,0 +1,57 @@
+# Azure Event Hubs skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+namespace:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.namespace_name}}"
+  sku: "{{user.sku}}"
+  throughput_units: "{{user.throughput_units}}"
+  enable_auto_inflate: false
+  minimum_tls_version: "1.2"
+
+eventhub:
+  name: "{{user.eventhub_name}}"
+  partition_count: "{{user.partition_count}}"
+  message_retention_days: "{{user.message_retention_days}}"
+  capture_enabled: false
+
+consumer_group:
+  name: "{{user.consumer_group_name}}"
+
+network:
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+  private_dns_zone: "privatelink.servicebus.windows.net"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - ThrottledRequests
+    - IncomingBytes
+    - OutgoingBytes
+    - IncomingMessages
+    - OutgoingMessages
+    - SuccessfulRequests
+    - ServerErrors
+    - UserErrors
+    - ActiveConnections
+    - CaptureBacklog
+    - ConsumerLag
+
+safety:
+  require_confirmation_for:
+    - delete_namespace
+    - delete_eventhub
+    - delete_consumer_group
+    - regenerate_keys
+    - scale_down_tu
+    - disable_capture
+    - broaden_firewall
