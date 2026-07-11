@@ -1,0 +1,70 @@
+# Azure Event Grid skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+topic:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.topic_name}}"
+  input_schema: "EventGridSchema"
+  public_network_access: "Enabled"
+
+system_topic:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.system_topic_name}}"
+  topic_type: "microsoft.storage.storageaccounts"
+  source_resource_id: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Storage/storageAccounts/{{user.storage_account_name}}"
+
+domain:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  name: "{{user.domain_name}}"
+
+domain_topic:
+  domain_name: "{{user.domain_name}}"
+  resource_group: "{{user.resource_group}}"
+  name: "{{user.domain_topic_name}}"
+
+event_subscription:
+  name: "{{user.event_subscription_name}}"
+  source_resource_id: "{{output.topic_id}}"
+  endpoint_url: "{{user.endpoint_url}}"
+  subject_begins_with: "{{user.subject_begins_with}}"
+  included_event_types: "{{user.included_event_types}}"
+  event_delivery_schema: "eventgridschema"
+  max_delivery_attempts: "{{user.max_delivery_attempts}}"
+  event_ttl_minutes: "{{user.event_ttl_minutes}}"
+  deadletter_endpoint: "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Storage/storageAccounts/{{user.storage_account_name}}/blobServices/default/containers/{{user.dead_letter_container}}"
+
+network:
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+  private_dns_zone: "privatelink.eventgrid.azure.net"
+
+diagnostics:
+  analysis_window: "{{user.analysis_window}}"
+  metrics:
+    - PublishFailedEvents
+    - DeliveryFailedEvents
+    - DeadLetteredEvents
+    - MatchedEvents
+    - DroppedEvents
+
+safety:
+  require_confirmation_for:
+    - delete_topic
+    - delete_system_topic
+    - delete_domain
+    - delete_domain_topic
+    - delete_event_subscription
+    - regenerate_topic_key
+    - regenerate_domain_key
+    - reduce_retry_attempts
+    - reduce_event_ttl
+    - broaden_public_network_access
