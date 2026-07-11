@@ -312,6 +312,15 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # 主题/订阅示例
 │
+├── azure-apim-ops/                  # Azure API Management 操作技能
+│   ├── SKILL.md                     # 精简版 - API 网关服务
+│   ├── references/
+│   │   ├── core-concepts.md         # 服务、SKU、API、产品、订阅、策略
+│   │   ├── troubleshooting.md      # 网关故障、策略错误、订阅密钥
+│   │   └ integration.md             # SDK/CLI（订阅/策略 CLI gap 已文档化）
+│   └ assets/
+│       └ example-config.yaml       # 服务/API/产品示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -458,6 +467,7 @@ az account show --output json
 | azure-queue-storage-ops | Azure Queue Storage (消息队列、GCL 强制) | ✅ 完成 |
 | azure-site-recovery-ops | Azure Site Recovery (容灾编排、GCL 强制) | ✅ 完成 |
 | azure-eventgrid-ops | Azure Event Grid (主题/订阅、事件路由、GCL 强制) | ✅ 完成 |
+| azure-apim-ops | Azure API Management (服务/API/产品/策略、GCL 强制) | ✅ 完成 |
 
 ## 计算服务对比
 

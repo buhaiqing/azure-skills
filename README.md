@@ -295,6 +295,15 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Topic/subscription examples
 │
+├── azure-apim-ops/                  # Azure API Management Operations Skill
+│   ├── SKILL.md                     # Concise - API gateway service
+│   ├── references/
+│   │   ├── core-concepts.md         # Service, SKU, API, Product, Subscription, Policy
+│   │   ├── troubleshooting.md      # Gateway failure, policy error, subscription key
+│   │   └── integration.md          # SDK/CLI (CLI gap on subscription/policy documented)
+│   └── assets/
+│       └── example-config.yaml      # Service/API/Product examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -473,6 +482,7 @@ az account show --output json
 | azure-queue-storage-ops | Azure Queue Storage (Messages, GCL required) | ✅ Complete |
 | azure-site-recovery-ops | Azure Site Recovery (DR orchestration, GCL required) | ✅ Complete |
 | azure-eventgrid-ops | Azure Event Grid (Topics/Subscriptions, GCL required) | ✅ Complete |
+| azure-apim-ops | Azure API Management (Service/API/Product/Policy, GCL required) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
