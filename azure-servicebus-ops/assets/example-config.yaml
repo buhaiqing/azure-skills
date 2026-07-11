@@ -1,0 +1,52 @@
+# Azure Service Bus skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+servicebus:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  namespace_name: "{{user.namespace_name}}"
+  queue_name: "{{user.queue_name}}"
+  topic_name: "{{user.topic_name}}"
+  subscription_name: "{{user.subscription_name}}"
+  sku: "Standard"
+  default_message_ttl: "P14D"
+  max_delivery_count: 10
+  dead_lettering_on_expiration: true
+  duplicate_detection: true
+  duplicate_detection_window: "PT30S"
+
+network:
+  private_endpoint_name: "{{user.private_endpoint_name}}"
+  vnet_name: "{{user.vnet_name}}"
+  subnet_name: "{{user.subnet_name}}"
+  private_dns_zone: "privatelink.servicebus.windows.net"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - IncomingMessages
+    - OutgoingMessages
+    - ActiveMessages
+    - DeadletteredMessages
+    - SuccessfulRequests
+    - ThrottledRequests
+    - ServerErrors
+    - UserErrors
+
+safety:
+  require_confirmation_for:
+    - delete_namespace
+    - delete_queue
+    - delete_topic
+    - delete_subscription
+    - regenerate_keys
+    - purge_dlq
+    - modify_ttl
+    - modify_delivery_count
+    - modify_filter_rules
