@@ -256,6 +256,16 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # Standard/Premium 命名空间示例
 │
+├── azure-backup-ops/                # Azure Backup (Recovery Services) 操作技能
+│   ├── SKILL.md                     # 精简版 - 备份与还原
+│   ├── references/
+│   │   ├── cli-commands.md          # 全部 9 个操作的 CLI 命令
+│   │   ├── core-concepts.md         # 保管库、保护、策略、还原点
+│   │   ├── troubleshooting.md      # 备份失败、还原失败、保留策略
+│   │   └ integration.md             # SDK/CLI、RBAC（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # VM/SQL DB 备份示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -396,6 +406,7 @@ az account show --output json
 | azure-aci-ops | Azure Container Instances (Serverless 容器、GCL) | ✅ 完成 |
 | azure-servicebus-ops | Azure Service Bus (队列/主题/订阅、GCL) | ✅ 完成 |
 | azure-eventhub-ops | Azure Event Hubs (吞吐/捕获/自动膨胀、GCL) | ✅ 完成 |
+| azure-backup-ops | Azure Backup (Recovery Services 保管库、GCL 强制) | ✅ 完成 |
 
 ## 计算服务对比
 

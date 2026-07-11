@@ -239,6 +239,16 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Standard/Premium namespace examples
 │
+├── azure-backup-ops/                # Azure Backup (Recovery Services) Operations Skill
+│   ├── SKILL.md                     # Concise - Backup & restore
+│   ├── references/
+│   │   ├── cli-commands.md          # CLI commands for all 9 operations
+│   │   ├── core-concepts.md         # Vault, protection, policy, recovery points
+│   │   ├── troubleshooting.md      # Backup failure, restore failure, retention
+│   │   └── integration.md          # SDK/CLI, RBAC (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # VM/SQL DB backup examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -411,6 +421,7 @@ az account show --output json
 | azure-aci-ops | Azure Container Instances (Serverless containers, GCL) | ✅ Complete |
 | azure-servicebus-ops | Azure Service Bus (Queues/Topics/Subscriptions, GCL) | ✅ Complete |
 | azure-eventhub-ops | Azure Event Hubs (Throughput/Capture/Auto-inflate, GCL) | ✅ Complete |
+| azure-backup-ops | Azure Backup (Recovery Services Vault, GCL required) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
