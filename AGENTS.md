@@ -67,6 +67,10 @@ After **every** Task (any discrete unit of work — a code edit, a skill change,
 
 This is a hard rule, not a suggestion. A Task is only "done" once a full critical-review round comes back clean. This applies regardless of whether the task also triggers the GCL loop or the 2-round self-review above — they are complementary, not substitutes.
 
+## Language — reply in Chinese (mandatory)
+
+All replies to the user MUST be written in **Chinese (中文)**. Code, commands, file paths, and technical identifiers stay as-is; prose, explanations, and summaries must be in Chinese.
+
 ## Setup script — known footguns
 
 `azure-skill-generator/scripts/setup_env.py` is the only Python in the repo. Important behaviors:
