@@ -1,0 +1,115 @@
+# Example Azure Queue Storage Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# Storage Account configuration example
+# resource_group: my-storage-rg
+# location: eastus
+# storage_account_name: mystorageaccount123 (3-24 chars, lowercase alphanumeric only)
+
+# Basic storage account example (must be StorageV2 for Queue Storage)
+# ---
+# sku: Standard_LRS
+# kind: StorageV2
+#
+# az storage account create --name mystorageaccount --resource-group my-rg --location eastus --sku Standard_LRS --kind StorageV2 --output json
+
+# Queue configuration
+# ---
+# queue_name: my-task-queue (3-63 chars, lowercase alphanumeric and hyphens)
+# metadata: {"environment": "production", "app": "worker"}
+#
+# az storage queue create --name my-task-queue --account-name mystorageaccount --metadata environment=production app=worker  # data-plane op; RG not required when using account key auth
+
+# Enqueue message example
+# ---
+# message_text: "Process order #12345"
+# visibility_timeout: 0 (visible immediately)
+# time_to_live: 604800 (7 days)
+#
+# az storage message put --queue-name my-task-queue --content "Process order #12345" --account-name mystorageaccount --visibility-timeout 0 --time-to-live 604800  # data-plane op; RG not required when using account key auth
+
+# Enqueue with custom TTL
+# ---
+# message_text: "Expire after 1 hour"
+# time_to_live: 3600
+#
+# az storage message put --queue-name my-task-queue --content "Expire after 1 hour" --account-name mystorageaccount --time-to-live 3600  # data-plane op; RG not required when using account key auth
+
+# Peek messages (inspect without dequeuing)
+# ---
+# az storage message peek --queue-name my-task-queue --account-name mystorageaccount --num-messages 5  # data-plane op; RG not required when using account key auth
+
+# Dequeue messages (get and hide)
+# ---
+# num_messages: 5
+# visibility_timeout: 60 (seconds to process)
+#
+# az storage message get --queue-name my-task-queue --account-name mystorageaccount --num-messages 5 --visibility-timeout 60  # data-plane op; RG not required when using account key auth
+
+# Update message visibility timeout (extend processing window)
+# ---
+# message_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# pop_receipt: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# visibility_timeout: 120
+#
+# az storage message update --queue-name my-task-queue --message-id "{{message_id}}" --pop-receipt "{{pop_receipt}}" --visibility-timeout 120 --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# Delete message after processing
+# ---
+# az storage message delete --queue-name my-task-queue --message-id "{{message_id}}" --pop-receipt "{{pop_receipt}}" --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# Clear all messages (safety gate required)
+# ---
+# az storage message clear --queue-name my-task-queue --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# Delete queue (safety gate required)
+# ---
+# az storage queue delete --name my-task-queue --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# List all queues
+# ---
+# az storage queue list --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# Show queue metadata
+# ---
+# az storage queue show --name my-task-queue --account-name mystorageaccount  # data-plane op; RG not required when using account key auth
+
+# SAS Token generation (queue operations)
+# ---
+# permissions: raup (read, add, update, process)
+# services: q (queue only)
+# expiry: 2026-12-31T23:59:00Z
+#
+# az storage account generate-sas --account-name mystorageaccount --permissions raup --services q --resource-types sco --expiry 2026-12-31T23:59:00Z --output tsv
+
+# RBAC assignment example
+# ---
+# role: Storage Queue Data Contributor
+# assignee: user-or-sp-id
+#
+# az role assignment create --assignee {{user-id}} --role "Storage Queue Data Contributor" --scope "/subscriptions/{{sub-id}}/resourceGroups/{{rg}}/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
+
+# Python SDK usage
+# ---
+# from azure.storage.queue import QueueServiceClient
+# from azure.identity import DefaultAzureCredential
+#
+# credential = DefaultAzureCredential()
+# queue_service = QueueServiceClient(
+#     account_url="https://mystorageaccount.queue.core.windows.net",
+#     credential=credential
+# )
+# queue_service.create_queue("my-task-queue")
+
+# Verify credentials
+# Run: az account show --output json
+# Run: az storage account list --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-account-name}/queueServices/default/queues/{queue-name}
