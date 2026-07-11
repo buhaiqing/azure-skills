@@ -1,0 +1,43 @@
+# Azure Cosmos DB skill example configuration
+# Keep placeholders unresolved. Never commit rendered credentials or account keys/connection strings.
+
+subscription_id: "{{env.AZURE_SUBSCRIPTION_ID}}"
+tenant_id: "{{env.AZURE_TENANT_ID}}"
+client_id: "{{env.AZURE_CLIENT_ID}}"
+client_secret: "{{env.AZURE_CLIENT_SECRET}}"
+
+cosmos:
+  resource_group: "{{user.resource_group}}"
+  location: "{{user.location}}"
+  account_name: "{{user.account_name}}"
+  api_kind: "{{user.api_kind}}"
+  database_name: "{{user.database_name}}"
+  container_name: "{{user.container_name}}"
+  partition_key: "{{user.partition_key}}"
+  throughput_rus: "{{user.throughput_rus}}"
+  max_throughput_rus: "{{user.max_throughput_rus}}"
+  consistency_level: "{{user.consistency_level}}"
+
+aiops:
+  analysis_window: "{{user.analysis_window}}"
+  baseline_window: "{{user.baseline_window}}"
+  metrics:
+    - TotalRequestUnits
+    - NormalizedRUConsumption
+    - ThrottleRate
+    - ProvisionedThroughput
+    - DataUsage
+    - AvailableStorage
+
+safety:
+  require_confirmation_for:
+    - delete_account
+    - delete_container
+    - regenerate_keys
+    - consistency_change
+    - region_add
+    - region_remove
+    - failover
+    - scale_down_rus
+    - disable_autoscale
+    - partition_key_recreate
