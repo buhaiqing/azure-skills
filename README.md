@@ -347,6 +347,41 @@ az account show --output json
 | azure-acr-ops | Azure Container Registry (Image operations, AIOps, RCA) | ✅ Complete |
 | azure-keyvault-ops | Azure Key Vault (Secrets, keys, certificates, AIOps, RCA) | ✅ Complete |
 
+## Planned Skills (Roadmap)
+
+以下服务尚未封装，按优先级排布，作为后续扩展清单。每个 skill 仍需遵守 `azure-skill-generator` 脚手架与 2-round self-review 流程。
+
+### P1 — 强烈建议（高频 + 高价值/高风险）
+
+| Skill | Service | 备注 |
+|------|------|------|
+| azure-function-ops | Azure Functions (Serverless) | 最大计算类缺口；触发器/绑定/部署槽/消费计划 |
+| azure-sqldb-ops | Azure SQL Database (含 Elastic Pool) | 与 postgres-ops 互补，关系库覆盖才完整 |
+| azure-cosmos-ops | Azure Cosmos DB | RU/s 调优、分区键、全局分布；AIOps/RCA 价值高 |
+| azure-aci-ops | Azure Container Instances | 对比表已提及但无 skill；最轻量容器部署 |
+| azure-servicebus-ops | Azure Service Bus | 消息/死信队列/配额排障 |
+| azure-eventhub-ops | Azure Event Hubs | 事件流式摄取，分区与吞吐排障 |
+
+### P2 — 建议封装（中高频运维刚需）
+
+| Skill | Service | 备注 |
+|------|------|------|
+| azure-queue-storage-ops | Queue Storage | 数据平面，与 blob-ops 互补 |
+| azure-file-storage-ops | File Storage (SMB/NFS) | 迁移/挂载排障常见 |
+| azure-backup-ops | Recovery Services / Backup | 备份/还原点；业务关键，GCL 建议启用 |
+| azure-site-recovery-ops | Site Recovery (ASR) | 容灾编排，变更影响大 |
+| azure-dns-ops | Azure DNS Zones | 与 TM/Front Door 互补，解析排障独立成块 |
+
+### P3 — 可选（视场景）
+
+| Skill | Service | 备注 |
+|------|------|------|
+| azure-logicapps-ops | Logic Apps | 集成/工作流自动化 |
+| azure-eventgrid-ops | Event Grid | 事件路由 |
+| azure-apim-ops | API Management | 企业 API 网关 |
+| azure-synapse-ops | Synapse Analytics | 数据分析，体量大可分阶段 |
+| azure-iot-hub-ops | IoT Hub | 涉 IoT 场景再补 |
+
 ## Compute Services Comparison
 
 | Feature | Virtual Machine | App Service | AKS | Container Instances |
