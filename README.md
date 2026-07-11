@@ -180,6 +180,16 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Key Vault examples
 │
+├── azure-sqldb-ops/                 # Azure SQL Database Operations Skill
+│   ├── SKILL.md                     # Concise - Logical server, elastic pool
+│   ├── references/
+│   │   ├── core-concepts.md         # Logical server, database, elastic pool
+│   │   ├── troubleshooting.md      # Connections, DTU/CPU, deadlocks, query RCA
+│   │   ├── aiops.md                # Metrics/query correlation and RCA reports
+│   │   └── integration.md           # CLI/SDK, RBAC, polling
+│   └── assets/
+│       └── example-config.yaml      # SQL DB/elastic pool examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -346,6 +356,7 @@ az account show --output json
 | azure-postgres-ops | Azure PostgreSQL Flexible Server (DB operations, AIOps, RCA) | ✅ Complete |
 | azure-acr-ops | Azure Container Registry (Image operations, AIOps, RCA) | ✅ Complete |
 | azure-keyvault-ops | Azure Key Vault (Secrets, keys, certificates, AIOps, RCA) | ✅ Complete |
+| azure-sqldb-ops | Azure SQL Database (with Elastic Pool) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
