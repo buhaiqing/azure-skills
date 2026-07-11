@@ -1,0 +1,115 @@
+# Example Azure File Storage Configuration
+# This file is for documentation only - NEVER commit real credentials
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID=your_subscription_id_here
+AZURE_TENANT_ID=your_tenant_id_here
+AZURE_CLIENT_ID=your_client_id_here
+AZURE_CLIENT_SECRET=your_client_secret_here
+
+# File Share configuration example
+# resource_group: my-files-rg
+# location: eastus
+# storage_account_name: myfilestorage123 (3-24 chars, lowercase alphanumeric only)
+# share_name: my-app-share (3-63 chars, lowercase alphanumeric + hyphens)
+
+# Basic SMB file share example
+# ---
+# quota: 100 (GB)
+# protocol: SMB (default)
+#
+# ACCOUNT_KEY=$(az storage account keys list --account-name myfilestorage123 --resource-group my-files-rg --query "[0].value" -o tsv)
+# az storage share create --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --quota 100 --output json
+
+# NFS file share example (requires premium FileStorage account)
+# ---
+# quota: 500 (GB)
+# protocol: NFS
+#
+# ACCOUNT_KEY=$(az storage account keys list --account-name mypremiumfiles --resource-group my-files-rg --query "[0].value" -o tsv)
+# az storage share create --name my-nfs-share --account-name mypremiumfiles --account-key "$ACCOUNT_KEY" --quota 500 --protocol NFS --output json
+
+# List file shares
+# ---
+# ACCOUNT_KEY=$(az storage account keys list --account-name myfilestorage123 --resource-group my-files-rg --query "[0].value" -o tsv)
+# az storage share list --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --output json
+
+# List shares with prefix filter
+# ---
+# az storage share list --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --prefix "app-" --output json
+
+# Show file share details
+# ---
+# az storage share show --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --output json
+
+# Update share quota
+# ---
+# new_quota: 200 (GB)
+#
+# az storage share update --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --quota 200 --output json
+
+# Create share snapshot
+# ---
+# az storage share snapshot --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --output json
+
+# List shares with snapshots
+# ---
+# az storage share list --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --include-snapshots --output json
+
+# Delete file share (requires confirmation)
+# ---
+# delete_snapshots: include
+#
+# # Step 1: Show share details
+# az storage share show --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --output json
+#
+# # Step 2: List snapshots (data-loss warning)
+# az storage share list --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --include-snapshots --query "[?name=='my-app-share']" --output json
+#
+# # Step 3: Delete after confirmation
+# az storage share delete --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --delete-snapshots include --output json
+
+# Generate SAS token
+# ---
+# permissions: rwdl (read, write, delete, list)
+# expiry: 2026-12-31T23:59:00Z
+#
+# az storage share generate-sas --name my-app-share --account-name myfilestorage123 --permissions rwdl --expiry 2026-12-31T23:59:00Z --output tsv
+
+# Enable soft delete for file shares
+# ---
+# retention_days: 14
+#
+# az storage account file-service-properties update --account-name myfilestorage123 --resource-group my-files-rg --enable-share-delete-retention true --share-delete-retention-days 14 --output json
+
+# Enable large file shares (up to 100 TiB)
+# ---
+# az storage account update --name myfilestorage123 --resource-group my-files-rg --enable-large-file-share --output json
+
+# Get share stats (approximate size)
+# ---
+# az storage share stats --name my-app-share --account-name myfilestorage123 --account-key "$ACCOUNT_KEY" --output json
+
+# Mount SMB share (Linux example)
+# ---
+# sudo mount -t cifs //myfilestorage123.file.core.windows.net/my-app-share /mnt/my-share \
+#   -o vers=3.0,username=myfilestorage123,password=$ACCOUNT_KEY,dir_mode=0777,file_mode=0777,serverino
+
+# Mount NFS share (Linux example, premium only)
+# ---
+# sudo mount -t nfs mypremiumfiles.file.core.windows.net:/mypremiumfiles/my-nfs-share /mnt/nfs-share \
+#   -o vers=4,minorversion=1,sec=sys,nconnect=4
+
+# RBAC assignment example
+# ---
+# role: Storage Account Contributor
+# assignee: user-or-sp-id
+#
+# az role assignment create --assignee {{user.principal_id}} --role "Storage Account Contributor" --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Storage/storageAccounts/myfilestorage123"
+
+# Verify credentials
+# Run: az account show --output json
+# Run: az storage account show --name myfilestorage123 --resource-group my-files-rg --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-account-name}/fileServices/default/shares/{share-name}
