@@ -275,6 +275,34 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # 公有/私有区域示例
 │
+├── azure-file-storage-ops/          # Azure File Storage 操作技能
+│   ├── SKILL.md                     # 精简版 - SMB/NFS 文件共享
+│   ├── references/
+│   │   ├── core-concepts.md         # 共享、快照、软删除、配额、同步
+│   │   ├── troubleshooting.md      # 挂载失败、权限、配额、同步冲突
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 文件共享创建/恢复示例
+│
+├── azure-queue-storage-ops/         # Azure Queue Storage 操作技能
+│   ├── SKILL.md                     # 精简版 - 消息队列
+│   ├── references/
+│   │   ├── commands.md              # CLI + SDK 命令参考
+│   │   ├── core-concepts.md         # 队列、消息 TTL、SAS、毒消息
+│   │   ├── troubleshooting.md      # 消息失败、超时、认证
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 队列/消息示例
+│
+├── azure-site-recovery-ops/         # Azure Site Recovery 操作技能
+│   ├── SKILL.md                     # 精简版 - 灾难恢复
+│   ├── references/
+│   │   ├── core-concepts.md         # 保管库、保护、故障转移、恢复计划
+│   │   ├── troubleshooting.md      # 复制健康、故障转移失败
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # DR 配置示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -417,6 +445,9 @@ az account show --output json
 | azure-eventhub-ops | Azure Event Hubs (吞吐/捕获/自动膨胀、GCL) | ✅ 完成 |
 | azure-backup-ops | Azure Backup (Recovery Services 保管库、GCL 强制) | ✅ 完成 |
 | azure-dns-ops | Azure DNS Zones (公有/私有 DNS、GCL 强制) | ✅ 完成 |
+| azure-file-storage-ops | Azure File Storage (SMB/NFS 文件共享、GCL 强制) | ✅ 完成 |
+| azure-queue-storage-ops | Azure Queue Storage (消息队列、GCL 强制) | ✅ 完成 |
+| azure-site-recovery-ops | Azure Site Recovery (容灾编排、GCL 强制) | ✅ 完成 |
 
 ## 计算服务对比
 

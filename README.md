@@ -258,6 +258,34 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Public/private zone examples
 │
+├── azure-file-storage-ops/          # Azure File Storage Operations Skill
+│   ├── SKILL.md                     # Concise - SMB/NFS file shares
+│   ├── references/
+│   │   ├── core-concepts.md         # Share, snapshot, soft-delete, quota, sync
+│   │   ├── troubleshooting.md      # Mount failure, permission, quota, sync
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # File share creation/restore examples
+│
+├── azure-queue-storage-ops/         # Azure Queue Storage Operations Skill
+│   ├── SKILL.md                     # Concise - Message queue
+│   ├── references/
+│   │   ├── commands.md              # CLI + SDK command reference
+│   │   ├── core-concepts.md         # Queue, message TTL, SAS, poison msg
+│   │   ├── troubleshooting.md      # Message failure, timeout, auth
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Queue/message examples
+│
+├── azure-site-recovery-ops/         # Azure Site Recovery Operations Skill
+│   ├── SKILL.md                     # Concise - Disaster recovery
+│   ├── references/
+│   │   ├── core-concepts.md         # Vault, protection, failover, recovery plan
+│   │   ├── troubleshooting.md      # Replication health, failover failure
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # DR configuration examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -432,6 +460,9 @@ az account show --output json
 | azure-eventhub-ops | Azure Event Hubs (Throughput/Capture/Auto-inflate, GCL) | ✅ Complete |
 | azure-backup-ops | Azure Backup (Recovery Services Vault, GCL required) | ✅ Complete |
 | azure-dns-ops | Azure DNS Zones (Public/Private, GCL required) | ✅ Complete |
+| azure-file-storage-ops | Azure File Storage (SMB/NFS shares, GCL required) | ✅ Complete |
+| azure-queue-storage-ops | Azure Queue Storage (Messages, GCL required) | ✅ Complete |
+| azure-site-recovery-ops | Azure Site Recovery (DR orchestration, GCL required) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
