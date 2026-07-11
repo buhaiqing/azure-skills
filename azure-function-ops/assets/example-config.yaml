@@ -1,0 +1,65 @@
+# Example Azure Functions Configuration
+# This file is for documentation only - NEVER commit real credentials
+# All secrets use {{env.*}} placeholders only.
+
+# Environment variables (required)
+AZURE_SUBSCRIPTION_ID={{env.AZURE_SUBSCRIPTION_ID}}
+AZURE_TENANT_ID={{env.AZURE_TENANT_ID}}
+AZURE_CLIENT_ID={{env.AZURE_CLIENT_ID}}
+AZURE_CLIENT_SECRET={{env.AZURE_CLIENT_SECRET}}
+
+# Storage connection string for AzureWebJobsStorage (see SKILL.md Variable Convention)
+# Maps to {{env.AZUREWEBJOBS_STORAGE}} used in app settings
+AZUREWEBJOBS_STORAGE={{env.AZUREWEBJOBS_STORAGE}}
+
+# Function App configuration example
+# resource_group: my-func-rg
+# location: eastus
+# function_app_name: my-unique-func-app
+# storage_account: myfuncstorageacct
+# runtime: python
+# plan_name: my-premium-plan (only for Premium/Dedicated)
+
+# Consumption plan + Function App
+# ---
+# Plan type: Consumption (pay-per-execution, auto-scale, cold start)
+# Requires: storage account
+#
+# az functionapp create --name my-unique-func-app --resource-group my-func-rg --location eastus --storage-account myfuncstorageacct --runtime python --consumption-plan-location eastus --output json
+
+# Premium (Elastic) plan + Function App
+# ---
+# Plan type: Premium (pre-warmed, VNet, no cold start)
+# Requires: pre-created plan (delegate to azure-appservice-ops)
+#
+# az functionapp create --name my-unique-func-app --resource-group my-func-rg --plan my-premium-plan --runtime python --output json
+
+# Deploy code (zip push)
+# ---
+# zip_path: ./build/functionapp.zip
+#
+# az functionapp deployment source config-zip --name my-unique-func-app --resource-group my-func-rg --src ./build/functionapp.zip --output json
+
+# Show Function App
+# ---
+# az functionapp show --name my-unique-func-app --resource-group my-func-rg --output json
+
+# Restart Function App
+# ---
+# az functionapp restart --name my-unique-func-app --resource-group my-func-rg --output json
+
+# Delete Function App (DESTRUCTIVE - requires explicit confirmation)
+# ---
+# 1. Show first: az functionapp show --name my-unique-func-app --resource-group my-func-rg --output json
+# 2. Obtain exact name confirmation from user
+# 3. Delete:    az functionapp delete --name my-unique-func-app --resource-group my-func-rg --output json
+
+# App settings (runtime config)
+# ---
+# FUNCTIONS_WORKER_RUNTIME: python
+# AzureWebJobsStorage: (connection string from storage account - use {{env.*}} or Key Vault ref)
+#
+# az functionapp config appsettings set --name my-unique-func-app --resource-group my-func-rg --settings "FUNCTIONS_WORKER_RUNTIME=python" --output json
+
+# Azure Resource ID format (reference)
+# /subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{user.resource_group}}/providers/Microsoft.Web/sites/{{user.function_app_name}}
