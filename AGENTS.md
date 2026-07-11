@@ -56,6 +56,17 @@ Typical issues that surface in self-review:
 
 **自检流程**：Round 1 基础检查 → Round 2 关键分析。详见 [docs/token-efficiency.md](./docs/token-efficiency.md)。
 
+## Critical review after every Task (mandatory)
+
+After **every** Task (any discrete unit of work — a code edit, a skill change, a doc update, a config change) is completed, you MUST apply **critical-reflection review**:
+
+1. **Critique your own output** as an independent reviewer: challenge assumptions, look for errors, edge cases, inconsistencies, missing safety gates, and over-engineering.
+2. **Fix every issue found** before moving on — do not defer.
+3. **Run another review round** on the result.
+4. **Repeat** until a review round surfaces **no new issues**.
+
+This is a hard rule, not a suggestion. A Task is only "done" once a full critical-review round comes back clean. This applies regardless of whether the task also triggers the GCL loop or the 2-round self-review above — they are complementary, not substitutes.
+
 ## Setup script — known footguns
 
 `azure-skill-generator/scripts/setup_env.py` is the only Python in the repo. Important behaviors:

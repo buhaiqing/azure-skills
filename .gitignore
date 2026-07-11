@@ -228,3 +228,6 @@ __marimo__/
 # GCL audit traces (generated at runtime)
 audit-results/
 !audit-results/.gitkeep
+
+# Code graph cache
+.codegraph/
