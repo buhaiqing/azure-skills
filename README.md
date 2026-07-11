@@ -219,6 +219,26 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # Public/private/registry container examples
 │
+├── azure-servicebus-ops/            # Azure Service Bus Operations Skill
+│   ├── SKILL.md                     # Concise - Messaging service
+│   ├── references/
+│   │   ├── core-concepts.md         # Namespace, queue, topic, subscription, DLQ
+│   │   ├── troubleshooting.md      # DLQ, quota, message delay, connection drop
+│   │   ├── aiops.md                # DLQ accumulation, quota exhaustion RCA
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Queue/Topic/Subscription examples
+│
+├── azure-eventhub-ops/              # Azure Event Hubs Operations Skill
+│   ├── SKILL.md                     # Concise - Event streaming service
+│   ├── references/
+│   │   ├── core-concepts.md         # Namespace, event hub, consumer group, TU/PU
+│   │   ├── troubleshooting.md      # Throttling, partition skew, consumer lag
+│   │   ├── aiops.md                # Throughput throttling, partition skew RCA
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Standard/Premium namespace examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -389,17 +409,12 @@ az account show --output json
 | azure-function-ops | Azure Functions (Serverless, dual-path, GCL) | ✅ Complete |
 | azure-cosmos-ops | Azure Cosmos DB (RU/s, partition, global dist, GCL) | ✅ Complete |
 | azure-aci-ops | Azure Container Instances (Serverless containers, GCL) | ✅ Complete |
+| azure-servicebus-ops | Azure Service Bus (Queues/Topics/Subscriptions, GCL) | ✅ Complete |
+| azure-eventhub-ops | Azure Event Hubs (Throughput/Capture/Auto-inflate, GCL) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 
-以下服务尚未封装，按优先级排布，作为后续扩展清单。每个 skill 仍需遵守 `azure-skill-generator` 脚手架与 2-round self-review 流程。
-
-### P1 — 强烈建议（高频 + 高价值/高风险）
-
-| Skill | Service | 备注 |
-|------|------|------|
-| azure-servicebus-ops | Azure Service Bus | 消息/死信队列/配额排障 |
-| azure-eventhub-ops | Azure Event Hubs | 事件流式摄取，分区与吞吐排障 |
+### P2 — 建议封装（中高频运维刚需）
 
 ### P2 — 建议封装（中高频运维刚需）
 

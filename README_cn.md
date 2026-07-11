@@ -236,6 +236,26 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # 公共/私有/registry 容器示例
 │
+├── azure-servicebus-ops/            # Azure Service Bus 操作技能
+│   ├── SKILL.md                     # 精简版 - 消息服务
+│   ├── references/
+│   │   ├── core-concepts.md         # 命名空间、队列、主题、订阅、死信
+│   │   ├── troubleshooting.md      # 死信、配额、消息延迟、连接断开
+│   │   ├── aiops.md                # 死信积累、配额耗尽 RCA
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 队列/主题/订阅示例
+│
+├── azure-eventhub-ops/              # Azure Event Hubs 操作技能
+│   ├── SKILL.md                     # 精简版 - 事件流服务
+│   ├── references/
+│   │   ├── core-concepts.md         # 命名空间、事件中心、消费者组、TU/PU
+│   │   ├── troubleshooting.md      # 节流、分区倾斜、消费者滞后
+│   │   ├── aiops.md                # 吞吐节流、分区倾斜 RCA
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # Standard/Premium 命名空间示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -374,6 +394,8 @@ az account show --output json
 | azure-function-ops | Azure Functions (Serverless 函数、双路径、GCL) | ✅ 完成 |
 | azure-cosmos-ops | Azure Cosmos DB (RU/s、分区键、全局分布、GCL) | ✅ 完成 |
 | azure-aci-ops | Azure Container Instances (Serverless 容器、GCL) | ✅ 完成 |
+| azure-servicebus-ops | Azure Service Bus (队列/主题/订阅、GCL) | ✅ 完成 |
+| azure-eventhub-ops | Azure Event Hubs (吞吐/捕获/自动膨胀、GCL) | ✅ 完成 |
 
 ## 计算服务对比
 
