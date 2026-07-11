@@ -249,6 +249,15 @@ azure-skills/
 │   └── assets/
 │       └── example-config.yaml      # VM/SQL DB backup examples
 │
+├── azure-dns-ops/                   # Azure DNS Zones Operations Skill
+│   ├── SKILL.md                     # Concise - Public & private DNS
+│   ├── references/
+│   │   ├── core-concepts.md         # Zone types, record types, alias, delegation
+│   │   ├── troubleshooting.md      # Resolution failure, delegation, TTL cache
+│   │   └── integration.md          # SDK/CLI (verified SDK methods)
+│   └── assets/
+│       └── example-config.yaml      # Public/private zone examples
+│
 ├── azure-audit-ops/                # Azure Audit Operations Skill
 │   ├── SKILL.md                     # Concise - Cross-product audit
 │   ├── references/
@@ -422,6 +431,7 @@ az account show --output json
 | azure-servicebus-ops | Azure Service Bus (Queues/Topics/Subscriptions, GCL) | ✅ Complete |
 | azure-eventhub-ops | Azure Event Hubs (Throughput/Capture/Auto-inflate, GCL) | ✅ Complete |
 | azure-backup-ops | Azure Backup (Recovery Services Vault, GCL required) | ✅ Complete |
+| azure-dns-ops | Azure DNS Zones (Public/Private, GCL required) | ✅ Complete |
 
 ## Planned Skills (Roadmap)
 

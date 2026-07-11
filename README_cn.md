@@ -266,6 +266,15 @@ azure-skills/
 │   └ assets/
 │       └ example-config.yaml       # VM/SQL DB 备份示例
 │
+├── azure-dns-ops/                   # Azure DNS Zones 操作技能
+│   ├── SKILL.md                     # 精简版 - 公有与私有 DNS
+│   ├── references/
+│   │   ├── core-concepts.md         # 区域类型、记录类型、别名、委派
+│   │   ├── troubleshooting.md      # 解析失败、委派错误、TTL 缓存
+│   │   └ integration.md             # SDK/CLI（SDK 方法已校验）
+│   └ assets/
+│       └ example-config.yaml       # 公有/私有区域示例
+│
 └── azure-[service]-ops/             # 后续服务技能...
 ```
 
@@ -407,6 +416,7 @@ az account show --output json
 | azure-servicebus-ops | Azure Service Bus (队列/主题/订阅、GCL) | ✅ 完成 |
 | azure-eventhub-ops | Azure Event Hubs (吞吐/捕获/自动膨胀、GCL) | ✅ 完成 |
 | azure-backup-ops | Azure Backup (Recovery Services 保管库、GCL 强制) | ✅ 完成 |
+| azure-dns-ops | Azure DNS Zones (公有/私有 DNS、GCL 强制) | ✅ 完成 |
 
 ## 计算服务对比
 
