@@ -9,28 +9,28 @@ A collection of Azure cloud resource/service operation skills for AI Agent autom
 ```
 azure-skills/
 ├── scripts/                        # L4 automation & tooling
-│   ├── auto_feedback_loop.py      # L4闭环：execute→observe→diff→heal→escalate
-│   ├── state_observer.py          # 调用 Azure ARM API 获取资源实际状态
-│   ├── state_diff.py              # desired vs actual state 比对（JMESPath支持）
-│   ├── escalation.py             # 升人工：构造诊断上下文（含补偿历史）
-│   ├── self_healing/             # 策略外置 JSON（31个Azure skill全量覆盖）
-│   ├── az_trace.py               # GCL auto-tracer（drop-in az wrapper）
+│   ├── auto_feedback_loop.py      # L4 loop: execute→observe→diff→heal→escalate
+│   ├── state_observer.py          # Calls Azure ARM API to get actual resource state
+│   ├── state_diff.py              # desired vs actual state diff (JMESPath support)
+│   ├── escalation.py             # Human escalation: diagnostic context + heal history
+│   ├── self_healing/             # Strategy JSON: 31 Azure skills, full coverage
+│   ├── az_trace.py               # GCL auto-tracer (drop-in az wrapper)
 │   └── setup_env.py              # .env → config generator
 │
-├── manual/                         # 用户手册（L4 快速入门/指南/FAQ）
-│   ├── index.md                  # 总览
-│   ├── quick-start.md            # 5 分钟上手
-│   ├── user-guide.md             # 完整用户指南
-│   └── faq.md                    # 常见问题
+├── manual/                         # User manual (L4 quick-start / guide / FAQ)
+│   ├── index.md                  # Overview
+│   ├── quick-start.md            # 5-minute quick start
+│   ├── user-guide.md             # Complete user guide
+│   └── faq.md                    # FAQ
 │
-├── tests/                         # 单元测试（14/14 PASS）
+├── tests/                         # Unit tests (14/14 PASS)
 │   ├── test_state_diff.py
 │   ├── test_self_healing.py
 │   └── test_auto_feedback_loop.py
 │
 ├── docs/superpowers/             # Superpowers plan + spec
-│   ├── specs/                    # 规格说明
-│   └── plans/                    # 实施计划
+│   ├── specs/                    # Specifications
+│   └── plans/                    # Implementation plans
 │
 ├── azure-skill-generator/           # Meta Skill (Skill Generator)
 │   ├── SKILL.md                     # Concise - What to do
@@ -365,23 +365,23 @@ azure-skills/
 
 ### L4 Auto-Feedback Loop
 
-Gartner L4 自动化闭环（见 `scripts/auto_feedback_loop.py`）：
+Gartner L4 Auto-Feedback Loop (see `scripts/auto_feedback_loop.py`):
 
 ```
 Execute → Observe → Diff → Heal → Escalate
   ↑________________________|____________↓
-       自动反馈闭环（最多 N 次补偿）
+       Auto-feedback loop (up to N compensation attempts)
 ```
 
-- **Observe**: 调用 Azure ARM API 获取资源实际状态
-- **Diff**: 比对 desired_state vs actual_state（支持 JMESPath）
-- **Heal**: 按策略 JSON 自动补偿（最多 2 次）
-- **Escalate**: 补偿耗尽 → 升人工 + 诊断上下文
-- **Risky 操作**（delete/stop/scale-down）永远走 human gate，不自动执行
-- **Trace**: 所有执行记录进 `audit-results/gcl-trace-*.json`（Langfuse-aligned schema）
+- **Observe**: Calls Azure ARM API to get actual resource state
+- **Diff**: Compares desired_state vs actual_state (JMESPath support)
+- **Heal**: Auto-remediates based on strategy JSON (up to 2 attempts)
+- **Escalate**: On exhausted attempts → human escalation + diagnostic context
+- **Risky ops** (delete/stop/scale-down) always require human gate, never auto-execute
+- **Trace**: All executions written to `audit-results/gcl-trace-*.json` (Langfuse-aligned schema)
 
 ```bash
-# dry-run 验证
+# dry-run verification
 python scripts/auto_feedback_loop.py \
   --skill azure-vm-ops \
   --operation vm_create \
