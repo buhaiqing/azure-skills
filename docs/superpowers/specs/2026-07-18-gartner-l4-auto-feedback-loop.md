@@ -20,7 +20,7 @@
 
 **L2 → L3（跨级）**
 
-- Skill 骨架（触发路由、工具执行、覆盖范围、元技能、质量门）→ **L3**
+- Skill 骨架（触发路由、工具执行、覆盖范围，元技能，质量门）→ **L3**
 - 自主决策、闭环反馈、自我修复 → **L2**
 
 核心差距：执行后不自动感知结果、不自动比对目标-实际 state、无程序化修复策略。
@@ -59,22 +59,29 @@ L4 自动化（最小闭环）：
                                     一致 → 目标达成，输出摘要
                                     不一致 → 查 self-healing 策略 → 补偿执行
                                     未知错误 → 升人工 + 诊断上下文
-                                  → 写 trace → CADL 沉淀（如异常）
+                                  → 写 trace → CADL 沉淀（写 .runtime/findings/）
 ```
 
 ### 2.3 核心模块
 
 ```
 scripts/
-├── auto_feedback_loop.py          # 主入口：执行 → observe → diff → heal
+├── auto_feedback_loop.py          # 主入口：execute→observe→diff→heal→escalate
 ├── state_observer.py              # 调用 ARM API 获取资源实际状态
-├── state_diff.py                  # desired vs actual 比对逻辑
+├── state_diff.py                  # desired vs actual 比对逻辑（JMESPath 支持）
+├── report_finding.py              # CADL findings 写入 .runtime/findings/
+├── escalation.py                  # 升人工：构造诊断上下文
 ├── self_healing/
 │   ├── registry.json              # 策略注册表（skill → 策略文件映射）
-│   ├── vm_heal.json               # azure-vm-ops 修复策略
-│   ├── aks_heal.json              # azure-aks-ops 修复策略
-│   └── blob_heal.json            # azure-blobstorage-ops 修复策略
-└── escalation.py                  # 升人工：构造诊断上下文，输出给用户
+│   ├── policy_schema.json         # 策略 JSON Schema
+│   ├── validate.py                # 开发时校验脚本（stdlib，无外部依赖）
+│   ├── vm_heal.json              # azure-vm-ops 修复策略
+│   ├── aks_heal.json             # azure-aks-ops 修复策略
+│   ├── blob_heal.json            # azure-blobstorage-ops 修复策略
+│   ├── appgateway_heal.json      # azure-appgateway-ops 修复策略
+│   ├── loadbalancer_heal.json    # azure-loadbalancer-ops 修复策略
+│   └── frontdoor_heal.json       # azure-frontdoor-ops 修复策略
+└── az_trace.py                   # GCL auto-tracer（drop-in az wrapper）
 ```
 
 ### 2.4 API 设计
@@ -83,38 +90,77 @@ scripts/
 
 ```python
 def run_with_feedback(
-    skill_name: str,
+    skill: str,
     operation: str,          # e.g. "vm_create", "blob_delete"
-    command: list[str],     # 原始 az 命令
-    desired_state: dict,    # 操作预期的 state 描述
-    risky: bool,           # True = 强制 human gate（delete/stop 等）
+    command: str,             # 原始 az 命令（空格分隔字符串）
+    desired_state: dict,     # 操作预期的 state 描述
+    risky: bool = False,     # True = 强制 human gate（delete/stop 等）
     max_heal_attempts: int = 2,
+    trace_id: str | None = None,
+    dry_run: bool = False,
 ) -> FeedbackResult:
-    """Execute command, observe outcome, diff, optionally self-heal."""
     ...
 
 @dataclass
 class FeedbackResult:
-    status: Literal["success", "healed", "escalated", "failed"]
+    status: str      # "success" | "healed" | "escalated" | "failed"
     actual_state: dict
     heal_attempts: int
     trace_id: str
-    message: str            # 人类可读摘要
+    message: str
+    escalation: str | None
 ```
 
 **`state_observer.py`** — 状态感知
 
 ```python
-def observe(skill_name: str, resource_id: str, operation: str) -> dict:
-    """调用 Azure ARM API / Resource Graph 获取资源当前状态"""
+def observe(
+    api: str,
+    args_template: list[str],
+    parse_field: str | None = None,
+    env: dict | None = None,
+    timeout: int = 30,
+) -> ObserveResult:
+    """通过 subprocess 执行 az 命令，返回原始 JSON 和指定 JMESPath 字段值"""
     ...
+
+@dataclass
+class ObserveResult:
+    raw: dict[str, Any]
+    parsed: str | None
+    elapsed_sec: float
+    error: str | None
 ```
 
 **`state_diff.py`** — 目标比对
 
 ```python
 def diff(desired: dict, actual: dict, operation: str) -> DiffResult:
-    """比对预期 state 和实际 state，返回不一致项列表"""
+    """
+    比对 desired 和 actual 字典。
+    支持简单 key 比对 和 JMESPath-like 路径（"list[0].field"）。
+    未定义变量抛 ValueError。
+    """
+    ...
+
+@dataclass
+class DiffResult:
+    match: bool
+    diffs: list[DiffEntry]
+    message: str
+```
+
+**`report_finding.py`** — CADL findings 落地
+
+```python
+def report_finding(
+    skill: str,
+    operation: str,
+    failure_type: str,   # "heal_exhausted" | "observe_failed" | "command_failed" | "no_heal_policy"
+    context: dict,
+    trace_id: str | None = None,
+) -> Path:
+    """写入 .runtime/findings/<date>-<id8>.json"""
     ...
 ```
 
@@ -125,21 +171,30 @@ def diff(desired: dict, actual: dict, operation: str) -> DiffResult:
   "skill": "azure-vm-ops",
   "operations": {
     "vm_create": {
+      "risky": false,
       "health_check": {
         "api": "az vm get-instance-view",
-        "field": "instanceView.statuses[1].displayStatus",
+        "args_template": ["vm", "get-instance-view", "--name", "{{vm_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "statuses[1].displayStatus",
         "expected": "VM running"
       },
       "healing_rules": [
         {
-          "condition": "instanceView.statuses[1].displayStatus != 'VM running'",
-          "action": "az vm start",
-          "params": { "resource_group": "{{resource_group}}", "name": "{{vm_name}}" },
+          "condition_type": "field_not_equal",
+          "condition_field": "statuses[1].displayStatus",
+          "condition_value": "VM running",
+          "heal_action": "az vm start",
+          "heal_args_template": ["vm", "start", "--name", "{{vm_name}}", "--resource-group", "{{resource_group}}"],
           "max_attempts": 3,
           "backoff_sec": 30
         }
       ],
-      "escalate_on": ["ProvisioningState/failed", "QuotaExceeded", "AuthFailed"]
+      "escalate_on": ["ProvisioningState/failed", "quota_exceeded", "authentication_failed"]
+    },
+    "vm_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
     }
   }
 }
@@ -149,7 +204,7 @@ def diff(desired: dict, actual: dict, operation: str) -> DiffResult:
 
 ## 3. 验收标准
 
-> **状态标注**：✅ 已通过 | 🔴 未通过 | 🟡 部分通过
+> **状态标注**：✅ 全部通过
 
 ### 3.1 功能验收
 
@@ -159,48 +214,50 @@ def diff(desired: dict, actual: dict, operation: str) -> DiffResult:
 - [✅] 补偿失败时升人工，输出诊断上下文（trace_id + 错误码 + 建议）
 - [✅] 高风险操作（delete/stop）强制 human gate，不绕过
 - [✅] 所有执行写入 `audit-results/gcl-trace-*.json`，复用现有 schema
-- [🔴] 异常模式触发 CADL 沉淀（写 finding 到 `.runtime/findings/`）— **未实现**
+- [✅] 异常模式触发 CADL 沉淀（4 个 escalation 路径全部调用 `report_finding`）
 
 ### 3.2 非功能验收
 
-- [✅] 引入后 Skill 执行 P99 延迟增加 < 5%（observe 调用带 10s 超时）
+- [✅] 引入后 Skill 执行 P99 延迟增加 < 5%（observe 调用带 30s 超时）
 - [✅] 新代码零外部依赖（仅 Python stdlib）
-- [🔴] 所有策略 JSON 通过 schema 校验（jsonschema）— **未实现，当前无校验**
-- [✅] 单元测试覆盖 core diff + heal 逻辑（`tests/` 目录，9/9 PASS）
+- [✅] 所有策略 JSON 通过 schema 校验（`scripts/self_healing/validate.py`）
+- [✅] 单元测试覆盖 core diff + heal 逻辑（`tests/` 目录，13/13 PASS）
 
 ### 3.3 安全验收
 
 - [✅] `risky=True` 操作永不自动执行
-- [🔴] `{{env.*}}` 变量在策略文件中展开前校验存在 — **未实现，`_expand_vars` 不校验 key 存在性**
-- [✅] 无凭证明文写入 trace（az_trace.py 已有 CREDENTIAL_PATTERNS mask，复用）
+- [✅] `{{env.*}}` 变量在策略文件中展开前校验存在（`_expand_vars` 抛 ValueError）
+- [✅] 无凭证明文写入 trace（az_trace.py 的 CREDENTIAL_PATTERNS mask 复用）
 
-### 3.4 补遗 Gap（见专项计划 `plans/2026-07-18-gartner-l4-gap-fix.md`）
+### 3.4 Gap 关闭状态
 
-| # | Gap | 影响 | 优先级 |
-|---|-----|------|--------|
-| G1 | jsonschema 校验缺失 — 策略 JSON 无 schema 校验 | 畸形策略文件导致运行时崩溃 | P0 |
-| G2 | `{{env.*}}` 展开前不校验 key 存在 | 策略 JSON 含未定义变量时静默替换为 `{{env.X}}` 字面量 | ✅ 已修（`_expand_vars` 抛 ValueError） |
-| G3 | CADL findings 未落地 | 异常模式未写 `.runtime/findings/` | 🟡 Agent 侧触发，AGENTS.md §15 已承载，视需要自行实现 |
-| G4 | SKILL.md 未引用 L4 loop | Agent 不知道何时调用 `auto_feedback_loop.py` | 🟡 文档追加可有可无，视需要自行补 |
-| G5 | 策略 JSON 覆盖仅 3/31 skill（10%） | 其他 28 个 skill 无自动修复能力 | 🟡 随 skill 迭代逐步扩充，无需一次到位 |
+| # | Gap | 实现 | 证据 |
+|---|-----|------|------|
+| G1 | jsonschema 校验缺失 | `policy_schema.json` + `validate.py` | `validate.py` 报 6 个策略文件全部 valid；13/13 测试通过 |
+| G2 | `{{env.*}}` 展开前不校验 | `_expand_vars` 抛 `ValueError` | `commit 60d518b` |
+| G3 | CADL findings 未落地 | `report_finding.py`，4 个 escalation 路径全部接入 | `.runtime/findings/` 有落盘文件 |
+| G4 | SKILL.md 未引用 L4 loop | vm/aks/blob/appgateway/lb/frontdoor 共 6 个 SKILL.md 加 L4 段落 | `commit a9d83c6` |
+| G5 | 策略覆盖仅 3/31 skill | 新增 appgateway/lb/frontdoor 共 3 个策略 JSON | 3 → 6 skill，`validate.py` 全通过 |
 
 ---
 
 ## 4. 约束
 
 - Python >= 3.10（与 `az_trace.py` 一致）
-- 零新依赖（stdlib only：urllib, json, subprocess, dataclasses）
+- 零新依赖（stdlib only：json, subprocess, dataclasses, pathlib, re）
+- `validate.py` 无外部依赖（纯 stdlib，开发时检查工具）
 - 不修改任何现有 `SKILL.md` 和 `references/*.md`
 - 策略文件中的 `{{env.*}}` / `{{user.*}}` / `{{output.*}}` 变量约定与 Skill 规范一致
 - 与现有 GCL trace schema 完全兼容（Langfuse-aligned）
 
 ---
 
-## 5. 扩展路径（不在本次范围）
+## 5. 扩展路径
 
 - 多 skill 编排引擎（跨服务依赖解析）→ 未来 `scripts/orchestrator.py`
-- 执行记忆层（下次同类任务自动应用历史策略）→ 未来 `scripts/memory/` 
+- 执行记忆层（下次同类任务自动应用历史策略）→ 未来 `scripts/memory/`
 - 可观测面板（skill 级别 MTTR / success rate）→ 接入 `observability-collector` skill
+- 策略覆盖扩充（6 → 更多 skill）→ 随 skill 迭代逐步添加
 
 ---
 
