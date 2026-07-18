@@ -207,33 +207,63 @@ User Request
 It detects destructive ops, scores against the rubric, masks credentials, and persists traces.
 For batch lint: `python scripts/az_trace.py lint`.
 
-Every GCL run MUST persist a JSON trace:
+Every GCL run MUST persist a JSON trace.
+Schema aligns with Langfuse observation model (Trace → Span → Generation).
 
 ```json
 {
-  "skill": "azure-vm-ops",
-  "request": "<sanitized user request>",
-  "rubric_version": "v1",
-  "iterations": [
+  "id": "uuid-v4",
+  "name": "azure-vm-ops GCL",
+  "version": "1.0.0",
+  "metadata": {
+    "skill": "azure-vm-ops",
+    "is_destructive": true,
+    "tool": "az_trace.py",
+    "tool_version": "1.0.0",
+    "scorer": "rule-based",
+    "python_version": "3.12.1",
+    "os": "darwin"
+  },
+  "gcl_status": "PASS",
+  "gcl_final_iter": 2,
+  "input": "az vm delete --name my-vm --resource-group my-rg --yes",
+  "spans": [
     {
-      "iter": 1,
-      "generator": { "command": "az vm delete ...", "args": {...}, "exit_code": 0, "result_excerpt": "..." },
-      "critic": {
-        "scores": {
-          "correctness": 1, "safety": 1, "idempotency": 0.5,
-          "traceability": 1, "spec_compliance": 1
-        },
-        "suggestions": ["..."],
-        "blocking": false
+      "name": "iter-1",
+      "start_time": "2026-07-18T12:02:16.328+00:00",
+      "end_time": "2026-07-18T12:02:16.333+00:00",
+      "metadata": { "command": "az vm delete ...", "exit_code": 0, "elapsed_sec": 0.012 },
+      "generation": {
+        "model": "rule-based-az-cli",
+        "model_parameters": {},
+        "input": "az vm delete ...",
+        "output": "{...}",
+        "usage": { "az_exit_code": 0, "az_elapsed_sec": 0.012 },
+        "metadata": { "az_args": {} }
       },
-      "decision": "RETRY"
+      "gcl_scores": { "correctness": 1, "safety": 1, "idempotency": 1, "traceability": 1, "spec_compliance": 1 },
+      "gcl_suggestions": [],
+      "gcl_decision": "PASS"
     }
-  ],
-  "final": { "status": "PASS", "iter": 2, "output": "..." }
+  ]
 }
 ```
 
-Path: `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json`.
+Field mapping to Langfuse:
+
+| This schema | Langfuse | Notes |
+|---|---|---|
+| `id` | Trace.id | UUID v4 |
+| `name` | Trace.name | e.g. `"azure-vm-ops GCL"` |
+| `metadata` | Trace.metadata | skill, tool, scorer, OS info |
+| `spans[]` | Trace.observations (type=span) | one per iteration |
+| `spans[].start_time / end_time` | Observation.start_time / end_time | ISO8601 |
+| `spans[].generation` | Observation (type=generation) | az command execution |
+| `spans[].generation.model` | Generation.model | `"rule-based-az-cli"`; upgrade to LLM Critic → fill model name |
+| `spans[].gcl_scores` | Span.metadata.gcl_scores | rubric scores |
+| `gcl_status` | computed summary | PASS / SAFETY_FAIL / MAX_ITER |
+
+Path: `./audit-results/gcl-trace-YYYYMMDD-HHMMSS-<id8>.json`.
 
 ### 7. Prompt Templates (mandatory per skill)
 
@@ -314,6 +344,7 @@ does not exempt a sloppy skill update.
 |---|---|---|
 | 1.0.0 | 2026-06-04 | Initial GCL specification added to `AGENTS.md` |
 | 1.1.0 | 2026-06-05 | Added TE/GCL/LI rules; moved detail to [docs/](./docs/) |
+| 1.2.0 | 2026-07-18 | Trace schema aligned with Langfuse observation model (Trace→Span→Generation); az_trace.py rebuilt with zero-dependency stdlib; model field = `"rule-based-az-cli"` (upgrade path to LLM Critic documented) |
 
 ### 13. 复利资产沉淀机制 (CADL) — 必走出口
 
