@@ -144,4 +144,3 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Azure CLI Private Endpoint Reference](https://docs.microsoft.com/cli/azure/network/private-endpoint)
 - [Azure SDK Network Module](https://docs.microsoft.com/python/api/azure-mgmt-network/)
 
-> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

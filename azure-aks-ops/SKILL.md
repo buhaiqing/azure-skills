@@ -328,4 +328,3 @@ See `AGENTS.md §3–§8` for the spec.
 - [Azure CLI AKS Reference](https://docs.microsoft.com/cli/azure/aks)
 - [Azure SDK ContainerService Module](https://docs.microsoft.com/python/api/azure-mgmt-containerservice/)
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
-> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

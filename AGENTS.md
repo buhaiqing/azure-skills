@@ -317,7 +317,8 @@ does not exempt a sloppy skill update.
 - **触发**：多步/跨文件、跨 Skill 协作、评审/修复循环、发现 repo 坑、验证归因、用户给可复用偏好。
 - **落点**：跨仓库有用 → 用户级 AGENTS.md（路径随运行时而定，如 `~/.config/opencode/AGENTS.md` 或 `~/.claude/CLAUDE.md`）；仅本仓库 → 根 `AGENTS.md`；skill 专属能力 → 独立 Skill（经 generator）。
 - **门禁**：写入前 `wc -l` 查行数，根 `AGENTS.md` ≥ 500 行先精简（复用用户级 AGENTS.md 的 `agent-md-size-guard` 行数门禁规则，该规则随运行时存放）。
-- **钩子**：`azure-skill-generator` 生成 skill 时须在 SKILL.md 末尾注入 CADL 触发行；现存 `azure-*-ops` 逐批补同一行。
+- **钩子**：`azure-skill-generator` 生成 skill 时须在 SKILL.md 末尾注入 CADL 触发行（见其 `Skill Output Hook` 节）。
+- **存量 skill**：既有 `azure-*-ops` 的触发信号由本节 + `cadl.md` 统一承载，**不在各 SKILL.md 重复嵌入**（避免 TE-6 跨文件重复、保持 SKILL.md 精简）；Agent 启动必读 AGENTS.md，故信号不丢失。
 
 ### 14. See also
 
