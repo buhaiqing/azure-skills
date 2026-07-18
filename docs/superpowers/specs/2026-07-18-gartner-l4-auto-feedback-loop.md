@@ -232,7 +232,7 @@ def report_finding(
 
 - [✅] 引入后 Skill 执行 P99 延迟增加 < 5%（observe 调用带 30s 超时）
 - [✅] 新代码零外部依赖（仅 Python stdlib）
-- [✅] 所有策略 JSON 通过 schema 校验（`scripts/self_healing/validate.py`）
+- [✅] 所有策略 JSON 通过 schema 校验（`scripts/self_healing/validate.py`，31/31 valid）
 - [✅] 单元测试覆盖 core diff + heal 逻辑（`tests/` 目录，13/13 PASS）
 
 ### 3.3 安全验收
@@ -245,11 +245,11 @@ def report_finding(
 
 | # | Gap | 实现 | 证据 |
 |---|-----|------|------|
-| G1 | jsonschema 校验缺失 | `policy_schema.json` + `validate.py` | `validate.py` 报 14 个策略文件全部 valid；13/13 测试通过 |
+| G1 | jsonschema 校验缺失 | `policy_schema.json` + `validate.py` | `validate.py` 报 31 个策略文件全部 valid；14/14 测试通过 |
 | G2 | `{{env.*}}` 展开前不校验 | `_expand_vars` 抛 `ValueError` | `commit 60d518b` |
 | G3 | CADL findings 未落地 | `report_finding.py`，4 个 escalation 路径全部接入 | `.runtime/findings/` 有落盘文件 |
 | G4 | SKILL.md 未引用 L4 loop | vm/aks/blob/appgateway/lb/frontdoor/vnet/dns/postgres/redis/monitor/cosmos/acr/function 共 14 个 SKILL.md 加 L4 段落 | `commit a9d83c6` + `commit f449c73` |
-| G5 | 策略覆盖仅 3/32 skill（9%） | 新增 28 个策略 JSON，覆盖全部 31 个 Azure skill | 6 → 31 skill（100%），`validate.py` 31/31 通过 |
+| G5 | 策略覆盖仅 3/32 skill（9%） | 新增 28 个策略 JSON，覆盖全部 31 个 Azure skill | 6 → 31 skill（100%），`validate.py` 31/31 通过，`test_all_31_policies_load` 覆盖全部 |
 
 ---
 
