@@ -40,12 +40,10 @@ Azure [Service Name] provides [brief description]. This `SKILL.md` is the slim e
 
 ## Variable Convention
 
+认证四件套 `{{env.AZURE_SUBSCRIPTION_ID/TENANT_ID/CLIENT_ID/SECRET}}`（NEVER ask user; fail if unset）为规范常量，详见 [azure-cli-conventions.md §Credential Sources](../../azure-skill-generator/references/azure-cli-conventions.md)。SKILL.md 仅声明业务占位符：
+
 | Placeholder | Source | Agent Action |
 |-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
 | `{{user.resource_group}}` | User input | Ask once; reuse |
 | `{{user.location}}` | User input | Azure region (e.g., eastus) |
 | `{{user.resource_name}}` | User input | Ask once; reuse |
@@ -53,7 +51,7 @@ Azure [Service Name] provides [brief description]. This `SKILL.md` is the slim e
 
 ## Execution Flow Pattern
 
-Every operation follows: **Pre-flight → Execute → Validate → Recover**
+Every operation follows: **Pre-flight → Execute → Validate → Recover**. Pre-flight 五步检查（CLI/credentials/subscription/Resource Group/Location）为通用骨架，详见 [azure-cli-conventions.md §Common Pitfalls](../../azure-skill-generator/references/azure-cli-conventions.md)；重试与 429/5xx 策略见同文件 §Retry Strategy。SKILL.md 只描述本服务的偏差。
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -65,13 +63,10 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 ### Operation: Create [Resource]
 
 #### Pre-flight
+通用五步见约定文档；本服务额外检查：
+
 | Check | Method | On Failure |
 |-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
 | Quota | Check Azure quotas | HALT; request increase |
 
 #### Execute — Azure CLI (Primary)

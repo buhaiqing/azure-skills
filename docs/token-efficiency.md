@@ -43,8 +43,26 @@ Agent 可执行命令本身（参数、JSON paths）、错误恢复逻辑、安�
 1. **SKILL.md ↔ references/**：SKILL.md 是入口点（entry point），只包含触发条件、操作流程摘要；references/ 提供深度，**禁止重复**。
 2. **references/ 内部**：同一错误码/概念只在一处定义，使用 `{{output.*}}` 引用。
 3. **跨 Skill 引用**：当一个 Skill 需要另一个 Skill 的能力时，使用 `## Delegation` 段落引用，而非内联复制。
-4. **检查方法**：
+4. **跨 Skill 通用骨架（TE-6 扩展）**：以下「规范已定义的常量骨架」在每个 Skill 中形态固定，禁止逐字展开复制：
+   - **认证四件套**：`{{env.AZURE_SUBSCRIPTION_ID/TENANT_ID/CLIENT_ID/SECRET}}` 的 Variable Convention 行。
+   - **执行流 Pre-flight 检查表**：CLI/credentials/subscription/Resource Group/Location 五步检查。
+   - **SDK fallback 骨架**：`DefaultAzureCredential` + mgmt client + `begin_create_or_update` 模板。
+   - **RBAC 通用注记**：如「Role assignment changes → prefer delegate to `azure-audit-ops`」。
+
+   **标准紧凑写法**（SKILL.md / references 通用）：用一行声明 + 链接到 `azure-skill-generator/references/azure-cli-conventions.md` 与 `azure-skill-template.md`，例如：
+
+   ```markdown
+   ## Variable Convention
+   认证四件套 `{{env.*}}` 见 [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order)；NEVER ask user, fail if unset。业务占位符见下表。
+   | Placeholder | Source | Agent Action |
+   | `{{user.resource_group}}` | User input | Ask once; reuse |
+   ...
+   ```
+
+   **注意**：不抽取跨目录共享文件——每个 Skill 必须保持自包含（runtime-agnostic、离线可加载）。紧凑写法是「引用 + 链接」，不是「依赖外部文件内容」。
+5. **检查方法**：
    - 搜索 SKILL.md 中的完整操作步骤 → 确认已移至 references/
    - 搜索重复的错误码描述行 → 合并或使用锚点引用
+   - 搜索逐字复制的认证四件套 / Pre-flight 表 / SDK 骨架 → 改为紧凑写法 + 链接
 
 **违规处理**：发现内容重复 → 立即重构 → 重新检查直到零重复。
