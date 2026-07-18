@@ -30,6 +30,7 @@
         "expected": "{{database_name}}"
       },
       "healing_rules": [],
+      "_reason": "database provisioning wait handled by health_check re-observation; auto-healing data ops is unsafe",
       "escalate_on": [],
       "risky": false
     },

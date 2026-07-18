@@ -4,7 +4,7 @@
     "cost_query": {
       "risky": false,
       "healing_rules": [],
-      "escalate_on": []
+      "_reason": "read-only query — no state to correct or wait for"
     }
   }
 }

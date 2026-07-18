@@ -9,6 +9,7 @@
         "expected": "{{share_name}}"
       },
       "healing_rules": [],
+      "_reason": "provisioning wait handled by health_check re-observation; fileshare exists check only",
       "escalate_on": [],
       "risky": false
     },

@@ -195,6 +195,7 @@ def run_with_feedback(
                 error=exec_result.stderr.strip() or f"exit {exec_result.returncode}",
                 heal_attempts=0,
                 trace_id=tid,
+                heal_history=[],
             )
             escalation_msg = escalate(ctx)
             fb_result = FeedbackResult(
@@ -235,6 +236,7 @@ def run_with_feedback(
                 command=command, exit_code=-1,
                 error=f"observe failed: {obs.error}",
                 heal_attempts=0, trace_id=tid,
+                heal_history=[],
             )
             escalation_msg = escalate(ctx)
             fb_result = FeedbackResult(
@@ -275,6 +277,7 @@ def run_with_feedback(
             command=command, exit_code=-1,
             error=f"state mismatch, no healing strategy: {[d.field for d in diff_result.diffs]}",
             heal_attempts=0, trace_id=tid,
+            heal_history=[],
         )
         escalation_msg = escalate(ctx)
         fb_result = FeedbackResult(
@@ -292,10 +295,19 @@ def run_with_feedback(
                       trace_id=tid)
         return fb_result
 
+    heal_history: list = []
     for attempt in range(1, max_heal_attempts + 1):
         applied_any = False
         for rule in heal_rules:
+            rule_name = rule.get("heal_action", "unknown")
             ok, msg = _apply_heal_rule(rule, actual_state, parsed_val, {})
+            heal_history.append({
+                "attempt": attempt,
+                "rule_name": rule_name,
+                "action": rule_name,
+                "ok": ok,
+                "error": msg if not ok else None,
+            })
             if ok:
                 applied_any = True
                 heal_attempts = attempt
@@ -335,6 +347,7 @@ def run_with_feedback(
         error=f"heal exhausted ({heal_attempts} attempts). "
               f"Mismatched fields: {[d.field for d in diff_result.diffs]}",
         heal_attempts=heal_attempts, trace_id=tid,
+        heal_history=heal_history,
     )
     escalation_msg = escalate(ctx)
     fb_result = FeedbackResult(

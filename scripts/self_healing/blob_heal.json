@@ -4,15 +4,25 @@
     "blob_upload": {
       "risky": false,
       "healing_rules": [],
-      "escalate_on": []
+      "_reason": "idempotent upload — result is immediate; retry on failure is caller responsibility"
+    },
+    "container_create": {
+      "risky": false,
+      "healing_rules": [],
+      "_reason": "provisioning wait handled by health_check re-observation loop; container either exists or not"
     },
     "blob_delete": {
       "risky": true,
       "healing_rules": [],
       "escalate_on": []
     },
-    "container_create": {
-      "risky": false,
+    "container_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    },
+    "storage_account_delete": {
+      "risky": true,
       "healing_rules": [],
       "escalate_on": []
     }

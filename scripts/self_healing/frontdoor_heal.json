@@ -19,9 +19,7 @@
           "backoff_sec": 30
         }
       ],
-      "escalate_on": [
-        "Failed"
-      ],
+      "escalate_on": ["Failed"],
       "risky": false
     },
     "endpoint_create": {
@@ -32,6 +30,7 @@
         "expected": "Succeeded"
       },
       "healing_rules": [],
+      "_reason": "endpoint provisioning wait handled by health_check re-observation; profile must exist first (dependency not yet expressible in policy)",
       "escalate_on": [],
       "risky": false
     },

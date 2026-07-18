@@ -13,10 +13,11 @@
           "condition_type": "field_not_equal",
           "condition_field": "properties.provisioningState",
           "condition_value": "Succeeded",
-          "heal_action": "az keyvault wait",
-          "heal_args_template": ["keyvault", "wait", "--name", "{{vault_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "heal_action": "az keyvault show",
+          "heal_args_template": ["keyvault", "show", "--name", "{{vault_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
           "max_attempts": 4,
-          "backoff_sec": 30
+          "backoff_sec": 30,
+          "_note": "Key Vault has no az keyvault wait; re-observation via health_check is the LRO polling mechanism"
         }
       ],
       "escalate_on": ["Failed", "quota_exceeded"],
@@ -24,7 +25,18 @@
     },
     "secret_set": {
       "risky": false,
-      "healing_rules": [],
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "id",
+          "condition_value": "",
+          "heal_action": "az keyvault secret set",
+          "heal_args_template": ["keyvault", "secret", "set", "--vault-name", "{{vault_name}}", "--name", "{{secret_name}}", "--value", "{{secret_value}}"],
+          "max_attempts": 2,
+          "backoff_sec": 10,
+          "_note": "Secret set failure retried once; subsequent failure escalates"
+        }
+      ],
       "escalate_on": []
     },
     "vault_delete": {

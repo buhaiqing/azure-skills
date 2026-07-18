@@ -9,6 +9,7 @@
         "expected": "Succeeded"
       },
       "healing_rules": [],
+      "_reason": "provisioning wait handled by health_check re-observation; resource existence check only",
       "escalate_on": [],
       "risky": false
     },
@@ -20,6 +21,7 @@
         "expected": "{{action_group_name}}"
       },
       "healing_rules": [],
+      "_reason": "provisioning wait handled by health_check re-observation; resource existence check only",
       "escalate_on": [],
       "risky": false
     },

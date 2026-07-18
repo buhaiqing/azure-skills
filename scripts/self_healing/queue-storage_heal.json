@@ -9,6 +9,7 @@
         "expected": "{{queue_name}}"
       },
       "healing_rules": [],
+      "_reason": "provisioning wait handled by health_check re-observation; queue exists check only",
       "escalate_on": [],
       "risky": false
     },

@@ -9,6 +9,7 @@
         "expected": "Online"
       },
       "healing_rules": [],
+      "_reason": "database provisioning wait handled by health_check re-observation; auto-healing production DB state is unsafe",
       "escalate_on": [],
       "risky": false
     },
@@ -20,6 +21,7 @@
         "expected": "Ready"
       },
       "healing_rules": [],
+      "_reason": "server provisioning wait handled by health_check re-observation; auto-healing production DB state is unsafe",
       "escalate_on": [],
       "risky": false
     },
