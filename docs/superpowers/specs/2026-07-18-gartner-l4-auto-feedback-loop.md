@@ -77,10 +77,20 @@ scripts/
 │   ├── validate.py                # 开发时校验脚本（stdlib，无外部依赖）
 │   ├── vm_heal.json              # azure-vm-ops 修复策略
 │   ├── aks_heal.json             # azure-aks-ops 修复策略
+│   ├── vm_heal.json              # azure-vm-ops 修复策略
+│   ├── aks_heal.json             # azure-aks-ops 修复策略
 │   ├── blob_heal.json            # azure-blobstorage-ops 修复策略
 │   ├── appgateway_heal.json      # azure-appgateway-ops 修复策略
 │   ├── loadbalancer_heal.json    # azure-loadbalancer-ops 修复策略
-│   └── frontdoor_heal.json       # azure-frontdoor-ops 修复策略
+│   ├── frontdoor_heal.json       # azure-frontdoor-ops 修复策略
+│   ├── vnet_heal.json            # azure-vnet-ops 修复策略
+│   ├── dns_heal.json             # azure-dns-ops 修复策略
+│   ├── postgres_heal.json        # azure-postgres-ops 修复策略
+│   ├── redis_heal.json           # azure-redis-ops 修复策略
+│   ├── monitor_heal.json         # azure-monitor-ops 修复策略
+│   ├── cosmos_heal.json          # azure-cosmos-ops 修复策略
+│   ├── acr_heal.json            # azure-acr-ops 修复策略
+│   └── function_heal.json        # azure-function-ops 修复策略
 └── az_trace.py                   # GCL auto-tracer（drop-in az wrapper）
 ```
 
@@ -233,11 +243,11 @@ def report_finding(
 
 | # | Gap | 实现 | 证据 |
 |---|-----|------|------|
-| G1 | jsonschema 校验缺失 | `policy_schema.json` + `validate.py` | `validate.py` 报 6 个策略文件全部 valid；13/13 测试通过 |
+| G1 | jsonschema 校验缺失 | `policy_schema.json` + `validate.py` | `validate.py` 报 14 个策略文件全部 valid；13/13 测试通过 |
 | G2 | `{{env.*}}` 展开前不校验 | `_expand_vars` 抛 `ValueError` | `commit 60d518b` |
 | G3 | CADL findings 未落地 | `report_finding.py`，4 个 escalation 路径全部接入 | `.runtime/findings/` 有落盘文件 |
-| G4 | SKILL.md 未引用 L4 loop | vm/aks/blob/appgateway/lb/frontdoor 共 6 个 SKILL.md 加 L4 段落 | `commit a9d83c6` |
-| G5 | 策略覆盖仅 3/31 skill | 新增 appgateway/lb/frontdoor 共 3 个策略 JSON | 3 → 6 skill，`validate.py` 全通过 |
+| G4 | SKILL.md 未引用 L4 loop | vm/aks/blob/appgateway/lb/frontdoor/vnet/dns/postgres/redis/monitor/cosmos/acr/function 共 14 个 SKILL.md 加 L4 段落 | `commit a9d83c6` + `commit f449c73` |
+| G5 | 策略覆盖仅 3/32 skill（9%） | 新增 vnet/dns/postgres/redis/monitor/cosmos/acr/function 共 8 个策略 JSON | 6 → 14 skill（43%），`validate.py` 全通过 |
 
 ---
 
