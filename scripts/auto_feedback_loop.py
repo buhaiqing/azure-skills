@@ -69,11 +69,16 @@ def _jmespath_simple(path: str, data: dict) -> Any:
 
 
 def _expand_vars(template: str | list, env: dict) -> str | list:
-    """展开策略 JSON 中的 {{env.VAR}} 占位符"""
+    """展开策略 JSON 中的 {{env.VAR}} 占位符。未定义的变量抛 ValueError。"""
     if isinstance(template, str):
         def repl(m):
             key = m.group(1)
-            return env.get(key, m.group(0))
+            if key not in env:
+                raise ValueError(
+                    f"Undefined variable: {{env.{key}}} — "
+                    f"must be set in environment before execution"
+                )
+            return env[key]
         return re.sub(r'\{\{env\.(\w+)\}\}', repl, template)
     elif isinstance(template, list):
         return [_expand_vars(item, env) for item in template]

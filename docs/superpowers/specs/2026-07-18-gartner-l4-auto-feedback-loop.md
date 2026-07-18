@@ -149,28 +149,40 @@ def diff(desired: dict, actual: dict, operation: str) -> DiffResult:
 
 ## 3. 验收标准
 
+> **状态标注**：✅ 已通过 | 🔴 未通过 | 🟡 部分通过
+
 ### 3.1 功能验收
 
-- [ ] `auto_feedback_loop.py --dry-run` 可在不执行命令的情况下验证流程
-- [ ] 对 `vm_create` 操作，VM 创建后自动 observe 并比对 desired state
-- [ ] VM 处于非 running 状态时，自动触发 start 补偿（最多 2 次）
-- [ ] 补偿失败时升人工，输出诊断上下文（trace_id + 错误码 + 建议）
-- [ ] 高风险操作（delete/stop）强制 human gate，不绕过
-- [ ] 所有执行写入 `audit-results/gcl-trace-*.json`，复用现有 schema
-- [ ] 异常模式触发 CADL 沉淀（写 finding 到 `.runtime/findings/`）
+- [✅] `auto_feedback_loop.py --dry-run` 可在不执行命令的情况下验证流程
+- [✅] 对 `vm_create` 操作，VM 创建后自动 observe 并比对 desired state
+- [✅] VM 处于非 running 状态时，自动触发 start 补偿（最多 2 次）
+- [✅] 补偿失败时升人工，输出诊断上下文（trace_id + 错误码 + 建议）
+- [✅] 高风险操作（delete/stop）强制 human gate，不绕过
+- [✅] 所有执行写入 `audit-results/gcl-trace-*.json`，复用现有 schema
+- [🔴] 异常模式触发 CADL 沉淀（写 finding 到 `.runtime/findings/`）— **未实现**
 
 ### 3.2 非功能验收
 
-- [ ] 引入后 Skill 执行 P99 延迟增加 < 5%（observe 调用带 10s 超时）
-- [ ] 新代码零外部依赖（仅 Python stdlib）
-- [ ] 所有策略 JSON 通过 schema 校验（jsonschema）
-- [ ] 单元测试覆盖 core diff + heal 逻辑（`tests/` 目录）
+- [✅] 引入后 Skill 执行 P99 延迟增加 < 5%（observe 调用带 10s 超时）
+- [✅] 新代码零外部依赖（仅 Python stdlib）
+- [🔴] 所有策略 JSON 通过 schema 校验（jsonschema）— **未实现，当前无校验**
+- [✅] 单元测试覆盖 core diff + heal 逻辑（`tests/` 目录，9/9 PASS）
 
 ### 3.3 安全验收
 
-- [ ] `risky=True` 操作永不自动执行
-- [ ] `{{env.*}}` 变量在策略文件中展开前校验存在
-- [ ] 无凭证明文写入 trace（az_trace.py 已有 CREDENTIAL_PATTERNS mask，复用）
+- [✅] `risky=True` 操作永不自动执行
+- [🔴] `{{env.*}}` 变量在策略文件中展开前校验存在 — **未实现，`_expand_vars` 不校验 key 存在性**
+- [✅] 无凭证明文写入 trace（az_trace.py 已有 CREDENTIAL_PATTERNS mask，复用）
+
+### 3.4 补遗 Gap（见专项计划 `plans/2026-07-18-gartner-l4-gap-fix.md`）
+
+| # | Gap | 影响 | 优先级 |
+|---|-----|------|--------|
+| G1 | jsonschema 校验缺失 — 策略 JSON 无 schema 校验 | 畸形策略文件导致运行时崩溃 | P0 |
+| G2 | `{{env.*}}` 展开前不校验 key 存在 | 策略 JSON 含未定义变量时静默替换为 `{{env.X}}` 字面量 | ✅ 已修（`_expand_vars` 抛 ValueError） |
+| G3 | CADL findings 未落地 | 异常模式未写 `.runtime/findings/` | 🟡 Agent 侧触发，AGENTS.md §15 已承载，视需要自行实现 |
+| G4 | SKILL.md 未引用 L4 loop | Agent 不知道何时调用 `auto_feedback_loop.py` | 🟡 文档追加可有可无，视需要自行补 |
+| G5 | 策略 JSON 覆盖仅 3/31 skill（10%） | 其他 28 个 skill 无自动修复能力 | 🟡 随 skill 迭代逐步扩充，无需一次到位 |
 
 ---
 
