@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "skills": {
+    "azure-vm-ops": "vm_heal.json",
+    "azure-aks-ops": "aks_heal.json",
+    "azure-blobstorage-ops": "blob_heal.json"
+  }
+}

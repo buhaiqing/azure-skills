@@ -1,0 +1,20 @@
+{
+  "skill": "azure-blobstorage-ops",
+  "operations": {
+    "blob_upload": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    },
+    "blob_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    },
+    "container_create": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "skill": "azure-aks-ops",
+  "operations": {
+    "aks_create": {
+      "health_check": {
+        "api": "az aks show",
+        "args_template": ["aks", "show", "--name", "{{cluster_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az aks wait",
+          "heal_args_template": ["aks", "wait", "--name", "{{cluster_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [
+        "Failed",
+        "quota_exceeded"
+      ],
+      "risky": false
+    },
+    "aks_scale": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    },
+    "aks_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}
