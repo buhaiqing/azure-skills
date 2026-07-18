@@ -8,7 +8,11 @@ A collection of **prompt-only "skills"** for AI agents, not runnable application
 
 There is no build, no test suite, no CI. The "deliverable" is markdown that an Agent will follow when operating real Azure resources.
 
-`azure-skill-generator/` is a **meta-skill**: it scaffolds new `azure-[service]-ops/` skills. It is the only thing in the repo with executable code (`scripts/setup_env.py`).
+Executable code:
+- `scripts/setup_env.py` — env setup & credential validation
+- `scripts/az_trace.py` — runtime GCL auto-tracer (drop-in `az` wrapper, auto-scores & persists traces)
+
+`azure-skill-generator/` is a **meta-skill**: it scaffolds new `azure-[service]-ops/` skills.
 
 ## Skill anatomy (must match exactly)
 
@@ -198,6 +202,10 @@ User Request
 `max_iterations` defaults per skill class — see §8.
 
 ### 6. Trace & Audit (mandatory)
+
+**Runtime tool**: `python scripts/az_trace.py run "<az command>"` auto-traces any `az` call.
+It detects destructive ops, scores against the rubric, masks credentials, and persists traces.
+For batch lint: `python scripts/az_trace.py lint`.
 
 Every GCL run MUST persist a JSON trace:
 
