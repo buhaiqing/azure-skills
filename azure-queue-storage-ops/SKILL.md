@@ -114,6 +114,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 
 Queue storage commands use `--account-key` for authentication. The GCL trace MUST NOT contain the account key value. If detected, safety=0 → ABORT.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-queue-storage-ops \
+  --operation queue_create \
+  --command "az storage queue create --name {{user.queue_name}} --account-name {{user.account_name}} ..." \
+  --desired-state '{"name": "{{user.queue_name}}"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (queue_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/queue-storage_heal.json`](../../scripts/self_healing/queue-storage_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — architecture, limits, message lifecycle, poison messages

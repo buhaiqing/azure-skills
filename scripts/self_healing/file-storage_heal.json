@@ -1,0 +1,21 @@
+{
+  "skill": "azure-file-storage-ops",
+  "operations": {
+    "fileshare_create": {
+      "health_check": {
+        "api": "az storage share show",
+        "args_template": ["storage", "share", "show", "--name", "{{share_name}}", "--account-name", "{{account_name}}", "--output", "json"],
+        "parse_field": "name",
+        "expected": "{{share_name}}"
+      },
+      "healing_rules": [],
+      "escalate_on": [],
+      "risky": false
+    },
+    "fileshare_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

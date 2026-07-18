@@ -1,0 +1,32 @@
+{
+  "skill": "azure-sqldb-ops",
+  "operations": {
+    "db_create": {
+      "health_check": {
+        "api": "az sql db show",
+        "args_template": ["sql", "db", "show", "--name", "{{db_name}}", "--server", "{{server_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "status",
+        "expected": "Online"
+      },
+      "healing_rules": [],
+      "escalate_on": [],
+      "risky": false
+    },
+    "server_create": {
+      "health_check": {
+        "api": "az sql server show",
+        "args_template": ["sql", "server", "show", "--name", "{{server_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "state",
+        "expected": "Ready"
+      },
+      "healing_rules": [],
+      "escalate_on": [],
+      "risky": false
+    },
+    "db_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

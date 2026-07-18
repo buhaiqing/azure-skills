@@ -144,6 +144,24 @@ Use AIOps only for observation, correlation, diagnosis, and recommendations. Do 
 ## Quality Gate
 GCL is required for destructive/disruptive operations and recommended for incident RCA. Use [rubric.md](references/rubric.md) and [prompt-templates.md](references/prompt-templates.md). Rubric dimensions: correctness, safety, idempotency, traceability, spec compliance, RCA quality. Safety score `0` aborts immediately. Persist GCL traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secrets masked as `***`.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-sqldb-ops \
+  --operation db_create \
+  --command "az sql db create --name {{user.db_name}} --server {{user.server_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"status": "Online"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (db_create, server_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/sqldb_heal.json`](../../scripts/self_healing/sqldb_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 - [Core Concepts](references/core-concepts.md) · [Integration](references/integration.md) · [Troubleshooting](references/troubleshooting.md) · [AIOps](references/aiops.md) · [Rubric](references/rubric.md) · [Prompt Templates](references/prompt-templates.md)
 

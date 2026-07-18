@@ -120,6 +120,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - ENABLE REPLICATION → **required**; validate pre-flight + idempotency
 - SHOW / LIST / STATUS → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-site-recovery-ops \
+  --operation vault_create \
+  --command "az site-recovery vault create --name {{user.vault_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (vault_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/site-recovery_heal.json`](../../scripts/self_healing/site-recovery_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

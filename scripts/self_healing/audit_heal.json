@@ -1,0 +1,10 @@
+{
+  "skill": "azure-audit-ops",
+  "operations": {
+    "activity_log_query": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

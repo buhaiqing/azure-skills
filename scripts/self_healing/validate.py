@@ -34,7 +34,7 @@ def validate_policy(policy_file: Path) -> list[str]:
     if "skill" not in policy:
         errors.append("missing required field: skill")
     else:
-        if not re.match(r"^azure-[a-z]+-ops$", policy["skill"]):
+        if not re.match(r"^azure-[a-z0-9]+(-[a-z0-9]+)*-ops$", policy["skill"]):
             errors.append(f"invalid skill name format: {policy['skill']} (expected azure-xxx-ops)")
 
     if "operations" not in policy:

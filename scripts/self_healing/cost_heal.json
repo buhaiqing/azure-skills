@@ -1,0 +1,10 @@
+{
+  "skill": "azure-cost-ops",
+  "operations": {
+    "cost_query": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

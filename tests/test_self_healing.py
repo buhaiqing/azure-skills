@@ -6,7 +6,7 @@ from self_healing.loader import load_policy, load_registry
 
 def test_load_empty_registry():
     registry = load_registry("scripts/self_healing/registry.json")
-    assert registry["version"].startswith("1.")
+    assert registry["version"] == "2.0.0"
 
 def test_load_nonexistent_policy():
     policy = load_policy("azure-nonexistent-ops")
@@ -43,7 +43,7 @@ def test_load_frontdoor_policy():
     assert policy["operations"]["frontdoor_create"]["risky"] is False
 
 def test_validate_all_policies():
-    """validate.py reports all 6 policy files valid"""
+    """validate.py reports all 31 policy files valid"""
     import subprocess
     r = subprocess.run(
         ["python3", "scripts/self_healing/validate.py"],

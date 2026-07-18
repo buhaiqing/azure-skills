@@ -140,6 +140,24 @@ If confirmation is missing or user asks to skip it, HALT and explain the require
 
 GCL is required for destructive operations (delete topic, delete system topic, delete domain, delete event subscription, regenerate key). Use [rubric.md](references/rubric.md) and [prompt-templates.md](references/prompt-templates.md). Rubric dimensions: correctness, safety, idempotency, traceability, spec compliance. Safety score `0` aborts immediately. max_iterations: 2. Persist traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secrets masked as `***`.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-eventgrid-ops \
+  --operation topic_create \
+  --command "az eventgrid topic create --name {{user.topic_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (topic_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/eventgrid_heal.json`](../../scripts/self_healing/eventgrid_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

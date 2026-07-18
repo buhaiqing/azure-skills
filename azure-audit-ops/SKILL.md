@@ -139,6 +139,22 @@ This skill is **read-only**. All audit operations are safe to retry. The main GC
 (are findings correctly classified?). GCL is recommended for comprehensive audits (multi-service
 sweeps) but may be skipped for quick single-resource lookups.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-audit-ops \
+  --operation activity_log_query \
+  --command "az monitor activity-log list ..." \
+  --desired-state '{}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- Read-only operations (activity_log_query): auto-feedback loop active
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — categories, RBAC/lock/policy concepts, report template, delegation

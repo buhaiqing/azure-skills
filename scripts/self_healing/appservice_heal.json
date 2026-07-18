@@ -1,0 +1,31 @@
+{
+  "skill": "azure-appservice-ops",
+  "operations": {
+    "webapp_create": {
+      "health_check": {
+        "api": "az webapp show",
+        "args_template": ["webapp", "show", "--name", "{{webapp_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "state",
+        "expected": "Running"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "state",
+          "condition_value": "Running",
+          "heal_action": "az webapp start",
+          "heal_args_template": ["webapp", "start", "--name", "{{webapp_name}}", "--resource-group", "{{resource_group}}"],
+          "max_attempts": 2,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [],
+      "risky": false
+    },
+    "webapp_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

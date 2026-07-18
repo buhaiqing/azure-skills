@@ -135,6 +135,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** (see `AGENTS.md �
 ### Account Key Security
 Account key MUST be fetched via `-o tsv` into a shell variable and NEVER echoed. Critic scans for base64-encoded keys in trace. If detected, safety=0 → ABORT.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-file-storage-ops \
+  --operation fileshare_create \
+  --command "az storage share create --name {{user.share_name}} --account-name {{user.account_name}} ..." \
+  --desired-state '{"name": "{{user.share_name}}"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (fileshare_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/file-storage_heal.json`](../../scripts/self_healing/file-storage_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — SMB/NFS, quotas, snapshots, soft-delete, sync

@@ -1,0 +1,31 @@
+{
+  "skill": "azure-servicebus-ops",
+  "operations": {
+    "namespace_create": {
+      "health_check": {
+        "api": "az servicebus namespace show",
+        "args_template": ["servicebus", "namespace", "show", "--name", "{{namespace_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az servicebus namespace wait",
+          "heal_args_template": ["servicebus", "namespace", "wait", "--name", "{{namespace_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [],
+      "risky": false
+    },
+    "namespace_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

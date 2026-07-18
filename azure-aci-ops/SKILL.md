@@ -123,6 +123,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - RESTART (`az container restart`) → recommended
 - SHOW / LIST / LOGS → read-only; optional
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-aci-ops \
+  --operation container_create \
+  --command "az container create --name {{user.container_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (container_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/aci_heal.json`](../../scripts/self_healing/aci_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

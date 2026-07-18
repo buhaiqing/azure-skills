@@ -1,0 +1,31 @@
+{
+  "skill": "azure-apim-ops",
+  "operations": {
+    "apim_create": {
+      "health_check": {
+        "api": "az apim show",
+        "args_template": ["apim", "show", "--name", "{{apim_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az apim wait",
+          "heal_args_template": ["apim", "wait", "--name", "{{apim_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": ["Failed"],
+      "risky": false
+    },
+    "apim_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

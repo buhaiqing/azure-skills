@@ -1,0 +1,31 @@
+{
+  "skill": "azure-eventgrid-ops",
+  "operations": {
+    "topic_create": {
+      "health_check": {
+        "api": "az eventgrid topic show",
+        "args_template": ["eventgrid", "topic", "show", "--name", "{{topic_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az eventgrid topic wait",
+          "heal_args_template": ["eventgrid", "topic", "wait", "--name", "{{topic_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [],
+      "risky": false
+    },
+    "topic_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

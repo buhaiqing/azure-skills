@@ -1,0 +1,21 @@
+{
+  "skill": "azure-queue-storage-ops",
+  "operations": {
+    "queue_create": {
+      "health_check": {
+        "api": "az storage queue show",
+        "args_template": ["storage", "queue", "show", "--name", "{{queue_name}}", "--account-name", "{{account_name}}", "--output", "json"],
+        "parse_field": "name",
+        "expected": "{{queue_name}}"
+      },
+      "healing_rules": [],
+      "escalate_on": [],
+      "risky": false
+    },
+    "queue_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

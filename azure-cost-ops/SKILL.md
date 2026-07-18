@@ -114,6 +114,22 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - Invoice download → recommended
 - Reservation/savings plan operations → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-cost-ops \
+  --operation cost_query \
+  --command "az costmanagement query ..." \
+  --desired-state '{}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- Read-only operations (cost_query): auto-feedback loop active
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — scopes, billing models, FinOps pillars, RBAC roles

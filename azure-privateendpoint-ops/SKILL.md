@@ -130,6 +130,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - Create/update Private Endpoint → **required**; subnet, target resource, group ID, and DNS validation required
 - LIST / SHOW / connection state inspection → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-privateendpoint-ops \
+  --operation pe_create \
+  --command "az network private-endpoint create --name {{user.pe_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (pe_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/privateendpoint_heal.json`](../../scripts/self_healing/privateendpoint_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

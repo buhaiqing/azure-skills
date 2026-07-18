@@ -126,6 +126,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - CHANGE routing method → **required**; traffic redistribution impact communicated
 - CREATE / ADD / ENABLE / UPDATE → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-trafficmanager-ops \
+  --operation profile_create \
+  --command "az trafficmanager profile create --name {{user.profile_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (profile_create, endpoint_update): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/trafficmanager_heal.json`](../../scripts/self_healing/trafficmanager_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 - [Core Concepts](references/core-concepts.md) — routing methods, endpoint types, monitor status
 - [Troubleshooting](references/troubleshooting.md)

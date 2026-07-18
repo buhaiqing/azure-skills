@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "2.0.0",
   "skills": {
     "azure-vm-ops": "vm_heal.json",
     "azure-aks-ops": "aks_heal.json",
@@ -16,6 +16,21 @@
     "azure-acr-ops": "acr_heal.json",
     "azure-function-ops": "function_heal.json",
     "azure-keyvault-ops": "keyvault_heal.json",
-    "azure-nsg-ops": "nsg_heal.json"
+    "azure-nsg-ops": "nsg_heal.json",
+    "azure-aci-ops": "aci_heal.json",
+    "azure-apim-ops": "apim_heal.json",
+    "azure-appservice-ops": "appservice_heal.json",
+    "azure-audit-ops": "audit_heal.json",
+    "azure-backup-ops": "backup_heal.json",
+    "azure-cost-ops": "cost_heal.json",
+    "azure-eventgrid-ops": "eventgrid_heal.json",
+    "azure-eventhub-ops": "eventhub_heal.json",
+    "azure-file-storage-ops": "file-storage_heal.json",
+    "azure-privateendpoint-ops": "privateendpoint_heal.json",
+    "azure-queue-storage-ops": "queue-storage_heal.json",
+    "azure-servicebus-ops": "servicebus_heal.json",
+    "azure-site-recovery-ops": "site-recovery_heal.json",
+    "azure-sqldb-ops": "sqldb_heal.json",
+    "azure-trafficmanager-ops": "trafficmanager_heal.json"
   }
 }

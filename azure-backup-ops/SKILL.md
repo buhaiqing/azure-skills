@@ -116,6 +116,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - UPDATE POLICY → **required**; confirm retention changes
 - SHOW / LIST / STATUS → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-backup-ops \
+  --operation backup_vault_create \
+  --command "az backup vault create --name {{user.vault_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (backup_vault_create, protection_enable): auto-feedback loop active
+- **Risky operations** (delete/disable protection): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/backup_heal.json`](../../scripts/self_healing/backup_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [CLI Commands](references/cli-commands.md)

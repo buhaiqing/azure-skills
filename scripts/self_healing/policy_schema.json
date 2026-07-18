@@ -7,7 +7,7 @@
   "properties": {
     "skill": {
       "type": "string",
-      "pattern": "^azure-[a-z]+-ops$"
+      "pattern": "^azure-[a-z0-9]+(-[a-z0-9]+)*-ops$"
     },
     "operations": {
       "type": "object",

@@ -141,6 +141,24 @@ GCL **required**, `max_iterations=2`. See `AGENTS.md §3–§8`.
 
 Subscription keys are sensitive credentials; Policy XML may contain connection strings. The GCL trace MUST NOT contain raw key values or `<set-*>` policy `value=` attributes. If detected, **safety=0 → ABORT**.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-apim-ops \
+  --operation apim_create \
+  --command "az apim create --name {{user.apim_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (apim_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/apim_heal.json`](../../scripts/self_healing/apim_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
