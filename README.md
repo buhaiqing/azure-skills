@@ -484,30 +484,6 @@ az account show --output json
 | azure-eventgrid-ops | Azure Event Grid (Topics/Subscriptions, GCL required) | ✅ Complete |
 | azure-apim-ops | Azure API Management (Service/API/Product/Policy, GCL required) | ✅ Complete |
 
-## Planned Skills (Roadmap)
-
-### P2 — 建议封装（中高频运维刚需）
-
-### P2 — 建议封装（中高频运维刚需）
-
-| Skill | Service | 备注 |
-|------|------|------|
-| azure-queue-storage-ops | Queue Storage | 数据平面，与 blob-ops 互补 |
-| azure-file-storage-ops | File Storage (SMB/NFS) | 迁移/挂载排障常见 |
-| azure-backup-ops | Recovery Services / Backup | 备份/还原点；业务关键，GCL 建议启用 |
-| azure-site-recovery-ops | Site Recovery (ASR) | 容灾编排，变更影响大 |
-| azure-dns-ops | Azure DNS Zones | 与 TM/Front Door 互补，解析排障独立成块 |
-
-### P3 — 可选（视场景）
-
-| Skill | Service | 备注 |
-|------|------|------|
-| azure-logicapps-ops | Logic Apps | 集成/工作流自动化 |
-| azure-eventgrid-ops | Event Grid | 事件路由 |
-| azure-apim-ops | API Management | 企业 API 网关 |
-| azure-synapse-ops | Synapse Analytics | 数据分析，体量大可分阶段 |
-| azure-iot-hub-ops | IoT Hub | 涉 IoT 场景再补 |
-
 ## Compute Services Comparison
 
 | Feature | Virtual Machine | App Service | AKS | Container Instances |

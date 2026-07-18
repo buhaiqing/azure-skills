@@ -71,56 +71,25 @@ Every operation: **Pre-flight → Execute → Validate → Recover**. Detailed c
 | RG | `az group show -n {{user.resource_group}}` | Create or suggest |
 | Storage Account | `az storage account show -n {{user.storage_account_name}} -g {{user.resource_group}}` | Delegate to `azure-blobstorage-ops` |
 
-### Operation: Create File Share
+### Operations (CREATE / SHOW / LIST / UPDATE / SNAPSHOT)
 
-**CLI (primary):**
-```bash
-ACCOUNT_KEY=$(az storage account keys list -n "{{user.storage_account_name}}" -g "{{user.resource_group}}" --query "[0].value" -o tsv)
-az storage share create -n "{{user.share_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" --quota "{{user.quota_gb}}" -o json
-# For NFS: add --protocol NFS (requires premium FileStorage account)
-```
+Full CLI commands and SDK fallbacks: see [references/integration.md](references/integration.md). Summary:
 
-**SDK (fallback):** `client.file_shares.create({{user.resource_group}}, {{user.storage_account_name}}, {{user.share_name}}, {'share_quota': int({{user.quota_gb}}), 'enabled_protocols': 'SMB'})`.
+| Op | Key Params |
+|----|-------------|
+| CREATE | `--quota {{user.quota_gb}}`; NFS: `--protocol NFS` |
+| SHOW | `--account-name` + `--account-key` (fetched from `az storage account keys list`) |
+| LIST | optional `--prefix "{{user.prefix}}"` |
+| UPDATE | `--quota {{user.quota_gb}}` |
+| SNAPSHOT | no extra params |
 
-**Validate:** `az storage share show -n "{{user.share_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" -o json`
-
-### Operation: Show/List File Shares
-
-```bash
-az storage share show -n "{{user.share_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" -o json
-az storage share list --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" -o json
-az storage share list --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" --prefix "{{user.prefix}}" -o json
-```
-
-### Operation: Update Share Quota
-
-```bash
-az storage share update -n "{{user.share_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" --quota "{{user.quota_gb}}" -o json
-```
-
-### Operation: Create Share Snapshot
-
-```bash
-az storage share snapshot -n "{{user.share_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" -o json
-```
+Validate via `az storage share show -n {{user.share_name}} ...` — expect `status: active`.
 
 ### Operation: Soft-Delete / Undelete Share
 
-**CLI list deleted:** `az storage share list --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" --include-deleted -o json`
-**SDK restore:**
-```python
-from azure.mgmt.storage.models import DeletedShare
-client.file_shares.restore(
-    resource_group_name='{{user.resource_group}}',
-    account_name='{{user.storage_account_name}}',
-    share_name='{{user.share_name}}',
-    deleted_share=DeletedShare(
-        deleted_share_name='{{user.share_name}}',
-        deleted_share_version='{{output.deleted_share_version}}'
-    )
-)
-```
-CLI has no `undelete`.
+- CLI list deleted: see [integration.md](references/integration.md)
+- SDK restore: `client.file_shares.restore(...)` with `deleted_share_version` — full snippet in [integration.md](references/integration.md)
+- CLI has no native undelete; SDK required.
 
 ### Operation: Delete File Share
 
@@ -143,6 +112,8 @@ az storage share delete -n "{{user.share_name}}" --account-name "{{user.storage_
 | QuotaExceeded | HALT; request increase |
 | Throttling (429) | Backoff, retry 3x |
 | 5xx Internal | Retry 3x, then HALT |
+
+Full error table: [references/troubleshooting.md](references/troubleshooting.md).
 
 ## Quality Gate
 

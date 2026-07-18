@@ -76,66 +76,25 @@ Every operation follows: **Scope → Query → Analyze → Report**. CLI is prim
 
 ## Operation: Cost Analysis
 
-Primary CLI (cost by service, current month to date):
-
-```bash
-az costmanagement query \
-  --type ActualCost --timeframe MonthToDate \
-  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
-  --dataset-grouping name "ServiceName" type "Dimension" \
-  --output json
-```
-
-Variants (by ResourceGroupName / ResourceName / TagKey / Location, custom time range, RG filter, `--include-forecast`) and the Azure SDK fallback are in [integration.md](references/integration.md). Recover: `AuthorizationFailed` → HALT, assign Cost Management Reader; `ProviderNotRegistered` → HALT, register `Microsoft.CostManagement`; throttling/5xx → retry 3× then HALT. Full error table in [troubleshooting.md](references/troubleshooting.md).
+Primary CLI: `az costmanagement query --type ActualCost --timeframe MonthToDate --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --dataset-grouping name ServiceName type Dimension --output json`. Variants (by RG / Resource / Tag / Location, custom time, forecast) + SDK fallback: see [references/integration.md](references/integration.md). Recover: `AuthorizationFailed` → HALT (assign Cost Management Reader); `ProviderNotRegistered` → HALT (register `Microsoft.CostManagement`); throttling/5xx → retry 3× then HALT.
 
 ## Operation: Budget Management
 
-```bash
-az consumption budget list --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
-az consumption budget show --budget-name "{{user.budget_name}}" \
-  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
-# Create (Cost Management Contributor required):
-az consumption budget create --budget-name "{{user.budget_name}}" \
-  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --amount "{{user.budget_amount}}" \
-  --time-grain Monthly --time-period start-date "{{user.budget_start}}" end-date "{{user.budget_end}}" \
-  --category Cost --notification-group threshold-type Actual,Percent \
-  --notification-group threshold 80,100 --notification-group operator GreaterThan \
-  --notification-group email "{{user.alert_email}}" --notification-group enabled true --output json
-```
+`az consumption budget list / show` for read. Full `budget create` command (Cost Management Contributor required): see [references/integration.md](references/integration.md).
 
 **Safety Gate — Budget delete (required, GCL required)**: show the budget first, then require explicit human confirmation before `az consumption budget delete`. Safety=0 → ABORT.
 
 ## Operation: Reservation & Savings Plan
 
-```bash
-az reservations reservation list --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
-az reservations reservation list --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
-  --query "[].{Name:name, Utilization:properties.utilization, Sku:sku.name}" --output json
-az billing savings-plan list --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" --output json
-```
-
-Full command set (recommendations, reservation-order) in [integration.md](references/integration.md).
+`az reservations reservation list ...` for utilization review. Full commands (recommendations, savings-plan list, reservation-order): see [references/integration.md](references/integration.md).
 
 ## Operation: Invoice Management
 
-```bash
-az billing invoice list --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" --output json
-az billing invoice download --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" \
-  --invoice-name "{{user.invoice_name}}" --download-urls --output json
-# MCA: add --billing-profile-name "{{user.billing_profile}}"
-```
-
-Billing Reader role required for EA/MCA. Full set in [integration.md](references/integration.md).
+`az billing invoice list / download`. Full commands (MCA billing profile, EA billing account variants): see [references/integration.md](references/integration.md). Billing Reader role required.
 
 ## Operation: Cost Optimization Recommendations
 
-```bash
-az advisor recommendation list --query "[?category=='Cost']" --output json
-az monitor metrics list --resource "{{user.target_resource_id}}" --metric "Percentage CPU" \
-  --interval PT1H --aggregation Average --top 168 --orderby Average desc --output json
-```
-
-Right-sizing / idle-resource queries in [integration.md](references/integration.md).
+`az advisor recommendation list --query "[?category=='Cost']"` for cost advice. Right-sizing / idle-resource queries: see [references/integration.md](references/integration.md).
 
 ## Quality Gate
 
@@ -163,9 +122,4 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
-
-- [Azure Cost Management Docs](https://learn.microsoft.com/azure/cost-management-billing/)
-- [Azure CLI Cost Management](https://learn.microsoft.com/cli/azure/costmanagement)
-- [Azure CLI Consumption](https://learn.microsoft.com/cli/azure/consumption)
-- [FinOps Framework](https://www.finops.org/)
+See [Core Concepts](references/core-concepts.md) for scopes, billing models, and FinOps pillars.
