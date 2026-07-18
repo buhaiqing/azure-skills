@@ -76,39 +76,17 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 
 Each operation: run the **Azure CLI (primary)**; on CLI failure retry up to 3×, then fall back to **Azure SDK for Python**. 完整命令与 SDK 回退见 [integration.md](references/integration.md)。
 
-### Create
-`az vm create --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --location "{{user.location}}" --image {{user.image}} --size "{{user.vm_size}}" ... --output json`
-Validate: `az vm show` + `az vm get-instance-view` (provisioningState = Succeeded).
+Full CLI commands + SDK fallback for all operations → [references/integration.md](references/integration.md).
 
-### Start
-`az vm start --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json`
-
-### Stop (deallocate — stops billing)
-`az vm stop --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json`
-Use `--skip-deallocation` only if you intend to keep billing.
-
-### Restart
-`az vm restart --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json`
-
-### Resize
-`az vm resize --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --size "{{user.new_vm_size}}" --output json`
-Confirm VM is deallocated/stopped before resize; verify new size via `az vm show`.
-
-### List
-`az vm list --resource-group "{{user.resource_group}}" --show-details --output json`
-
-### Run Command (Cloud Assistant)
-`az vm run-command invoke --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --command-id RunShellScript --scripts "..." --output json`
-Available command IDs (RunShellScript / RunPowerShellScript / ifconfig) and SDK fallback: [integration.md](references/integration.md).
-
-### Extension
-`az vm extension set --name CustomScript --publisher Microsoft.Azure.Extensions --vm-name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json`
-Common extensions (VMAccessAgent / CustomScript / AzureMonitorAgent / AzureDiskEncryption): [core-concepts.md](references/core-concepts.md).
-
-### Delete — Safety Gate
-**MUST obtain explicit user confirmation (type exact VM name) before deletion. All attached disks and data will be lost.**
-`az vm show ...` → confirm → `az vm delete --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --yes --output json`
-Use `--force-deletion` to also remove NIC/disks/public IP. This is destructive — GCL required.
+| Op | Key flags |
+|----|-----------|
+| CREATE | `--image {{user.image}} --size {{user.vm_size}}`; validate: `az vm get-instance-view` |
+| START / RESTART / STOP | `--resource-group {{user.resource_group}}`; STOP: use `--skip-shutdown` to keep billing |
+| RESIZE | confirm deallocated first; `--size {{user.new_vm_size}}` |
+| LIST | `--show-details` |
+| RUN-COMMAND | `--command-id RunShellScript/RunPowerShellScript`; full commands: [integration.md](references/integration.md) |
+| EXTENSION | `--name CustomScript --publisher Microsoft.Azure.Extensions`; common extensions: [core-concepts.md](references/core-concepts.md) |
+| DELETE | **Safety Gate**: confirm exact VM name → `az vm delete --yes`; `--force-deletion` removes NIC/disks/public IP |
 
 ## Recovery (HALT vs Retry)
 
@@ -154,8 +132,4 @@ See `AGENTS.md §3–§8` for the spec.
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure Virtual Machines Documentation](https://docs.microsoft.com/azure/virtual-machines/)
-- [Azure CLI VM Reference](https://docs.microsoft.com/cli/azure/vm)
-- [Azure SDK Compute Module](https://docs.microsoft.com/python/api/azure-mgmt-compute/)

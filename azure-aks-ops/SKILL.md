@@ -117,13 +117,6 @@ az aks show --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}
 az aks delete --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --yes --output json
 ```
 
-## Safety & Delegation Notes
-
-- **Destructive ops** (`delete`, `stop`, scale node pool to 0, node pool delete) require an explicit human-confirmation gate — never auto-execute.
-- **ACR integration** (attach registry, grant AcrPull) is delegated to `azure-acr-ops`; this skill only calls `az aks update --attach-acr`. See [integration.md](references/integration.md#acr-integration-setup).
-- **Networking** (VNet/subnet for Azure CNI) is delegated to `azure-vnet-ops`; this skill passes `--vnet-subnet-id` only.
-- **Recovery decisions** (QuotaExceeded → HALT; Throttling 429 / 5xx → backoff retry 3×) follow [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md).
-
 ## Quality Gate
 
 This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
@@ -151,9 +144,4 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure AKS Documentation](https://docs.microsoft.com/azure/aks/)
-- [Azure CLI AKS Reference](https://docs.microsoft.com/cli/azure/aks)
-- [Azure SDK ContainerService Module](https://docs.microsoft.com/python/api/azure-mgmt-containerservice/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)

@@ -68,18 +68,16 @@ Azure Event Hubs provides managed event streaming (AMQP, Kafka). This skill hand
 
 ## JSON Paths
 
-```yaml
-NAMESPACE_ID: id
-NAMESPACE_STATE: properties.provisioningState
-NAMESPACE_SKU: sku.name
-NAMESPACE_TU: sku.capacity
-NAMESPACE_ENDPOINT: properties.serviceBusEndpoint
-EVENTHUB_ID: id
-EVENTHUB_PARTITIONS: properties.partitionCount
-EVENTHUB_STATE: properties.status
-CONSUMER_GROUP_ID: id
-CONNECTION_STRING: connectionString
-```
+| Key | Path |
+|-----|------|
+| NAMESPACE_ID / EVENTHUB_ID / CONSUMER_GROUP_ID | `.id` |
+| NAMESPACE_STATE | `.properties.provisioningState` |
+| NAMESPACE_SKU | `.sku.name` |
+| NAMESPACE_TU | `.sku.capacity` |
+| NAMESPACE_ENDPOINT | `.properties.serviceBusEndpoint` |
+| EVENTHUB_PARTITIONS | `.properties.partitionCount` |
+| EVENTHUB_STATE | `.properties.status` |
+| CONNECTION_STRING | `.connectionString` |
 
 ## Execution Flow Pattern
 

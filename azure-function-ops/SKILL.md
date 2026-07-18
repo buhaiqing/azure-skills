@@ -145,7 +145,5 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Integration Setup](references/integration.md) · [CLI & SDK Reference](references/cli-reference.md)
 - [Rubric](references/rubric.md) · [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure Functions Docs](https://docs.microsoft.com/azure/azure-functions/) · [functionapp CLI](https://docs.microsoft.com/cli/azure/functionapp) · [azure-mgmt-web SDK](https://docs.microsoft.com/python/api/azure-mgmt-web/)
 

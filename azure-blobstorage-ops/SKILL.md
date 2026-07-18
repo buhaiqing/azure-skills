@@ -115,10 +115,6 @@ az storage blob delete --account-name "{{user.storage_account_name}}" --containe
 az storage account delete --name "{{user.storage_account_name}}" --resource-group "{{user.resource_group}}" --yes --output json
 ```
 
-## Account Key Security
-
-Storage account data-plane commands use `--account-key` (or SAS token) for authentication. Never print the key value into logs or GCL traces — mask as `***`. Prefer Azure AD auth (`Storage Blob Data Contributor`) over shared keys where possible.
-
 ## Quality Gate
 
 This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
@@ -150,8 +146,4 @@ Storage account commands use `--account-key` for authentication. The GCL trace M
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure Blob Storage Documentation](https://docs.microsoft.com/azure/storage/blobs/)
-- [Azure CLI Storage Reference](https://docs.microsoft.com/cli/azure/storage)
-- [Azure SDK Storage Module](https://docs.microsoft.com/python/api/azure-storage-blob/)

@@ -111,18 +111,9 @@ Caller / event-name variants → [integration.md §7](references/integration.md)
 
 ## Safety Gates (Destructive)
 
-**Delete Alert Rule** — MUST obtain explicit user confirmation (user must type the exact alert rule name) before deletion:
-```bash
-az monitor metrics alert show --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
-# After confirmation: az monitor metrics alert delete --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
-```
-
-**Delete Action Group** — MUST confirm no alert rules reference it; list affected rules, then require explicit confirmation:
-```bash
-az monitor action-group delete --name "{{user.action_group_name}}" --resource-group "{{user.resource_group}}" --output json
-```
-
-**Delete Diagnostic Setting** — communicate the data-flow gap (logs/metrics stop streaming) before deletion.
+- **Delete Alert Rule**: show rule first, then require exact alert rule name. GCL required.
+- **Delete Action Group**: list rules referencing it first, then require confirmation. GCL required.
+- **Delete Diagnostic Setting**: warn of data-flow gap (logs/metrics stop streaming). GCL required.
 
 ## Quality Gate
 
@@ -153,8 +144,4 @@ Most Monitor operations are read-only (query, list, show). GCL is encouraged but
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure Monitor Docs](https://docs.microsoft.com/azure/azure-monitor/)
-- [Azure CLI Monitor Reference](https://docs.microsoft.com/cli/azure/monitor)
-- [KQL Query Reference](https://docs.microsoft.com/azure/data-explorer/kusto/query/)

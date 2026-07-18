@@ -147,10 +147,4 @@ sweeps) but may be skipped for quick single-resource lookups.
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
-## See Also
 
-- [Azure Activity Log Docs](https://docs.microsoft.com/azure/azure-monitor/essentials/activity-log)
-- [Azure RBAC Docs](https://docs.microsoft.com/azure/role-based-access-control/)
-- [Azure Policy Docs](https://docs.microsoft.com/azure/governance/policy/)
-- [Azure Resource Lock Docs](https://docs.microsoft.com/azure/azure-resource-manager/management/lock-resources)
-- [Azure Security Benchmark](https://docs.microsoft.com/security/benchmark/azure/)
