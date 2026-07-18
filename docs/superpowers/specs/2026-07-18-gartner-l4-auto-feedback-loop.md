@@ -269,7 +269,7 @@ def report_finding(
 - 多 skill 编排引擎（跨服务依赖解析）→ 未来 `scripts/orchestrator.py`
 - 执行记忆层（下次同类任务自动应用历史策略）→ 未来 `scripts/memory/`
 - 可观测面板（skill 级别 MTTR / success rate）→ 接入 `observability-collector` skill
-- 策略覆盖扩充（6 → 更多 skill）→ 随 skill 迭代逐步添加
+- 策略覆盖扩充（已完成：31/31 skill，100% 覆盖）→ 随新 skill 迭代逐步扩充
 
 ---
 
@@ -279,3 +279,4 @@ def report_finding(
 - `AGENTS.md §GCL` — GCL rubric 和 trace schema
 - `azure-skill-generator/references/rubric.md` — 5 维评分体系
 - `azure-skill-generator/references/troubleshooting-template.md` — 故障处理模板
+- [`execution-paths.md`](execution-paths.md) — Agent 执行路径决策树（auto_feedback_loop vs gcl_runner vs Safety Gate）

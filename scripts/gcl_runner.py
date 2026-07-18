@@ -37,14 +37,38 @@ DEFAULT_RUBRIC = {
     "spec_compliance": {"scale": [0, 0.5, 1], "threshold": 0.5},
 }
 
-# Skills where GCL is REQUIRED (Safety=1 mandatory)
-GCL_REQUIRED_SKILLS = {
-    "azure-vm-ops", "azure-aks-ops", "azure-blobstorage-ops",
-    "azure-appgateway-ops", "azure-loadbalancer-ops",
-    "azure-frontdoor-ops", "azure-trafficmanager-ops",
-}
-# Skills where GCL is RECOMMENDED
-GCL_RECOMMENDED_SKILLS = {"azure-monitor-ops", "azure-audit-ops", "azure-cost-ops"}
+# GCL_REQUIRED_SKILLS: loaded dynamically from registry
+# Skill is REQUIRED if any operation has risky=true
+# This avoids hardcoding and stays in sync with registry.json
+
+def _load_gcl_required_skills() -> set:
+    """Scan registry.json and return skills with at least one risky=true operation."""
+    registry_path = REPO_ROOT / "scripts" / "self_healing" / "registry.json"
+    required = set()
+    recommended = set()
+    try:
+        import json
+        registry = json.loads(registry_path.read_text())
+        for skill, policy_file in registry.get("skills", {}).items():
+            policy_path = REPO_ROOT / "scripts" / "self_healing" / policy_file
+            if policy_path.exists():
+                policy = json.loads(policy_path.read_text())
+                risky_ops = [op for op, cfg in policy.get("operations", {}).items() if cfg.get("risky")]
+                if risky_ops:
+                    required.add(skill)
+                else:
+                    recommended.add(skill)
+    except Exception:
+        # Fallback: hardcoded original set
+        required = {
+            "azure-vm-ops", "azure-aks-ops", "azure-blobstorage-ops",
+            "azure-appgateway-ops", "azure-loadbalancer-ops",
+            "azure-frontdoor-ops", "azure-trafficmanager-ops",
+        }
+        recommended = {"azure-monitor-ops", "azure-audit-ops", "azure-cost-ops"}
+    return required, recommended
+
+GCL_REQUIRED_SKILLS, GCL_RECOMMENDED_SKILLS = _load_gcl_required_skills()
 
 
 # --- CADL Finding Reporter ---
