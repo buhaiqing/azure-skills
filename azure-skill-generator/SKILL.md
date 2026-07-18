@@ -203,6 +203,15 @@ itself never touches live resources.
 - [governance-review.md](references/governance-review.md)
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
+- [CADL](references/cadl.md) — 复利资产沉淀机制，生成 skill 时须在 SKILL.md 末尾注入 CADL 触发行
+
+## Skill Output Hook — CADL Trigger Line
+
+When generating any `azure-*-ops` skill, append the following line to the end of its `SKILL.md`:
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。
+
+This makes every generated skill self-trigger the CADL loop after use.
 
 ## See Also
 

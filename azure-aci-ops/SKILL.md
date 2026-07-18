@@ -136,3 +136,5 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Azure Container Instances Documentation](https://docs.microsoft.com/azure/container-instances/)
 - [Azure CLI Container Reference](https://docs.microsoft.com/cli/azure/container)
 - [Azure SDK ContainerInstance Module](https://docs.microsoft.com/python/api/azure-mgmt-containerinstance/)
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

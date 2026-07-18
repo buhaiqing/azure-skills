@@ -348,3 +348,4 @@ safety=0 → ABORT, regardless of operation success.
 - [Azure Blob Storage Documentation](https://docs.microsoft.com/azure/storage/blobs/)
 - [Azure CLI Storage Reference](https://docs.microsoft.com/cli/azure/storage)
 - [Azure SDK Storage Module](https://docs.microsoft.com/python/api/azure-storage-blob/)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

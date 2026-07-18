@@ -128,3 +128,5 @@ Queue storage commands use `--account-key` for authentication. The GCL trace MUS
 - [Azure Queue Storage Documentation](https://docs.microsoft.com/azure/storage/queues/)
 - [Azure CLI Storage Queue Reference](https://docs.microsoft.com/cli/azure/storage/queue)
 - [Azure SDK Queue Module](https://docs.microsoft.com/python/api/azure-storage-queue/)
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

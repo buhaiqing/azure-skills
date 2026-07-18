@@ -256,3 +256,4 @@ See `AGENTS.md §3–§8` for the spec.
 - [Azure Load Balancer Docs](https://docs.microsoft.com/azure/load-balancer/)
 - [Azure CLI Network Reference](https://docs.microsoft.com/cli/azure/network/lb)
 - [Azure SDK Network Module](https://docs.microsoft.com/python/api/azure-mgmt-network/)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

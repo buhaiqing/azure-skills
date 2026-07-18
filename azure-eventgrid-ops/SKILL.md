@@ -147,3 +147,4 @@ GCL is required for destructive operations (delete topic, delete system topic, d
 - [Troubleshooting and RCA](references/troubleshooting.md)
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

@@ -333,3 +333,4 @@ sweeps) but may be skipped for quick single-resource lookups.
 - [Azure Policy Docs](https://docs.microsoft.com/azure/governance/policy/)
 - [Azure Resource Lock Docs](https://docs.microsoft.com/azure/azure-resource-manager/management/lock-resources)
 - [Azure Security Benchmark](https://docs.microsoft.com/security/benchmark/azure/)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

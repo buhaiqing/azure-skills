@@ -344,3 +344,4 @@ The GCL trace should note TTL value and propagation characteristics.
 - [Traffic Manager Docs](https://docs.microsoft.com/azure/traffic-manager/)
 - [Azure CLI Traffic Manager Reference](https://docs.microsoft.com/cli/azure/network/traffic-manager)
 - [Routing Methods](https://docs.microsoft.com/azure/traffic-manager/traffic-manager-routing-methods)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

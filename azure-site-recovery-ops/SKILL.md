@@ -133,3 +133,5 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - [Azure Site Recovery Documentation](https://docs.microsoft.com/azure/site-recovery/)
 - [Azure CLI Site Recovery Reference](https://docs.microsoft.com/cli/azure/site-recovery)
 - [Azure SDK Recovery Services](https://docs.microsoft.com/python/api/azure-mgmt-recoveryservicessiterecovery/)
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

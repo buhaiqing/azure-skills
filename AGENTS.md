@@ -40,6 +40,7 @@ When generating or modifying a skill, the source of truth for structure, frontma
 4. **Azure terminology**: always "Resource Group" (required for nearly every resource) and "Location" (not "region"). Resource IDs use full `/subscriptions/.../providers/...` form.
 5. **Variable convention** is enforced: `{{env.*}}` for secrets (never ask user), `{{user.*}}` for inputs (ask once, reuse), `{{output.*}}` for parsed API responses. See `azure-skill-generator/SKILL.md` "Variable Convention".
 6. **Keep `SKILL.md` slim.** Target ~100–150 lines focused on triggers, scope, flow, safety gates, and reference links. Move detailed commands, SDK snippets, RCA rules, AIOps playbooks, long tables, and design detail into `references/`.
+7. **Runtime-agnostic.** This repo's skills are consumed by many Agent runtimes (Harness AI, Claude Code, OpenCode, Cursor, etc.). Never hardcode a specific Coding Agent's paths, commands, or config names as the sole truth. Reference user-level config (e.g. `AGENTS.md` / `CLAUDE.md`) by its *role* with the path noted as runtime-dependent (`~/.config/opencode/AGENTS.md` or `~/.claude/CLAUDE.md`), never as the only valid location. Skills must stay portable across runtimes.
 
 ## Skill update workflow (project directive)
 
@@ -306,9 +307,22 @@ does not exempt a sloppy skill update.
 | 1.0.0 | 2026-06-04 | Initial GCL specification added to `AGENTS.md` |
 | 1.1.0 | 2026-06-05 | Added TE/GCL/LI rules; moved detail to [docs/](./docs/) |
 
-### 13. See also
+### 13. 复利资产沉淀机制 (CADL) — 必走出口
+
+任何实质任务完成后，Agent 必须走完「提取 → 判定落点 → 写入 → 门禁」闭环才能结束（任务不做沉淀 = 任务未完成）。完整机制、触发条件、Skill 侧钩子与反模式见：
+
+- **`azure-skill-generator/references/cadl.md`** — CADL 完整规范
+
+要点速记：
+- **触发**：多步/跨文件、跨 Skill 协作、评审/修复循环、发现 repo 坑、验证归因、用户给可复用偏好。
+- **落点**：跨仓库有用 → 用户级 AGENTS.md（路径随运行时而定，如 `~/.config/opencode/AGENTS.md` 或 `~/.claude/CLAUDE.md`）；仅本仓库 → 根 `AGENTS.md`；skill 专属能力 → 独立 Skill（经 generator）。
+- **门禁**：写入前 `wc -l` 查行数，根 `AGENTS.md` ≥ 500 行先精简（复用用户级 AGENTS.md 的 `agent-md-size-guard` 行数门禁规则，该规则随运行时存放）。
+- **钩子**：`azure-skill-generator` 生成 skill 时须在 SKILL.md 末尾注入 CADL 触发行；现存 `azure-*-ops` 逐批补同一行。
+
+### 14. See also
 
 - Each skill's `references/rubric.md` / `references/prompt-templates.md` — rubric + G/C/O prompts
 - [docs/token-efficiency.md](./docs/token-efficiency.md) — TE-1~TE-7 规则 + 内容去重
 - [docs/link-integrity.md](./docs/link-integrity.md) — LI-1~LI-4 链接检测
+- `azure-skill-generator/references/cadl.md` — 复利资产沉淀机制 (CADL) 完整规范
 - `azure-skill-generator/references/governance-review.md` — build-time governance review

@@ -527,3 +527,4 @@ See `AGENTS.md §3–§8` for the spec.
 - [Azure Virtual Machines Documentation](https://docs.microsoft.com/azure/virtual-machines/)
 - [Azure CLI VM Reference](https://docs.microsoft.com/cli/azure/vm)
 - [Azure SDK Compute Module](https://docs.microsoft.com/python/api/azure-mgmt-compute/)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

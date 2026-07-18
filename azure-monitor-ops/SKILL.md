@@ -308,3 +308,4 @@ for read-only operations. All **delete** operations are required to go through G
 - [Azure Monitor Docs](https://docs.microsoft.com/azure/azure-monitor/)
 - [Azure CLI Monitor Reference](https://docs.microsoft.com/cli/azure/monitor)
 - [KQL Query Reference](https://docs.microsoft.com/azure/data-explorer/kusto/query/)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

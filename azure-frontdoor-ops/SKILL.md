@@ -310,3 +310,4 @@ This skill uses `az afd` commands (Front Door Standard/Premium). The deprecated
 - [Front Door Docs](https://docs.microsoft.com/azure/frontdoor/)
 - [Azure CLI Front Door Reference](https://docs.microsoft.com/cli/azure/afd)
 - [Front Door Standard vs Premium](https://docs.microsoft.com/azure/frontdoor/standard-premium/tier-comparison)
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

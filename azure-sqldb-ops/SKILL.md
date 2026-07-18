@@ -146,3 +146,5 @@ GCL is required for destructive/disruptive operations and recommended for incide
 
 ## Reference Files
 - [Core Concepts](references/core-concepts.md) · [Integration](references/integration.md) · [Troubleshooting](references/troubleshooting.md) · [AIOps](references/aiops.md) · [Rubric](references/rubric.md) · [Prompt Templates](references/prompt-templates.md)
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

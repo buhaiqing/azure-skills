@@ -171,3 +171,5 @@ Account key MUST be fetched via `-o tsv` into a shell variable and NEVER echoed.
 - [Integration Setup](references/integration.md) — credentials, CLI/SDK setup, AzCopy
 - [Rubric](references/rubric.md) — GCL scoring dimensions
 - [Prompt Templates](references/prompt-templates.md) — Generator + Critic prompts
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。
