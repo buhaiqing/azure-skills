@@ -124,6 +124,24 @@ See `AGENTS.md §3–§8` for the spec.
 - CREATE (`az vm create`) → **required**; validate pre-flight + idempotency
 - START/RESTART/RUNCOMMAND → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation without a human gate on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-vm-ops \
+  --operation vm_create \
+  --command "az vm create --name {{user.vm_name}} --resource-group {{user.resource_group}} --location {{user.location}} ..." \
+  --desired-state '{"statuses[1].displayStatus": "VM running"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (create, start, restart, resize): auto-feedback loop active — observes actual VM state, diffs against desired, self-heals if non-running
+- **Risky operations** (delete, stop/deallocate): always bypass the loop and require explicit human confirmation — safety gate cannot be overridden
+- Healing policy: see [`scripts/self_healing/vm_heal.json`](../../scripts/self_healing/vm_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

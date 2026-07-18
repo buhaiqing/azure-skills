@@ -138,6 +138,24 @@ See `AGENTS.md §3–§8` for the spec.
 ### Account Key Security (GCL scanning)
 Storage account commands use `--account-key` for authentication. The GCL trace MUST NOT contain the account key value. The Critic scans for base64-encoded key strings in output. If detected, safety=0 → ABORT, regardless of operation success.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation without a human gate on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-blobstorage-ops \
+  --operation container_create \
+  --command "az storage container create --name {{user.container_name}} --account-name {{user.storage_account_name}} ..." \
+  --desired-state '{"name": "{{user.container_name}}"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (container_create, blob_upload): auto-feedback loop active — observes resource state
+- **Risky operations** (delete container, delete blob, delete storage account): always bypass the loop and require explicit human confirmation — safety gate cannot be overridden
+- Healing policy: see [`scripts/self_healing/blob_heal.json`](../../scripts/self_healing/blob_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — account types, SKU/replication, access tiers, blob types

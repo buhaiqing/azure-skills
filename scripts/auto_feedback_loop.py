@@ -28,6 +28,7 @@ from state_diff import diff, DiffResult
 from state_observer import observe, ObserveResult
 from self_healing.loader import load_policy
 from escalation import escalate, EscalationContext
+from report_finding import report_finding
 
 
 TRACE_DIR = Path(__file__).parent.parent / "audit-results"
@@ -205,6 +206,11 @@ def run_with_feedback(
                 escalation=escalation_msg,
             )
             _persist_trace(tid, fb_result)
+            report_finding(skill=skill, operation=operation,
+                          failure_type="command_failed",
+                          context={"exit_code": exec_result.returncode,
+                                   "stderr": exec_result.stderr[:200]},
+                          trace_id=tid)
             return fb_result
 
     # 3. 加载策略
@@ -240,6 +246,10 @@ def run_with_feedback(
                 escalation=escalation_msg,
             )
             _persist_trace(tid, fb_result)
+            report_finding(skill=skill, operation=operation,
+                          failure_type="observe_failed",
+                          context={"error": obs.error},
+                          trace_id=tid)
             return fb_result
 
     # 5. Diff — 比对 desired vs actual
@@ -276,6 +286,10 @@ def run_with_feedback(
             escalation=escalation_msg,
         )
         _persist_trace(tid, fb_result)
+        report_finding(skill=skill, operation=operation,
+                      failure_type="no_heal_policy",
+                      context={"diff_fields": [d.field for d in diff_result.diffs]},
+                      trace_id=tid)
         return fb_result
 
     for attempt in range(1, max_heal_attempts + 1):
@@ -332,6 +346,11 @@ def run_with_feedback(
         escalation=escalation_msg,
     )
     _persist_trace(tid, fb_result)
+    report_finding(skill=skill, operation=operation,
+                  failure_type="heal_exhausted",
+                  context={"diff_fields": [d.field for d in diff_result.diffs],
+                           "heal_attempts": heal_attempts},
+                  trace_id=tid)
     return fb_result
 
 

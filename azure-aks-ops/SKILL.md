@@ -136,6 +136,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - UPGRADE cluster → **required**; pre-check (`az aks get-upgrades`) + rollback strategy
 - CREATE / SCALE (non-zero) → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation without a human gate on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-aks-ops \
+  --operation aks_create \
+  --command "az aks create --name {{user.aks_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (create, scale): auto-feedback loop active — observes cluster provisioningState, diffs against desired, self-heals via `az aks wait`
+- **Risky operations** (delete, stop, scale-to-zero): always bypass the loop and require explicit human confirmation — safety gate cannot be overridden
+- Healing policy: see [`scripts/self_healing/aks_heal.json`](../../scripts/self_healing/aks_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — architecture, node pools, networking models, identity, kubectl cheat sheet
