@@ -51,3 +51,19 @@ def test_validate_all_policies():
     )
     assert r.returncode == 0, r.stderr
     assert "All policy files valid" in r.stdout
+
+
+def test_all_31_policies_load():
+    """每个策略文件都能正确加载，skill名匹配，operations非空"""
+    registry = load_registry("scripts/self_healing/registry.json")
+    skills = list(registry["skills"].keys())
+    assert len(skills) == 31, f"expected 31 skills, got {len(skills)}"
+    for skill in skills:
+        policy = load_policy(skill)
+        assert policy is not None, f"{skill}: load_policy returned None"
+        assert policy["skill"] == skill, f"{skill}: skill name mismatch {policy['skill']}"
+        assert "operations" in policy, f"{skill}: missing operations"
+        assert len(policy["operations"]) > 0, f"{skill}: empty operations"
+        # 每个 operation 必须有 risky 字段
+        for op_name, op_config in policy["operations"].items():
+            assert "risky" in op_config, f"{skill}.{op_name}: missing risky field"
