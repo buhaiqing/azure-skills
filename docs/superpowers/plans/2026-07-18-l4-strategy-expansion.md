@@ -1,8 +1,8 @@
 # L4 策略覆盖扩充计划 ✅ 已完成
 
 > **目标**: 将 self-healing 策略从 6 个 skill 扩充到 16 个，达到 L4 覆盖门槛（50%）
-> **最终 commit**: `98b3865`
-> **实际**: 6 → 16 skill（50%），正好达到 L4 门槛
+> **最终 commit**: `d258b89`
+> **实际**: 6 → 31 skill（100%），超越目标
 > **范围**: 新增 10 个策略 JSON + registry 更新 + 6 个 SKILL.md 追加 L4 段落 + validate 验证
 > **约束**: 每个策略 JSON 只写有把握的 operation；不写臆测的 API 字段
 

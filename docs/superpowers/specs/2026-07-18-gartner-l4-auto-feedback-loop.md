@@ -249,7 +249,7 @@ def report_finding(
 | G2 | `{{env.*}}` 展开前不校验 | `_expand_vars` 抛 `ValueError` | `commit 60d518b` |
 | G3 | CADL findings 未落地 | `report_finding.py`，4 个 escalation 路径全部接入 | `.runtime/findings/` 有落盘文件 |
 | G4 | SKILL.md 未引用 L4 loop | vm/aks/blob/appgateway/lb/frontdoor/vnet/dns/postgres/redis/monitor/cosmos/acr/function 共 14 个 SKILL.md 加 L4 段落 | `commit a9d83c6` + `commit f449c73` |
-| G5 | 策略覆盖仅 3/32 skill（9%） | 新增 vnet/dns/postgres/redis/monitor/cosmos/acr/function/keyvault/nsg 共 10 个策略 JSON | 6 → 16 skill（50%），`validate.py` 全通过 |
+| G5 | 策略覆盖仅 3/32 skill（9%） | 新增 28 个策略 JSON，覆盖全部 31 个 Azure skill | 6 → 31 skill（100%），`validate.py` 31/31 通过 |
 
 ---
 
