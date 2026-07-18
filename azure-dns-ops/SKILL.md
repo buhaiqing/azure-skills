@@ -130,6 +130,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - IMPORT zone file → **recommended**; idempotency check for bulk operations
 - CREATE zone / CREATE or UPDATE record set / SHOW / LIST / EXPORT → optional
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-dns-ops \
+  --operation dns_zone_create \
+  --command "az network dns zone create --name {{user.zone_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (dns_zone_create, dns_record_set_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/dns_heal.json`](../../scripts/self_healing/dns_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

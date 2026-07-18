@@ -123,6 +123,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - Peering create/delete/update → **required**; cross-VNet connectivity impact warning
 - CREATE VNet / subnet / LIST / SHOW → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-vnet-ops \
+  --operation vnet_create \
+  --command "az network vnet create --name {{user.vnet_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (vnet_create, subnet_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/vnet_heal.json`](../../scripts/self_healing/vnet_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

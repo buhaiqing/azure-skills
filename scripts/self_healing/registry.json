@@ -1,11 +1,19 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "skills": {
     "azure-vm-ops": "vm_heal.json",
     "azure-aks-ops": "aks_heal.json",
     "azure-blobstorage-ops": "blob_heal.json",
     "azure-appgateway-ops": "appgateway_heal.json",
     "azure-loadbalancer-ops": "loadbalancer_heal.json",
-    "azure-frontdoor-ops": "frontdoor_heal.json"
+    "azure-frontdoor-ops": "frontdoor_heal.json",
+    "azure-vnet-ops": "vnet_heal.json",
+    "azure-dns-ops": "dns_heal.json",
+    "azure-postgres-ops": "postgres_heal.json",
+    "azure-redis-ops": "redis_heal.json",
+    "azure-monitor-ops": "monitor_heal.json",
+    "azure-cosmos-ops": "cosmos_heal.json",
+    "azure-acr-ops": "acr_heal.json",
+    "azure-function-ops": "function_heal.json"
   }
 }

@@ -1,0 +1,31 @@
+{
+  "skill": "azure-function-ops",
+  "operations": {
+    "functionapp_create": {
+      "health_check": {
+        "api": "az functionapp show",
+        "args_template": ["functionapp", "show", "--name", "{{functionapp_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "state",
+        "expected": "Running"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "state",
+          "condition_value": "Running",
+          "heal_action": "az functionapp start",
+          "heal_args_template": ["functionapp", "start", "--name", "{{functionapp_name}}", "--resource-group", "{{resource_group}}"],
+          "max_attempts": 2,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [],
+      "risky": false
+    },
+    "functionapp_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

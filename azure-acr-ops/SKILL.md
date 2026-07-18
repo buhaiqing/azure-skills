@@ -131,6 +131,22 @@ GCL is required for destructive/disruptive operations and recommended for incide
 
 Persist GCL traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secrets masked as `***`.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-acr-ops \
+  --operation acr_create \
+  --command "az acr create --name {{user.registry_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+- **Non-risky operations** (acr_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/acr_heal.json`](../../scripts/self_healing/acr_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

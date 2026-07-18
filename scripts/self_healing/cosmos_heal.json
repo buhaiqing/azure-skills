@@ -1,0 +1,42 @@
+{
+  "skill": "azure-cosmos-ops",
+  "operations": {
+    "cosmosdb_create": {
+      "health_check": {
+        "api": "az cosmosdb show",
+        "args_template": ["cosmosdb", "show", "--name", "{{account_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az cosmosdb wait",
+          "heal_args_template": ["cosmosdb", "wait", "--name", "{{account_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": ["Failed", "quota_exceeded"],
+      "risky": false
+    },
+    "sql_database_create": {
+      "health_check": {
+        "api": "az cosmosdb sql database show",
+        "args_template": ["cosmosdb", "sql", "database", "show", "--account-name", "{{account_name}}", "--name", "{{database_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "id",
+        "expected": "{{database_name}}"
+      },
+      "healing_rules": [],
+      "escalate_on": [],
+      "risky": false
+    },
+    "cosmosdb_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}
