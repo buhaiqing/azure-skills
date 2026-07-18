@@ -5,15 +5,7 @@ az_trace.py — Lightweight auto-tracer for Azure CLI
 Drop-in wrapper that intercepts `az` commands, scores them against the GCL rubric,
 and persists normalized traces to audit-results/.
 
-Usage (replace `az` with this script in any skill execution):
-    python scripts/az_trace.py run "az vm show --name my-vm --resource-group my-rg --output json"
-
-    # With explicit skill (auto-detected if omitted):
-    python scripts/az_trace.py run --skill azure-vm-ops "az vm delete ..."
-
-    # Destructive operations are flagged automatically.
-    # Credentials are masked in traces (***).
-
+Schema aligned with Langfuse observation model (trace → span → generation).
 No dependencies beyond stdlib. Python >= 3.10.
 """
 
@@ -30,6 +22,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+# --- Langfuse Schema Alignment ---
+# Trace-level reserved fields (snake_case = Python SDK convention):
+#   id, name, user_id, session_id, version, release, metadata, tags, public, input, output
+# Observation fields (snake_case):
+#   id, trace_id, name, type, start_time, end_time, metadata
+#   generation: model, model_parameters, input, output, usage, completion_start_time
+# For rule-based scoring (no LLM): model = "rule-based-az-cli"
+
+TRACE_VERSION = "1.0.0"
+
 # --- Constants ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -37,7 +39,7 @@ AUDIT_DIR = REPO_ROOT / "audit-results"
 TRACE_PREFIX = "gcl-trace"
 TIMESTAMP_FMT = "%Y%m%d-%H%M%S"
 
-# Skills where GCL is REQUIRED (destructive operations need explicit confirmation)
+# Skills where GCL is REQUIRED
 GCL_REQUIRED_SKILLS = frozenset({
     "azure-vm-ops", "azure-aks-ops", "azure-blobstorage-ops",
     "azure-appgateway-ops", "azure-loadbalancer-ops", "azure-frontdoor-ops",
@@ -46,7 +48,6 @@ GCL_REQUIRED_SKILLS = frozenset({
     "azure-eventgrid-ops", "azure-apim-ops",
 })
 
-# Destructive operation keywords (case-insensitive)
 DESTRUCTIVE_PATTERNS = re.compile(
     r"\b(delete|terminate|destroy|purge|remove|stop\s+--?\s*deallocate|"
     r"deallocate|drop\s+table|drop\s+database|reset|purge\s+key|"
@@ -54,7 +55,6 @@ DESTRUCTIVE_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-# Credential patterns to mask in traces
 CREDENTIAL_PATTERNS = re.compile(
     r"(AZURE_CLIENT_SECRET|AZURE_|subscription[_-]?id|tenant[_-]?id|"
     r"client[_-]?id|client[_-]?secret|access[_-]?key|connection[_-]?string|"
@@ -62,10 +62,8 @@ CREDENTIAL_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-# Map az subcommand prefixes to skill names
 AZ_TO_SKILL = {
-    "vm": "azure-vm-ops",
-    "aks": "azure-aks-ops",
+    "vm": "azure-vm-ops", "aks": "azure-aks-ops",
     "storage account": "azure-blobstorage-ops",
     "storage container": "azure-blobstorage-ops",
     "storage blob": "azure-blobstorage-ops",
@@ -75,47 +73,26 @@ AZ_TO_SKILL = {
     "network lb": "azure-loadbalancer-ops",
     "afd": "azure-frontdoor-ops",
     "network traffic-manager": "azure-trafficmanager-ops",
-    "backup": "azure-backup-ops",
-    "site-recovery": "azure-site-recovery-ops",
-    "network dns": "azure-dns-ops",
-    "eventhubs": "azure-eventhub-ops",
-    "eventgrid": "azure-eventgrid-ops",
-    "servicebus": "azure-servicebus-ops",
-    "functionapp": "azure-function-ops",
-    "webapp": "azure-appservice-ops",
-    "containerapp": "azure-aci-ops",
-    "containerreg": "azure-acr-ops",
-    "cosmosdb": "azure-cosmos-ops",
-    "sql": "azure-sqldb-ops",
-    "postgres": "azure-postgres-ops",
-    "redis": "azure-redis-ops",
-    "keyvault": "azure-keyvault-ops",
-    "monitor": "azure-monitor-ops",
-    "policy": "azure-audit-ops",
-    "role": "azure-audit-ops",
-    "lock": "azure-audit-ops",
-    "group": "azure-vnet-ops",
-    "network vnet": "azure-vnet-ops",
-    "network nsg": "azure-nsg-ops",
+    "backup": "azure-backup-ops", "site-recovery": "azure-site-recovery-ops",
+    "network dns": "azure-dns-ops", "eventhubs": "azure-eventhub-ops",
+    "eventgrid": "azure-eventgrid-ops", "servicebus": "azure-servicebus-ops",
+    "functionapp": "azure-function-ops", "webapp": "azure-appservice-ops",
+    "containerapp": "azure-aci-ops", "containerreg": "azure-acr-ops",
+    "cosmosdb": "azure-cosmos-ops", "sql": "azure-sqldb-ops",
+    "postgres": "azure-postgres-ops", "redis": "azure-redis-ops",
+    "keyvault": "azure-keyvault-ops", "monitor": "azure-monitor-ops",
+    "policy": "azure-audit-ops", "role": "azure-audit-ops",
+    "lock": "azure-audit-ops", "group": "azure-vnet-ops",
+    "network vnet": "azure-vnet-ops", "network nsg": "azure-nsg-ops",
     "network private-endpoint": "azure-privateendpoint-ops",
     "apim": "azure-apim-ops",
 }
 
 
-# --- Data Models ---
+# --- Data Models (Langfuse-aligned) ---
 
 @dataclass
-class GeneratorResult:
-    command: str
-    args: dict
-    exit_code: int
-    stdout: str
-    stderr: str
-    elapsed_sec: float
-
-
-@dataclass
-class CriticScores:
+class GCLScores:
     correctness: float
     safety: float
     idempotency: float
@@ -124,27 +101,53 @@ class CriticScores:
 
 
 @dataclass
-class CriticResult:
-    scores: CriticScores
-    suggestions: list[str]
-    blocking: bool
+class Generation:
+    """Langfuse GENERATION observation — represents az command execution."""
+    model: str = "rule-based-az-cli"      # no LLM; would be "gpt-4o" if upgraded
+    model_parameters: dict = field(default_factory=dict)
+    input: str = ""
+    output: str = ""
+    usage: dict = field(default_factory=dict)  # for LLM: prompt_tokens/completion_tokens; here: az metadata
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
-class Iteration:
-    iter: int
-    generator: GeneratorResult
-    critic: CriticResult
-    decision: str
+class Span:
+    """Langfuse SPAN observation — represents one GCL iteration."""
+    name: str = ""       # e.g. "iter-1"
+    start_time: str = ""  # ISO8601
+    end_time: str = ""    # ISO8601
+    metadata: dict = field(default_factory=dict)
+    generation: Optional[Generation] = None
+    # GCL-specific: critic scores attached to span metadata
+    gcl_scores: Optional[GCLScores] = None
+    gcl_suggestions: list = field(default_factory=list)
+    gcl_blocking: bool = False
+    gcl_decision: str = ""
 
 
 @dataclass
-class GCLTrace:
-    skill: str
-    request: str
-    rubric_version: str
-    iterations: list[Iteration] = field(default_factory=list)
-    final: Optional[dict] = None
+class Trace:
+    """
+    Langfuse Trace — top-level container for one GCL run.
+    Fields align with Langfuse Python SDK snake_case convention.
+    """
+    id: str = ""
+    name: str = ""         # trace name, e.g. "azure-vm-ops GCL"
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    version: str = TRACE_VERSION
+    release: Optional[str] = None
+    metadata: dict = field(default_factory=dict)
+    tags: list = field(default_factory=list)
+    public: bool = False
+    input: str = ""
+    output: str = ""
+    # GCL-specific spans
+    spans: list = field(default_factory=list)
+    # Summary fields (flat, for quick query)
+    gcl_status: str = ""    # PASS / SAFETY_FAIL / MAX_ITER
+    gcl_final_iter: int = 0
 
 
 # --- Helpers ---
@@ -153,8 +156,11 @@ def ts() -> str:
     return datetime.now(timezone.utc).strftime(TIMESTAMP_FMT)
 
 
+def iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
 def mask_credentials(text: str) -> str:
-    """Replace credential values with *** in traces."""
     return CREDENTIAL_PATTERNS.sub("***", text)
 
 
@@ -163,7 +169,6 @@ def is_destructive(command: str) -> bool:
 
 
 def detect_skill(command: str) -> str:
-    """Infer skill from az subcommand."""
     lower = command.lower()
     for pattern, skill in AZ_TO_SKILL.items():
         if pattern in lower:
@@ -171,21 +176,19 @@ def detect_skill(command: str) -> str:
     return "unknown"
 
 
-def default_rubric(skill: str, is_destructive: bool) -> dict:
-    """Return per-skill rubric thresholds."""
+def default_rubric(skill: str, destructive: bool) -> dict:
     required = skill in GCL_REQUIRED_SKILLS
-    safety_threshold = 1.0 if (required or is_destructive) else 0.5
+    safety_threshold = 1.0 if (required or destructive) else 0.5
     return {
-        "correctness": {"scale": [0, 0.5, 1], "threshold": 0.5},
-        "safety": {"scale": [0, 1], "threshold": safety_threshold},
-        "idempotency": {"scale": [0, 0.5, 1], "threshold": 0.5},
-        "traceability": {"scale": [0, 0.5, 1], "threshold": 0.5},
-        "spec_compliance": {"scale": [0, 0.5, 1], "threshold": 0.5},
+        "correctness": {"threshold": 0.5},
+        "safety": {"threshold": safety_threshold},
+        "idempotency": {"threshold": 0.5},
+        "traceability": {"threshold": 0.5},
+        "spec_compliance": {"threshold": 0.5},
     }
 
 
 def parse_args(command: str) -> dict:
-    """Parse az command string into a dict of flags and values."""
     parts = command.split()
     args = {}
     i = 0
@@ -200,8 +203,7 @@ def parse_args(command: str) -> dict:
                 args[key] = True
                 i += 1
         elif p.startswith("-"):
-            key = p[1:].replace("-", "_")
-            args[key] = True
+            args[p[1:].replace("-", "_")] = True
             i += 1
         else:
             i += 1
@@ -210,106 +212,90 @@ def parse_args(command: str) -> dict:
 
 # --- Core GCL Logic ---
 
-def run_az(command: str, timeout: int = 120) -> GeneratorResult:
-    """Execute az command and return structured result."""
+def run_az(command: str, timeout: int = 120) -> dict:
     start = time.time()
+    start_iso = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
     try:
-        # Split command string into list (handles "az vm show --name x")
-        parts = command.split()
-        result = subprocess.run(parts, capture_output=True, text=True, timeout=timeout)
+        result = subprocess.run(command.split(), capture_output=True, text=True, timeout=timeout)
         elapsed = time.time() - start
-        return GeneratorResult(
-            command=command,
-            args=parse_args(command),
-            exit_code=result.returncode,
-            stdout=result.stdout[:4000],
-            stderr=result.stderr[:2000],
-            elapsed_sec=round(elapsed, 2),
-        )
+        end_iso = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        return {
+            "start_iso": start_iso, "end_iso": end_iso,
+            "elapsed": round(elapsed, 3),
+            "exit_code": result.returncode,
+            "stdout": result.stdout[:4000],
+            "stderr": result.stderr[:2000],
+            "command": command,
+        }
     except subprocess.TimeoutExpired:
-        return GeneratorResult(
-            command=command, args={}, exit_code=-1,
-            stdout="", stderr=f"Timeout after {timeout}s", elapsed_sec=timeout,
-        )
+        end_iso = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        return {
+            "start_iso": start_iso, "end_iso": end_iso, "elapsed": timeout,
+            "exit_code": -1, "stdout": "",
+            "stderr": f"Timeout after {timeout}s", "command": command,
+        }
     except FileNotFoundError:
-        return GeneratorResult(
-            command=command, args={}, exit_code=-1,
-            stdout="", stderr="az not found. Install Azure CLI: https://aka.ms/installazurecliwindows",
-            elapsed_sec=0,
-        )
+        end_iso = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        return {
+            "start_iso": start_iso, "end_iso": end_iso, "elapsed": 0,
+            "exit_code": -1, "stdout": "",
+            "stderr": "az not found. Install: https://aka.ms/installazurecliwindows",
+            "command": command,
+        }
 
 
-def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
-    """
-    Deterministic rule-based critic scoring.
-    Aligned with AGENTS.md §6 trace schema.
-    """
-    gen = trace.iterations[-1].generator
-    scores = {}
+def score(gen_result: dict, rubric: dict, destructive: bool, prev_command: str = "") -> tuple[GCLScores, list, bool]:
+    scores = {"correctness": 0.0, "safety": 1.0, "idempotency": 0.5, "traceability": 0.5, "spec_compliance": 0.5}
     suggestions = []
     blocking = False
 
-    # Correctness: exit code 0 + non-empty stdout
-    if gen.exit_code == 0 and gen.stdout.strip():
+    # Correctness
+    if gen_result["exit_code"] == 0 and gen_result["stdout"].strip():
         scores["correctness"] = 1.0
-    elif gen.exit_code == 0:
+    elif gen_result["exit_code"] == 0:
         scores["correctness"] = 0.5
-        suggestions.append("Command succeeded but stdout is empty — verify resource state")
+        suggestions.append("Command succeeded but stdout is empty")
     else:
         scores["correctness"] = 0.0
-        err_brief = mask_credentials(gen.stderr[:200])
-        suggestions.append(f"Command failed (exit {gen.exit_code}): {err_brief}")
-        # For read-only/show/list commands, allow retry; for destructive ops fail immediately
+        suggestions.append(f"Command failed (exit {gen_result['exit_code']}): {mask_credentials(gen_result['stderr'][:200])}")
         if destructive:
             blocking = True
 
-    # Safety: destructive ops must have pre-confirmation show
+    # Safety: destructive ops must have prior `show`
     if destructive:
-        prior_shows = sum(
-            1 for it in trace.iterations
-            if "show" in it.generator.command.lower() and "delete" not in it.generator.command.lower()
-        )
-        if prior_shows > 0:
+        # Heuristic: command contains "show" and not "delete" = pre-confirmation
+        if "show" in gen_result["command"].lower() and "delete" not in gen_result["command"].lower():
             scores["safety"] = 1.0
         else:
             scores["safety"] = 0.0
             suggestions.append("Destructive op without prior `show` — safety gate missing")
             blocking = True
-    else:
-        scores["safety"] = 1.0
 
-    # Safety override: credential leak — only flag if az credential-write command returned actual secret
-    # Common credential write operations that might leak a secret in stdout
+    # Credential leak: only flag credential-write operations
     credential_write_ops = (
-        "create-for-rbac" in gen.command or
-        "create-credentials" in gen.command or
-        "reset-credentials" in gen.command
+        "create-for-rbac" in gen_result["command"] or
+        "create-credentials" in gen_result["command"] or
+        "reset-credentials" in gen_result["command"]
     )
-    combined = gen.stdout + gen.stderr
+    combined = gen_result["stdout"] + gen_result["stderr"]
     if credential_write_ops and ("AZURE_CLIENT_SECRET" in combined or "password" in combined.lower()):
         scores["safety"] = 0.0
         suggestions.append("CREDENTIAL_LEAK: secret value found in credential-write output")
         blocking = True
 
-    # Idempotency: same command re-run produces same result
-    if len(trace.iterations) >= 2:
-        prev_cmd = trace.iterations[-2].generator.command
-        curr_cmd = gen.command
-        if prev_cmd == curr_cmd and gen.exit_code == 0:
-            scores["idempotency"] = 1.0
-        elif prev_cmd == curr_cmd and gen.exit_code != 0:
-            scores["idempotency"] = 0.5
-            suggestions.append("Same command re-run failed — not idempotent or transient error")
-        else:
-            # Commands differ (command was fixed between iterations — expected behavior)
-            scores["idempotency"] = 1.0
+    # Idempotency
+    if prev_command and gen_result["command"] == prev_command:
+        scores["idempotency"] = 1.0 if gen_result["exit_code"] == 0 else 0.5
+    elif not prev_command:
+        scores["idempotency"] = 1.0 if gen_result["exit_code"] == 0 else 0.5
     else:
-        scores["idempotency"] = 1.0 if gen.exit_code == 0 else 0.5
+        # Command was mechanically fixed between iterations — not a failure
+        scores["idempotency"] = 1.0
 
-    # Traceability: command + output captured
-    if gen.command and gen.stdout:
+    # Traceability
+    if gen_result["command"] and gen_result["stdout"]:
         scores["traceability"] = 1.0
-    elif gen.command:
+    elif gen_result["command"]:
         scores["traceability"] = 0.5
         suggestions.append("No stdout captured in trace")
     else:
@@ -317,9 +303,9 @@ def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
         suggestions.append("No command captured")
         blocking = True
 
-    # Spec compliance: --output json + --resource-group
-    has_json = "--output json" in gen.command or "-o json" in gen.command
-    has_rg = "--resource-group" in gen.command
+    # Spec compliance
+    has_json = "--output json" in gen_result["command"] or "-o json" in gen_result["command"]
+    has_rg = "--resource-group" in gen_result["command"]
     if has_json and has_rg:
         scores["spec_compliance"] = 1.0
     elif has_json:
@@ -329,215 +315,239 @@ def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
         scores["spec_compliance"] = 0.0
         suggestions.append("Missing --output json")
 
-    # Safety=0 always blocks
-    if scores.get("safety", 1.0) == 0.0:
+    if scores["safety"] == 0.0:
         blocking = True
 
-    return CriticResult(
-        scores=CriticScores(**scores),
-        suggestions=suggestions[:3],
-        blocking=blocking,
-    )
+    return GCLScores(**scores), suggestions[:3], blocking
 
 
-def decide(trace: GCLTrace, rubric: dict, max_iter: int, destructive: bool) -> tuple[str, Optional[dict]]:
-    """Return (decision, final_entry)."""
-    last = trace.iterations[-1]
-    s = last.critic.scores
+def decide(scores: GCLScores, rubric: dict, iter_num: int, max_iter: int) -> tuple[str, dict]:
     all_pass = all(
-        getattr(s, dim, 0) >= rubric[dim]["threshold"]
+        getattr(scores, dim, 0) >= rubric[dim]["threshold"]
         for dim in ["correctness", "safety", "idempotency", "traceability", "spec_compliance"]
     )
-
-    if last.critic.blocking:
-        last.decision = "BLOCK"
-        return "BLOCK", {
-            "status": "SAFETY_FAIL",
-            "iter": last.iter,
-            "reason": suggestions_summary(last.critic.suggestions),
-            "scores": asdict(s),
-            "output": mask_credentials(last.generator.stdout[:500]),
-        }
     if all_pass:
-        last.decision = "PASS"
-        return "PASS", {
-            "status": "PASS",
-            "iter": last.iter,
-            "scores": asdict(s),
-            "output": mask_credentials(last.generator.stdout[:500]),
-        }
-    if last.iter >= max_iter:
-        last.decision = "MAX_ITER"
-        return "MAX_ITER", {
-            "status": "MAX_ITER",
-            "iter": last.iter,
-            "reason": f"max_iter={max_iter} reached",
-            "scores": asdict(s),
-            "unresolved": [dim for dim in ["correctness", "safety", "idempotency", "traceability", "spec_compliance"]
-                          if getattr(s, dim, 0) < rubric[dim]["threshold"]],
-        }
-    last.decision = "RETRY"
-    return "RETRY", None
+        return "PASS", {"status": "PASS", "iter": iter_num, "scores": asdict(scores)}
+    if iter_num >= max_iter:
+        unresolved = [d for d in ["correctness", "safety", "idempotency", "traceability", "spec_compliance"]
+               if getattr(scores, d, 0) < rubric[d]["threshold"]]
+        return "MAX_ITER", {"status": "MAX_ITER", "iter": iter_num, "unresolved": unresolved, "scores": asdict(scores)}
+    return "RETRY", {}
 
 
-def suggestions_summary(suggestions: list[str]) -> str:
-    return "; ".join(suggestions) if suggestions else "scoring failed"
-
-
-# --- Trace Persistence ---
-
-def persist(trace: GCLTrace) -> Path:
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    filename = f"{TRACE_PREFIX}-{ts()}-{uuid.uuid4().hex[:6]}.json"
-    path = AUDIT_DIR / filename
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(asdict_trace(trace), f, indent=2, ensure_ascii=False)
-    return path
-
-
-def asdict_trace(trace: GCLTrace) -> dict:
-    """Serialize GCLTrace to dict matching AGENTS.md §6 schema."""
-    iterations = []
-    for it in trace.iterations:
-        iterations.append({
-            "iter": it.iter,
-            "generator": {
-                "command": mask_credentials(it.generator.command),
-                "args": it.generator.args,
-                "exit_code": it.generator.exit_code,
-                "result_excerpt": mask_credentials(it.generator.stdout[:800]),
-            },
-            "critic": {
-                "scores": asdict(it.critic.scores),
-                "suggestions": [mask_credentials(s) for s in it.critic.suggestions],
-                "blocking": it.critic.blocking,
-            },
-            "decision": it.decision,
-        })
-    return {
-        "skill": trace.skill,
-        "request": mask_credentials(trace.request),
-        "rubric_version": trace.rubric_version,
-        "iterations": iterations,
-        "final": trace.final,
-    }
-
-
-# --- Command Fixer (for retry) ---
+# --- Command Fixer ---
 
 def _inject_output_json(cmd: str) -> str:
-    """Add --output json if missing."""
     if "--output" not in cmd and "-o json" not in cmd and "-o table" not in cmd:
         return f"{cmd.rstrip()} --output json"
     return cmd
 
 
-def _inject_resource_group(cmd: str, rg_hint: Optional[str] = None) -> str:
-    """Add --resource-group if missing (only if a hint is provided)."""
-    if "--resource-group" not in cmd:
-        if rg_hint:
-            return f"{cmd.rstrip()} --resource-group {rg_hint}"
+def _fix_command(cmd: str, suggestions: list[str]) -> str:
+    for s in suggestions:
+        if "Missing --output json" in s:
+            cmd = _inject_output_json(cmd)
     return cmd
 
 
-def _fix_command(cmd: str, suggestions: list[str], rubric: dict, skill: str) -> str:
-    """
-    Apply mechanical fixes from critic suggestions to the command for next iteration.
-    Maps feedback to concrete az flag corrections.
-    """
-    fixed = cmd
-    for s in suggestions:
-        if "Missing --output json" in s:
-            fixed = _inject_output_json(fixed)
-        if "Missing --resource-group" in s and "--resource-group" not in fixed:
-            # Cannot guess the RG; leave as-is for user to confirm
-            pass
-    return fixed
+# --- Trace Serialization (Langfuse-aligned) ---
+
+def serialize_trace(trace: Trace) -> dict:
+    """Serialize Trace to Langfuse-aligned dict."""
+    result = {
+        "id": trace.id,
+        "name": trace.name,
+        "version": trace.version,
+        "metadata": trace.metadata,
+        "gcl_status": trace.gcl_status,
+        "gcl_final_iter": trace.gcl_final_iter,
+        "input": mask_credentials(trace.input),
+        "output": mask_credentials(trace.output),
+        "spans": [],
+    }
+    if trace.user_id:
+        result["user_id"] = trace.user_id
+    if trace.session_id:
+        result["session_id"] = trace.session_id
+    if trace.release:
+        result["release"] = trace.release
+    if trace.tags:
+        result["tags"] = trace.tags
+
+    for span in trace.spans:
+        span_dict = {
+            "name": span.name,
+            "start_time": span.start_time,
+            "end_time": span.end_time,
+            "metadata": span.metadata,
+        }
+        if span.generation:
+            gen = span.generation
+            span_dict["generation"] = {
+                "model": gen.model,
+                "model_parameters": gen.model_parameters,
+                "input": mask_credentials(gen.input),
+                "output": mask_credentials(gen.output),
+                "usage": gen.usage,
+                "metadata": gen.metadata,
+            }
+        if span.gcl_scores:
+            span_dict["gcl_scores"] = asdict(span.gcl_scores)
+        if span.gcl_suggestions:
+            span_dict["gcl_suggestions"] = [mask_credentials(s) for s in span.gcl_suggestions]
+        if span.gcl_decision:
+            span_dict["gcl_decision"] = span.gcl_decision
+        result["spans"].append(span_dict)
+
+    return result
+
+
+def persist(trace: Trace) -> Path:
+    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{TRACE_PREFIX}-{ts()}-{trace.id[:8]}.json"
+    path = AUDIT_DIR / filename
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(serialize_trace(trace), f, indent=2, ensure_ascii=False)
+    return path
 
 
 # --- Main ---
 
 def gcl_run(command: str, skill: Optional[str] = None, max_iter: int = 3) -> dict:
-    """
-    Run one az command through GCL: execute → score → decide → persist.
-    Returns the final entry dict.
-    """
     skill = skill or detect_skill(command)
     destructive = is_destructive(command)
     rubric = default_rubric(skill, destructive)
 
-    trace = GCLTrace(
-        skill=skill,
-        request=command,
-        rubric_version="v1",
+    trace = Trace(
+        id=str(uuid.uuid4()),
+        name=f"{skill} GCL",
+        metadata={
+            "skill": skill,
+            "is_destructive": destructive,
+            "tool": "az_trace.py",
+            "tool_version": TRACE_VERSION,
+            "scorer": "rule-based",
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            "os": sys.platform,
+        },
+        input=command,
+        tags=[skill, "gcl", "az-cli"],
     )
+    if sub_id := os.environ.get("AZURE_SUBSCRIPTION_ID"):
+        parts = sub_id.split("-")
+        trace.metadata["subscription_id_pattern"] = f"{parts[0]}-****-{parts[-1]}" if len(parts) >= 3 else "***"
+
+    prev_command = ""
+    final_status = "UNKNOWN"
+    final_scores = {}
 
     for i in range(1, max_iter + 1):
         gen_result = run_az(command)
-        iter_entry = Iteration(
-            iter=i,
-            generator=gen_result,
-            critic=CriticResult(
-                scores=CriticScores(correctness=0, safety=0, idempotency=0, traceability=0, spec_compliance=0),
-                suggestions=[],
-                blocking=False,
-            ),
-            decision="RETRY",
+
+        # Build Generation observation
+        generation = Generation(
+            model="rule-based-az-cli",  # would be actual model name if upgraded to LLM
+            model_parameters={"command": mask_credentials(command)},
+            input=mask_credentials(gen_result["command"]),
+            output=mask_credentials(gen_result["stdout"][:800]),
+            usage={
+                "az_exit_code": gen_result["exit_code"],
+                "az_elapsed_sec": gen_result["elapsed"],
+            },
+            metadata={
+                "az_stderr": mask_credentials(gen_result["stderr"][:500]),
+                "az_args": parse_args(gen_result["command"]),
+            },
         )
-        trace.iterations.append(iter_entry)
 
         # Score
-        trace.iterations[-1].critic = score(trace, rubric, destructive)
+        gcl_scores, suggestions, blocking = score(gen_result, rubric, destructive, prev_command)
 
         # Decide
-        decision, final_entry = decide(trace, rubric, max_iter, destructive)
-        if decision in ("BLOCK", "PASS", "MAX_ITER"):
-            trace.final = final_entry
+        decision, final_entry = decide(gcl_scores, rubric, i, max_iter)
+
+        # Build Span observation
+        span = Span(
+            name=f"iter-{i}",
+            start_time=gen_result["start_iso"],
+            end_time=gen_result["end_iso"],
+            metadata={
+                "command": mask_credentials(gen_result["command"]),
+                "exit_code": gen_result["exit_code"],
+                "elapsed_sec": gen_result["elapsed"],
+            },
+            generation=generation,
+            gcl_scores=gcl_scores,
+            gcl_suggestions=suggestions,
+            gcl_blocking=blocking,
+            gcl_decision=decision,
+        )
+        trace.spans.append(span)
+
+        if decision == "PASS":
+            trace.gcl_status = "PASS"
+            trace.gcl_final_iter = i
+            trace.output = mask_credentials(gen_result["stdout"][:500])
+            final_status = "PASS"
+            final_scores = asdict(gcl_scores)
             break
 
-        # Inject mechanical fixes from critic into next iteration (B2 fix)
-        next_suggestions = trace.iterations[-1].critic.suggestions
-        command = _fix_command(command, next_suggestions, rubric, skill)
+        if decision == "MAX_ITER":
+            trace.gcl_status = "MAX_ITER"
+            trace.gcl_final_iter = i
+            final_status = "MAX_ITER"
+            final_scores = asdict(gcl_scores)
+            break
 
-    # Persist
+        if blocking:
+            trace.gcl_status = "SAFETY_FAIL"
+            trace.gcl_final_iter = i
+            final_status = "SAFETY_FAIL"
+            final_scores = asdict(gcl_scores)
+            break
+
+        # Inject fixes into next iteration
+        command = _fix_command(command, suggestions)
+        prev_command = gen_result["command"]
+
     path = persist(trace)
     return {
-        "status": trace.final["status"] if trace.final else "UNKNOWN",
-        "iter": trace.iterations[-1].iter,
-        "scores": asdict(trace.iterations[-1].critic.scores),
+        "id": trace.id,
+        "gcl_status": trace.gcl_status,
+        "gcl_final_iter": trace.gcl_final_iter,
+        "scores": final_scores,
         "trace": str(path),
-        "output": trace.final.get("output", "") if trace.final else "",
-        "suggestions": [mask_credentials(s) for s in trace.iterations[-1].critic.suggestions],
+        "metadata": trace.metadata,
+        "output": trace.output,
     }
 
 
+# --- CLI Entry Point ---
+
 def main():
     parser = argparse.ArgumentParser(
-        description="az_trace.py — Auto-tracer for Azure CLI. Wraps az commands with GCL scoring.",
+        description="az_trace.py — GCL auto-tracer for Azure CLI. Schema aligned with Langfuse.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python scripts/az_trace.py run "az vm show --name my-vm --resource-group my-rg --output json"
   python scripts/az_trace.py run --skill azure-vm-ops "az vm delete --name my-vm --resource-group my-rg --yes"
-  python scripts/az_trace.py trace  # show last N traces
-  python scripts/az_trace.py lint   # score all traces in audit-results/
+  python scripts/az_trace.py trace  # list recent traces
+  python scripts/az_trace.py lint   # batch score all traces
         """,
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    # run
-    p_run = sub.add_parser("run", help="Execute one az command with auto-tracing")
+    p_run = sub.add_parser("run", help="Execute one az command with GCL auto-tracing")
     p_run.add_argument("--skill", help="Skill name (auto-detected if omitted)")
     p_run.add_argument("--max-iter", type=int, default=3)
     p_run.add_argument("command", help="Full az command as a single string")
     p_run.add_argument("--json", action="store_true", help="Output only JSON")
 
-    # trace
     p_trace = sub.add_parser("trace", help="List recent trace files")
     p_trace.add_argument("-n", "--count", type=int, default=10)
 
-    # lint
-    p_lint = sub.add_parser("lint", help="Score all traces in audit-results/ (batch review)")
+    p_lint = sub.add_parser("lint", help="Batch review all traces in audit-results/")
 
     args = parser.parse_args()
 
@@ -546,43 +556,35 @@ Examples:
         if args.json:
             print(json.dumps(result, indent=2))
         else:
-            print(f"[az_trace] skill={result['skill']} status={result['status']} "
-                  f"iter={result['iter']} trace={result['trace']}", file=sys.stderr)
-            if result["suggestions"]:
-                print(f"[az_trace] suggestions: {'; '.join(result['suggestions'])}", file=sys.stderr)
+            print(f"[az_trace] id={result['id']} status={result['gcl_status']} "
+                  f"iter={result['gcl_final_iter']} trace={result['trace']}", file=sys.stderr)
             print(result["output"])
 
     elif args.cmd == "trace":
         files = sorted(AUDIT_DIR.glob(f"{TRACE_PREFIX}-*.json"), reverse=True)
         if not files:
-            print("No traces found. Run: python scripts/az_trace.py run '<az command>'")
+            print("No traces found.")
             return
         for f in files[:args.count]:
-            ts_str = f.stem.replace(f"{TRACE_PREFIX}-", "")
             size = f.stat().st_size
-            print(f"  {ts_str}  {size:>6d}B  {f.name}")
+            print(f"  {f.name}  {size:>6d}B")
 
     elif args.cmd == "lint":
         files = sorted(AUDIT_DIR.glob(f"{TRACE_PREFIX}-*.json"), reverse=True)
         if not files:
             print("No traces to lint.")
             return
-        total = len(files)
-        statuses = {"PASS": 0, "SAFETY_FAIL": 0, "MAX_ITER": 0}
-        safety_fails = []
+        statuses = {"PASS": 0, "SAFETY_FAIL": 0, "MAX_ITER": 0, "UNKNOWN": 0}
         for f in files:
             try:
                 data = json.loads(f.read_text())
-                s = data.get("final", {}).get("status", "UNKNOWN")
+                s = data.get("gcl_status", "UNKNOWN")
                 statuses[s] = statuses.get(s, 0) + 1
-                if s == "SAFETY_FAIL":
-                    safety_fails.append(f.name)
             except (json.JSONDecodeError, OSError):
                 pass
+        total = len(files)
         print(f"Traces: {total} total | PASS: {statuses['PASS']} | "
               f"SAFETY_FAIL: {statuses['SAFETY_FAIL']} | MAX_ITER: {statuses['MAX_ITER']}")
-        if safety_fails:
-            print(f"Safety failures: {', '.join(safety_fails)}")
 
 
 if __name__ == "__main__":
