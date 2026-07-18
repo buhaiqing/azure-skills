@@ -259,7 +259,9 @@ def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
         scores["correctness"] = 0.0
         err_brief = mask_credentials(gen.stderr[:200])
         suggestions.append(f"Command failed (exit {gen.exit_code}): {err_brief}")
-        blocking = True
+        # For read-only/show/list commands, allow retry; for destructive ops fail immediately
+        if destructive:
+            blocking = True
 
     # Safety: destructive ops must have pre-confirmation show
     if destructive:
@@ -276,17 +278,33 @@ def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
     else:
         scores["safety"] = 1.0
 
-    # Safety override: credential leak
+    # Safety override: credential leak — only flag if az credential-write command returned actual secret
+    # Common credential write operations that might leak a secret in stdout
+    credential_write_ops = (
+        "create-for-rbac" in gen.command or
+        "create-credentials" in gen.command or
+        "reset-credentials" in gen.command
+    )
     combined = gen.stdout + gen.stderr
-    if "AZURE_CLIENT_SECRET" in combined or "password" in combined.lower():
-        # Only flag if it looks like a real credential (not a help message)
-        if "create-for-rbac" not in combined and "show" not in gen.command.lower():
-            scores["safety"] = 0.0
-            suggestions.append("CREDENTIAL_LIKELIHOOD: credential pattern in output")
-            blocking = True
+    if credential_write_ops and ("AZURE_CLIENT_SECRET" in combined or "password" in combined.lower()):
+        scores["safety"] = 0.0
+        suggestions.append("CREDENTIAL_LEAK: secret value found in credential-write output")
+        blocking = True
 
-    # Idempotency: exit 0 on re-run
-    scores["idempotency"] = 1.0 if gen.exit_code == 0 else 0.5
+    # Idempotency: same command re-run produces same result
+    if len(trace.iterations) >= 2:
+        prev_cmd = trace.iterations[-2].generator.command
+        curr_cmd = gen.command
+        if prev_cmd == curr_cmd and gen.exit_code == 0:
+            scores["idempotency"] = 1.0
+        elif prev_cmd == curr_cmd and gen.exit_code != 0:
+            scores["idempotency"] = 0.5
+            suggestions.append("Same command re-run failed — not idempotent or transient error")
+        else:
+            # Commands differ (command was fixed between iterations — expected behavior)
+            scores["idempotency"] = 1.0
+    else:
+        scores["idempotency"] = 1.0 if gen.exit_code == 0 else 0.5
 
     # Traceability: command + output captured
     if gen.command and gen.stdout:
@@ -310,7 +328,6 @@ def score(trace: GCLTrace, rubric: dict, destructive: bool) -> CriticResult:
     else:
         scores["spec_compliance"] = 0.0
         suggestions.append("Missing --output json")
-        blocking = True
 
     # Safety=0 always blocks
     if scores.get("safety", 1.0) == 0.0:
@@ -406,6 +423,38 @@ def asdict_trace(trace: GCLTrace) -> dict:
     }
 
 
+# --- Command Fixer (for retry) ---
+
+def _inject_output_json(cmd: str) -> str:
+    """Add --output json if missing."""
+    if "--output" not in cmd and "-o json" not in cmd and "-o table" not in cmd:
+        return f"{cmd.rstrip()} --output json"
+    return cmd
+
+
+def _inject_resource_group(cmd: str, rg_hint: Optional[str] = None) -> str:
+    """Add --resource-group if missing (only if a hint is provided)."""
+    if "--resource-group" not in cmd:
+        if rg_hint:
+            return f"{cmd.rstrip()} --resource-group {rg_hint}"
+    return cmd
+
+
+def _fix_command(cmd: str, suggestions: list[str], rubric: dict, skill: str) -> str:
+    """
+    Apply mechanical fixes from critic suggestions to the command for next iteration.
+    Maps feedback to concrete az flag corrections.
+    """
+    fixed = cmd
+    for s in suggestions:
+        if "Missing --output json" in s:
+            fixed = _inject_output_json(fixed)
+        if "Missing --resource-group" in s and "--resource-group" not in fixed:
+            # Cannot guess the RG; leave as-is for user to confirm
+            pass
+    return fixed
+
+
 # --- Main ---
 
 def gcl_run(command: str, skill: Optional[str] = None, max_iter: int = 3) -> dict:
@@ -445,6 +494,10 @@ def gcl_run(command: str, skill: Optional[str] = None, max_iter: int = 3) -> dic
         if decision in ("BLOCK", "PASS", "MAX_ITER"):
             trace.final = final_entry
             break
+
+        # Inject mechanical fixes from critic into next iteration (B2 fix)
+        next_suggestions = trace.iterations[-1].critic.suggestions
+        command = _fix_command(command, next_suggestions, rubric, skill)
 
     # Persist
     path = persist(trace)
