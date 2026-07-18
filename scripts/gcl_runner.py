@@ -47,6 +47,27 @@ GCL_REQUIRED_SKILLS = {
 GCL_RECOMMENDED_SKILLS = {"azure-monitor-ops", "azure-audit-ops", "azure-cost-ops"}
 
 
+# --- CADL Finding Reporter ---
+
+def _report_finding(skill: str, failure_type: str, context: dict, trace_id: str) -> None:
+    """Write CADL finding on GCL escalation. Silently ignores if report_finding.py unavailable."""
+    try:
+        import importlib.util
+        script = REPO_ROOT / "scripts" / "report_finding.py"
+        spec = importlib.util.spec_from_file_location("report_finding", script)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.report_finding(
+            skill=skill,
+            operation="",
+            failure_type=failure_type,
+            context=context,
+            trace_id=trace_id,
+        )
+    except Exception:
+        pass  # non-critical; findings are best-effort
+
+
 # --- Utilities ---
 
 def timestamp() -> str:
@@ -236,7 +257,9 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
     max_iter = rubric.get("max_iter", MAX_ITER)
     skill_required = skill in GCL_REQUIRED_SKILLS
 
+    trace_id = uuid.uuid4().hex[:8]
     trace = {
+        "id": trace_id,
         "skill": skill,
         "request": user_request,
         "rubric_version": rubric.get("rubric_version", "v1"),
@@ -289,6 +312,13 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
                 "scores": scores,
             }
             _path = persist_trace(trace)
+            tid = trace["id"]
+            _report_finding(
+                skill=skill,
+                failure_type="gcl_safety_fail",
+                context={"reason": trace["final"]["reason"], "scores": scores},
+                trace_id=tid,
+            )
             print(f"[GCL] SAFETY_FAIL — trace written to {_path}")
             return trace["final"]
 
@@ -321,6 +351,13 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
         "scores": critic_result["scores"] if 'critic_result' in dir() else {},
     }
     _path = persist_trace(trace)
+    tid = trace["id"]
+    _report_finding(
+        skill=skill,
+        failure_type="gcl_max_iter",
+        context={"reason": trace["final"]["reason"], "scores": trace["final"]["scores"]},
+        trace_id=tid,
+    )
     print(f"[GCL] MAX_ITER — trace written to {_path}")
     return trace["final"]
 
