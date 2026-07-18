@@ -12,12 +12,18 @@ azure-skills/
 │   ├── auto_feedback_loop.py      # L4闭环：execute→observe→diff→heal→escalate
 │   ├── state_observer.py          # 调用 Azure ARM API 获取资源实际状态
 │   ├── state_diff.py              # desired vs actual state 比对（JMESPath支持）
-│   ├── escalation.py             # 升人工：构造诊断上下文
+│   ├── escalation.py             # 升人工：构造诊断上下文（含补偿历史）
 │   ├── self_healing/             # 策略外置 JSON（31个Azure skill全量覆盖）
 │   ├── az_trace.py               # GCL auto-tracer（drop-in az wrapper）
 │   └── setup_env.py              # .env → 配置生成器
 │
-├── tests/                         # 单元测试（pytest，9/9 PASS）
+├── manual/                         # 用户手册（L4 快速入门/指南/FAQ）
+│   ├── index.md                  # 总览
+│   ├── quick-start.md            # 5 分钟上手
+│   ├── user-guide.md             # 完整用户指南
+│   └── faq.md                    # 常见问题
+│
+├── tests/                         # 单元测试（14/14 PASS）
 │   ├── test_state_diff.py
 │   ├── test_self_healing.py
 │   └── test_auto_feedback_loop.py
