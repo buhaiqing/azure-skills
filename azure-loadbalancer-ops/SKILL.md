@@ -122,6 +122,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - DELETE inbound NAT rule → **required**; port forwarding impact communicated
 - CREATE LB / ADD VM to pool / LIST → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-loadbalancer-ops \
+  --operation lb_create \
+  --command "az network lb create --name {{user.lb_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/loadbalancer_heal.json`](../../scripts/self_healing/loadbalancer_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — LB types, SKU, components

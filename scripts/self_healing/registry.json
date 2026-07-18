@@ -1,8 +1,11 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "skills": {
     "azure-vm-ops": "vm_heal.json",
     "azure-aks-ops": "aks_heal.json",
-    "azure-blobstorage-ops": "blob_heal.json"
+    "azure-blobstorage-ops": "blob_heal.json",
+    "azure-appgateway-ops": "appgateway_heal.json",
+    "azure-loadbalancer-ops": "loadbalancer_heal.json",
+    "azure-frontdoor-ops": "frontdoor_heal.json"
   }
 }

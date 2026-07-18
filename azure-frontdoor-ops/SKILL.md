@@ -116,6 +116,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 
 This skill uses `az afd` commands (Front Door Standard/Premium). The deprecated `az network front-door` MUST NOT be used. Violation → spec_compliance = 0.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-frontdoor-ops \
+  --operation frontdoor_create \
+  --command "az afd profile create --name {{user.profile_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (create, endpoint_create): auto-feedback loop active
+- **Risky operations** (delete): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/frontdoor_heal.json`](../../scripts/self_healing/frontdoor_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md) — SKU, components, FD vs AGW comparison

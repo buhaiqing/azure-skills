@@ -1,0 +1,34 @@
+{
+  "skill": "azure-loadbalancer-ops",
+  "operations": {
+    "lb_create": {
+      "health_check": {
+        "api": "az network lb show",
+        "args_template": ["network", "lb", "show", "--name", "{{lb_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az network lb wait",
+          "heal_args_template": ["network", "lb", "wait", "--name", "{{lb_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": [
+        "Failed",
+        "quota_exceeded"
+      ],
+      "risky": false
+    },
+    "lb_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

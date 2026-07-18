@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Azure Skill Self-Healing Policy",
+  "type": "object",
+  "required": ["skill", "operations"],
+  "additionalProperties": false,
+  "properties": {
+    "skill": {
+      "type": "string",
+      "pattern": "^azure-[a-z]+-ops$"
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["risky"],
+        "additionalProperties": false,
+        "properties": {
+          "risky": {
+            "type": "boolean",
+            "description": "True = destructive operation, always requires human gate"
+          },
+          "health_check": {
+            "type": "object",
+            "required": ["api", "args_template"],
+            "additionalProperties": false,
+            "properties": {
+              "api": { "type": "string" },
+              "args_template": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "parse_field": { "type": "string" },
+              "expected": { "type": "string" }
+            }
+          },
+          "healing_rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "condition_type",
+                "condition_field",
+                "condition_value",
+                "heal_action",
+                "heal_args_template",
+                "max_attempts",
+                "backoff_sec"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "condition_type": {
+                  "type": "string",
+                  "enum": ["field_not_equal"]
+                },
+                "condition_field": { "type": "string" },
+                "condition_value": { "type": "string" },
+                "heal_action": { "type": "string" },
+                "heal_args_template": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "max_attempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "backoff_sec": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 300
+                }
+              }
+            }
+          },
+          "escalate_on": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
