@@ -232,3 +232,9 @@ audit-results/
 
 # Code graph cache
 .codegraph/
+
+# Pi Agent runtime state
+.pi/
+
+# L4 feedback loop findings (generated at runtime)
+.runtime/
