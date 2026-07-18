@@ -167,3 +167,189 @@ AppRequests | where Success == false | count by AppRoleName
 - Generated Skills use `{{env.*}}` placeholders only
 - Alert thresholds should be validated against baseline metrics
 - Action groups should be tested before production use
+
+## Full `az monitor` Command Reference
+
+All operations follow dual-path: **Azure CLI (primary)** + **Azure SDK for Python (fallback)**. CLI failures retry up to 3× before falling back.
+
+### 1. Metrics
+
+```bash
+# List available metrics for a resource
+az monitor metrics list --resource "{{user.target_resource_id}}" --output json
+
+# Get specific metric values
+az monitor metrics list --resource "{{user.target_resource_id}}" \
+  --metric "Percentage CPU" \
+  --interval PT1M \
+  --aggregation Average \
+  --start-time "2026-05-10T00:00:00Z" \
+  --end-time "2026-05-10T01:00:00Z" \
+  --output json
+```
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.monitor import MonitorManagementClient
+import os
+
+credential = DefaultAzureCredential()
+client = MonitorManagementClient(
+    credential,
+    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
+)
+
+# Get metric definitions
+definitions = client.metrics.list(
+    resource_uri='{{user.target_resource_id}}'
+)
+
+# Get metric values
+metrics = client.metrics.list(
+    resource_uri='{{user.target_resource_id}}',
+    metricnames='Percentage CPU',
+    aggregation='Average',
+    interval='PT1M'
+)
+```
+
+### 2. Action Groups
+
+```bash
+# Create action group for alert notifications
+az monitor action-group create \
+  --name "{{user.action_group_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --location "Global" \
+  --short-name "myaction" \
+  --output json
+
+# Add email notification
+az monitor action-group create \
+  --name "{{user.action_group_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --short-name "myaction" \
+  --action-email name "email-action" email-address "admin@example.com" \
+  --output json
+
+# Add webhook notification
+az monitor action-group create \
+  --name "{{user.action_group_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --short-name "myaction" \
+  --action-webhook name "webhook-action" webhook-uri "https://example.com/webhook" \
+  --output json
+```
+
+### 3. Metric Alert Rule
+
+```bash
+az monitor metrics alert create \
+  --name "{{user.alert_rule_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --scopes "{{user.target_resource_id}}" \
+  --condition "avg Percentage CPU > 80" \
+  --window-size 5m \
+  --evaluation-frequency 1m \
+  --action "{{user.action_group_name}}" \
+  --description "CPU usage exceeds 80%" \
+  --output json
+```
+
+### 4. Log Alert Rule (Scheduled Query)
+
+```bash
+az monitor scheduled-query create \
+  --name "{{user.alert_rule_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --scopes "{{user.log_analytics_workspace_id}}" \
+  --condition-query "AzureActivity | where OperationName == 'RestartVM'" \
+  --condition-threshold 1 \
+  --evaluation-frequency 5m \
+  --window-size 15m \
+  --action "{{user.action_group_name}}" \
+  --description "VM restart detected" \
+  --output json
+```
+
+### 5. Log Analytics Query
+
+```bash
+# Execute KQL query in Log Analytics workspace
+az monitor log-analytics query \
+  --workspace "{{user.workspace_id}}" \
+  --analytics-query "AzureActivity | take 10" \
+  --timespan "1d" \
+  --output json
+
+# Query specific logs
+az monitor log-analytics query \
+  --workspace "{{user.workspace_id}}" \
+  --analytics-query "Syslog | where TimeGenerated > ago(1h) | count" \
+  --output json
+```
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.monitor.query import LogsQueryClient
+
+credential = DefaultAzureCredential()
+client = LogsQueryClient(credential)
+
+# Execute KQL query
+response = client.query_workspace(
+    workspace_id='{{user.workspace_id}}',
+    query='AzureActivity | take 10',
+    timespan='1d'
+)
+
+# Access results
+for table in response.tables:
+    for row in table.rows:
+        print(row)
+```
+
+### 6. Diagnostic Settings
+
+```bash
+az monitor diagnostic-settings create \
+  --name "{{user.diagnostic_setting_name}}" \
+  --resource "{{user.target_resource_id}}" \
+  --workspace "{{user.workspace_id}}" \
+  --logs "[{category:'Administrative',enabled:true},{category:'Security',enabled:true}]" \
+  --metrics "[{category:'AllMetrics',enabled:true,timegrain:'PT1M'}]" \
+  --output json
+```
+
+### 7. Activity Log
+
+```bash
+# List recent activity log events
+az monitor activity-log list \
+  --caller "{{user.caller}}" \
+  --start-time "2026-05-09T00:00:00Z" \
+  --end-time "2026-05-10T00:00:00Z" \
+  --output json
+
+# Query by resource
+az monitor activity-log list \
+  --resource "{{user.target_resource_id}}" \
+  --output json
+
+# Query by event name
+az monitor activity-log list \
+  --event-name "RestartVM" \
+  --output json
+```
+
+### 8. Delete Operations (Destructive — require confirmation)
+
+```bash
+# Show alert rule before deletion
+az monitor metrics alert show --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
+# Then, after explicit user confirmation (exact rule name typed):
+az monitor metrics alert delete --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Delete action group (after confirming no rules reference it)
+az monitor action-group delete --name "{{user.action_group_name}}" --resource-group "{{user.resource_group}}" --output json
+```

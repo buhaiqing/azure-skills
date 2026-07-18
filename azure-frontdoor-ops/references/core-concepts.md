@@ -187,3 +187,24 @@
   2. Configure health probes
   3. Set priority: primary first, secondary backup
   4. FD automatically routes to healthy origin
+
+## Key Components (CLI Command Family)
+
+| Component | Purpose | CLI Command |
+|-----------|---------|-------------|
+| **Profile** | Front Door container | `az afd profile` |
+| **Endpoint** | Entry point (hostname) | `az afd endpoint` |
+| **Origin Group** | Backend pool | `az afd origin-group` |
+| **Origin** | Backend server | `az afd origin` |
+| **Health Probe** | Health check | `az afd probe` |
+| **Route** | Routing rule | `az afd route` |
+| **Custom Domain** | Custom hostname | `az afd custom-domain` |
+| **Rule Set** | Traffic rules | `az afd rule-set` |
+| **Security Policy** | WAF association | `az afd security-policy` |
+
+## Front Door SKUs
+
+| SKU | Use Case |
+|-----|----------|
+| **Standard_AzureFrontDoor** | Global load balancing, CDN acceleration |
+| **Premium_AzureFrontDoor** | Standard + WAF, private link origins |

@@ -104,3 +104,158 @@ dependencies = [
 - **NEVER** write credentials into Skill documents
 - Generated Skills use `{{env.*}}` placeholders only
 - Front Door endpoint names must be globally unique
+
+## Full Command Reference (Azure CLI)
+
+All operations use `az afd` (Front Door Standard/Premium). The deprecated `az network front-door` MUST NOT be used.
+
+### Create Front Door Profile (full topology)
+
+```bash
+# Create Front Door Standard/Premium profile
+az afd profile create \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --sku Standard_AzureFrontDoor \
+  --output json
+
+# Create endpoint
+az afd endpoint create \
+  --endpoint-name "{{user.endpoint_name}}" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --enabled-state Enabled \
+  --output json
+
+# Create origin group (backend pool)
+az afd origin-group create \
+  --origin-group-name "origin-group" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --probe-name "health-probe" \
+  --output json
+
+# Create health probe
+az afd probe create \
+  --probe-name "health-probe" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --probe-interval-in-seconds 60 \
+  --probe-path "/" \
+  --probe-protocol Https \
+  --output json
+
+# Create origin (backend server)
+az afd origin create \
+  --origin-name "origin-1" \
+  --origin-group-name "origin-group" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --origin-host-name "{{user.backend_host}}" \
+  --origin-host-header "{{user.backend_host}}" \
+  --http-port 80 \
+  --https-port 443 \
+  --priority 1 \
+  --weight 1000 \
+  --output json
+
+# Create route (routing rule)
+az afd route create \
+  --route-name "route" \
+  --endpoint-name "{{user.endpoint_name}}" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --origin-group "origin-group" \
+  --patterns-to-match "/*" \
+  --supported-protocols Http Https \
+  --forward-protocol Https \
+  --output json
+```
+
+### Validate (after create)
+
+```bash
+az afd profile show --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
+az afd endpoint show --endpoint-name "{{user.endpoint_name}}" --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
+# Check provisioning state: should be "Succeeded"
+# Endpoint hostname: `{{endpoint_name}}-{{hash}}.azurefd.net`
+```
+
+### Add Custom Domain
+
+```bash
+az afd custom-domain create \
+  --custom-domain-name "{{user.custom_domain_name}}" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --host-name "{{user.custom_domain}}" \
+  --certificate-type ManagedCertificate \
+  --minimum-tls-version TLS12 \
+  --output json
+
+az afd route update \
+  --route-name "route" \
+  --endpoint-name "{{user.endpoint_name}}" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --custom-domains "{{user.custom_domain_name}}" \
+  --output json
+```
+
+### Enable WAF Policy
+
+```bash
+az network front-door waf-policy create \
+  --name "{{user.waf_policy_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --mode Prevention \
+  --output json
+
+az afd security-policy create \
+  --security-policy-name "waf-policy" \
+  --profile-name "{{user.fd_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --waf-policy "{{user.waf_policy_id}}" \
+  --output json
+```
+
+### Delete Front Door Profile (requires explicit confirmation — see SKILL.md Safety Gate)
+
+```bash
+az afd profile show --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
+az afd profile delete --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
+```
+
+### Azure SDK (Python) Fallback — Create Profile
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.cdn import CdnManagementClient
+import os
+
+credential = DefaultAzureCredential()
+client = CdnManagementClient(
+    credential,
+    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
+)
+
+profile = client.profiles.begin_create(
+    resource_group_name='{{user.resource_group}}',
+    profile_name='{{user.fd_name}}',
+    profile={
+        'location': 'Global',
+        'sku': {'name': 'Standard_AzureFrontDoor'},
+        'origin_response_timeout_seconds': 30
+    }
+).result()
+```
+
+### Recovery Decision Table
+
+| Error | Action |
+|-------|--------|
+| InvalidParameter | Fix args; retry once |
+| QuotaExceeded | HALT; request quota increase |
+| NameNotAvailable | HALT; endpoint name must be globally unique |
+| Throttling (429) | Backoff, retry 3x |
+| 5xx Internal | Retry 3x, then HALT |

@@ -113,3 +113,186 @@ az consumption budget list \
   --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
   --output json 2>/dev/null && echo "OK" || echo "FAIL"
 ```
+
+## Full Command Reference
+
+> Moved here from `SKILL.md` to keep the entrypoint slim. All commands use
+> `--scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}"` unless noted.
+
+### Cost Analysis (`az costmanagement query`)
+
+```bash
+# Cost by resource group (current month to date)
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ResourceGroupName" type "Dimension" --output json
+
+# Cost by resource (current month)
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ResourceName" type "Dimension" --output json
+
+# Cost by service name (current month)
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ServiceName" type "Dimension" --output json
+
+# Cost by tag (current month)
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "TagKey" type "Dimension" --output json
+
+# Cost by location
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "Location" type "Dimension" --output json
+
+# Custom time range
+az costmanagement query \
+  --type ActualCost --timeframe Custom \
+  --time-period from "2026-05-01" to "2026-05-31" \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ServiceName" type "Dimension" --output json
+
+# Filter by resource group
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-filter "{\"dimensions\":[{\"name\":\"ResourceGroupName\",\"operator\":\"In\",\"values\":[\"{{user.resource_group}}\"]}]}" \
+  --dataset-grouping name "ResourceName" type "Dimension" --output json
+
+# Forecast (predicted cost for current month)
+az costmanagement query \
+  --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --include-forecast \
+  --dataset-grouping name "ServiceName" type "Dimension" --output json
+```
+
+#### Azure SDK (Fallback)
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.costmanagement import CostManagementClient
+import os
+
+credential = DefaultAzureCredential()
+client = CostManagementClient(credential)
+
+response = client.query.usage(
+    scope=f'/subscriptions/{os.environ.get("AZURE_SUBSCRIPTION_ID")}',
+    parameters={
+        'type': 'ActualCost',
+        'timeframe': 'MonthToDate',
+        'dataset': {
+            'granularity': 'Daily',
+            'grouping': [{'name': 'ServiceName', 'type': 'Dimension'}]
+        }
+    }
+)
+
+for row in response.rows:
+    print(f"{row[0]}: {row[1]} {row[2]}")
+```
+
+#### Validate
+
+```bash
+az costmanagement query --type ActualCost --timeframe MonthToDate \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --dataset-grouping name "ServiceName" type "Dimension" \
+  --output json --query "rows" | head -5
+```
+
+### Budget Management (`az consumption budget`)
+
+```bash
+# List budgets
+az consumption budget list \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
+
+# Show specific budget
+az consumption budget show \
+  --budget-name "{{user.budget_name}}" \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
+
+# Create budget with notification (Cost Management Contributor required)
+az consumption budget create \
+  --budget-name "{{user.budget_name}}" \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --amount "{{user.budget_amount}}" \
+  --time-grain Monthly \
+  --time-period start-date "{{user.budget_start}}" end-date "{{user.budget_end}}" \
+  --category Cost \
+  --notification-group threshold-type Actual,Percent \
+  --notification-group threshold 80,100 \
+  --notification-group operator GreaterThan \
+  --notification-group email "{{user.alert_email}}" \
+  --notification-group enabled true --output json
+
+# Delete budget — SAFETY GATE: confirm with human before running
+az consumption budget delete \
+  --budget-name "{{user.budget_name}}" \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
+```
+
+### Reservation & Savings Plan
+
+```bash
+# List reservations
+az reservations reservation list \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" --output json
+
+# Reservation utilization
+az reservations reservation list \
+  --scope "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}" \
+  --query "[].{Name:name, Utilization:properties.utilization, Sku:sku.name}" --output json
+
+# Reservation recommendations
+az reservations reservation-order list --output json
+
+# Savings plan list (EA/MCA)
+az billing savings-plan list \
+  --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" --output json
+```
+
+### Invoice Management
+
+```bash
+# List invoices (Enterprise Agreement)
+az billing invoice list \
+  --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" --output json
+
+# Download invoice (EA)
+az billing invoice download \
+  --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" \
+  --invoice-name "{{user.invoice_name}}" --download-urls --output json
+
+# List invoices for MCA (Microsoft Customer Agreement)
+az billing invoice list \
+  --billing-profile-name "{{user.billing_profile}}" \
+  --billing-account-name "{{env.AZURE_BILLING_ACCOUNT_ID}}" --output json
+```
+
+### Cost Optimization Recommendations
+
+```bash
+# Right-sizing recommendations (requires Azure Advisor)
+az advisor recommendation list --query "[?category=='Cost']" --output json
+
+# Idle resources (requires Azure Advisor)
+az advisor recommendation list \
+  --query "[?category=='Cost' && (contains(impactedField,'VirtualMachine') || contains(impactedField,'Storage'))]" \
+  --output json
+
+# Under-utilized resources
+az monitor metrics list \
+  --resource "{{user.target_resource_id}}" --metric "Percentage CPU" \
+  --interval PT1H --aggregation Average --top 168 --orderby Average desc --output json
+```
+```

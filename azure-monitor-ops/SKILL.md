@@ -25,7 +25,7 @@ metadata:
 
 ## Overview
 
-Azure Monitor provides comprehensive monitoring, diagnostics, and alerting for Azure resources and applications. This skill is an operational runbook with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure Monitor provides comprehensive monitoring, diagnostics, and alerting for Azure resources and applications. This skill is an operational runbook: explicit scope, credential rules, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
 
 ## Trigger & Scope
 
@@ -43,20 +43,19 @@ Azure Monitor provides comprehensive monitoring, diagnostics, and alerting for A
 
 ## Variable Convention
 
-| Placeholder | Source | Agent Action |
-|-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{user.resource_group}}` | User input | Ask once; reuse |
-| `{{user.target_resource_id}}` | User input | Resource being monitored; ask once |
-| `{{user.action_group_name}}` | User input | Action group name for alerts |
-| `{{user.alert_rule_name}}` | User input | Alert rule name |
+Auth env quad (`{{env.AZURE_SUBSCRIPTION_ID}}`, `{{env.AZURE_TENANT_ID}}`, `{{env.AZURE_CLIENT_ID}}`, `{{env.AZURE_CLIENT_SECRET}}`) is a common skeleton — never ask the user; fail if unset. Full credential-sources priority order: [azure-cli-conventions.md#credential-sources-priority-order](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order).
+
+Business placeholders (ask once, reuse):
+- `{{user.resource_group}}` — target Resource Group
+- `{{user.target_resource_id}}` — resource being monitored
+- `{{user.action_group_name}}` — action group name for alerts
+- `{{user.alert_rule_name}}` — alert rule name
+- `{{user.workspace_id}}` / `{{user.log_analytics_workspace_id}}` — Log Analytics workspace
+- `{{user.diagnostic_setting_name}}` — diagnostic setting name
 
 ## Execution Flow Pattern
 
-Every operation follows: **Pre-flight → Execute → Validate → Recover**
+Every operation follows: **Pre-flight → Execute → Validate → Recover**.
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -65,216 +64,69 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-## Monitor Components
+Pre-flight checks (env resolution, retry policy, credential priority) and the 3× CLI-retry-then-SDK fallback are defined in [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md).
 
-### 1. Metrics
-Azure Metrics provide numerical data about resource performance.
+## Operations
 
-#### Retrieve Metrics — Azure CLI (Primary)
+All operations are dual-path (Azure CLI primary + Azure SDK fallback). Full `az monitor ...` command blocks, SDK snippets, and KQL are in [integration.md](references/integration.md). Monitor components, alert types, and KQL basics are in [core-concepts.md](references/core-concepts.md).
+
+### Metrics
 ```bash
-# List available metrics for a resource
 az monitor metrics list --resource "{{user.target_resource_id}}" --output json
-
-# Get specific metric values
-az monitor metrics list --resource "{{user.target_resource_id}}" \
-  --metric "Percentage CPU" \
-  --interval PT1M \
-  --aggregation Average \
-  --start-time "2026-05-10T00:00:00Z" \
-  --end-time "2026-05-10T01:00:00Z" \
-  --output json
 ```
+Full metric retrieval (CLI + SDK) → [integration.md §1](references/integration.md).
 
-#### Retrieve Metrics — Azure SDK (Fallback)
-```python
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.monitor import MonitorManagementClient
-import os
-
-credential = DefaultAzureCredential()
-client = MonitorManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Get metric definitions
-definitions = client.metrics.list(
-    resource_uri='{{user.target_resource_id}}'
-)
-
-# Get metric values
-metrics = client.metrics.list(
-    resource_uri='{{user.target_resource_id}}',
-    metricnames='Percentage CPU',
-    aggregation='Average',
-    interval='PT1M'
-)
-```
-
-### 2. Alerts (Alert Rules + Action Groups)
-
-#### Create Action Group — Azure CLI
+### Alerts (Action Groups + Alert Rules)
 ```bash
-# Create action group for alert notifications
-az monitor action-group create \
-  --name "{{user.action_group_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "Global" \
-  --short-name "myaction" \
-  --output json
-
-# Add email notification
-az monitor action-group create \
-  --name "{{user.action_group_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --short-name "myaction" \
-  --action-email name "email-action" email-address "admin@example.com" \
-  --output json
-
-# Add webhook notification
-az monitor action-group create \
-  --name "{{user.action_group_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --short-name "myaction" \
-  --action-webhook name "webhook-action" webhook-uri "https://example.com/webhook" \
-  --output json
+# Metric alert
+az monitor metrics alert create --name "{{user.alert_rule_name}}" \
+  --resource-group "{{user.resource_group}}" --scopes "{{user.target_resource_id}}" \
+  --condition "avg Percentage CPU > 80" --action "{{user.action_group_name}}" --output json
+# Log alert (scheduled query)
+az monitor scheduled-query create --name "{{user.alert_rule_name}}" \
+  --resource-group "{{user.resource_group}}" --scopes "{{user.log_analytics_workspace_id}}" \
+  --condition-query "AzureActivity | where OperationName == 'RestartVM'" --action "{{user.action_group_name}}" --output json
 ```
+Action group create + both alert types (CLI) → [integration.md §2–§4](references/integration.md).
 
-#### Create Metric Alert Rule — Azure CLI
+### Log Analytics
 ```bash
-# Create metric alert rule
-az monitor metrics alert create \
-  --name "{{user.alert_rule_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --scopes "{{user.target_resource_id}}" \
-  --condition "avg Percentage CPU > 80" \
-  --window-size 5m \
-  --evaluation-frequency 1m \
-  --action "{{user.action_group_name}}" \
-  --description "CPU usage exceeds 80%" \
-  --output json
+az monitor log-analytics query --workspace "{{user.workspace_id}}" \
+  --analytics-query "AzureActivity | take 10" --timespan "1d" --output json
 ```
+Query + SDK + KQL examples → [integration.md §5](references/integration.md).
 
-#### Create Log Alert Rule — Azure CLI
+### Diagnostic Settings
 ```bash
-# Create scheduled query rule (log alert)
-az monitor scheduled-query create \
-  --name "{{user.alert_rule_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --scopes "{{user.log_analytics_workspace_id}}" \
-  --condition-query "AzureActivity | where OperationName == 'RestartVM'" \
-  --condition-threshold 1 \
-  --evaluation-frequency 5m \
-  --window-size 15m \
-  --action "{{user.action_group_name}}" \
-  --description "VM restart detected" \
-  --output json
+az monitor diagnostic-settings create --name "{{user.diagnostic_setting_name}}" \
+  --resource "{{user.target_resource_id}}" --workspace "{{user.workspace_id}}" --output json
 ```
+Full diagnostic-settings create (logs/metrics) → [integration.md §6](references/integration.md).
 
-### 3. Log Analytics
-
-#### Query Logs — Azure CLI
+### Activity Log
 ```bash
-# Execute KQL query in Log Analytics workspace
-az monitor log-analytics query \
-  --workspace "{{user.workspace_id}}" \
-  --analytics-query "AzureActivity | take 10" \
-  --timespan "1d" \
-  --output json
-
-# Query specific logs
-az monitor log-analytics query \
-  --workspace "{{user.workspace_id}}" \
-  --analytics-query "Syslog | where TimeGenerated > ago(1h) | count" \
-  --output json
+az monitor activity-log list --resource "{{user.target_resource_id}}" --output json
 ```
+Caller / event-name variants → [integration.md §7](references/integration.md).
 
-#### Query Logs — Azure SDK
-```python
-from azure.identity import DefaultAzureCredential
-from azure.monitor.query import LogsQueryClient
-import os
+## Safety Gates (Destructive)
 
-credential = DefaultAzureCredential()
-client = LogsQueryClient(credential)
-
-# Execute KQL query
-response = client.query_workspace(
-    workspace_id='{{user.workspace_id}}',
-    query='AzureActivity | take 10',
-    timespan='1d'
-)
-
-# Access results
-for table in response.tables:
-    for row in table.rows:
-        print(row)
-```
-
-### 4. Diagnostic Settings
-
-#### Enable Diagnostic Settings — Azure CLI
+**Delete Alert Rule** — MUST obtain explicit user confirmation (user must type the exact alert rule name) before deletion:
 ```bash
-# Create diagnostic setting to send logs to Log Analytics
-az monitor diagnostic-settings create \
-  --name "{{user.diagnostic_setting_name}}" \
-  --resource "{{user.target_resource_id}}" \
-  --workspace "{{user.workspace_id}}" \
-  --logs "[{category:'Administrative',enabled:true},{category:'Security',enabled:true}]" \
-  --metrics "[{category:'AllMetrics',enabled:true,timegrain:'PT1M'}]" \
-  --output json
-```
-
-### 5. Activity Log (Audit Trail)
-
-#### Query Activity Log — Azure CLI
-```bash
-# List recent activity log events
-az monitor activity-log list \
-  --caller "{{user.caller}}" \
-  --start-time "2026-05-09T00:00:00Z" \
-  --end-time "2026-05-10T00:00:00Z" \
-  --output json
-
-# Query by resource
-az monitor activity-log list \
-  --resource "{{user.target_resource_id}}" \
-  --output json
-
-# Query by event name
-az monitor activity-log list \
-  --event-name "RestartVM" \
-  --output json
-```
-
-### Operation: Delete Alert Rule
-
-**Safety Gate**: MUST obtain explicit user confirmation before deletion.
-
-```bash
-# Show alert rule before deletion
 az monitor metrics alert show --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Request confirmation - user must type exact alert rule name
-# Then proceed with deletion:
-az monitor metrics alert delete --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
+# After confirmation: az monitor metrics alert delete --name "{{user.alert_rule_name}}" --resource-group "{{user.resource_group}}" --output json
 ```
 
-## Common Metric Namespaces
+**Delete Action Group** — MUST confirm no alert rules reference it; list affected rules, then require explicit confirmation:
+```bash
+az monitor action-group delete --name "{{user.action_group_name}}" --resource-group "{{user.resource_group}}" --output json
+```
 
-| Namespace | Metrics |
-|-----------|---------|
-| `Microsoft.Compute/virtualMachines` | Percentage CPU, Network In/Out, Disk Read/Write |
-| `Microsoft.Storage/storageAccounts` | BlobCapacity, BlobCount, Transactions, Ingress/Egress |
-| `Microsoft.Sql/servers` | CPU_percent, Storage_used, Active_connections |
-| `Microsoft.Web/sites` | CPU Time, Requests, Response Time, Memory Working Set |
-| `Microsoft.Network/loadBalancers` | VipAvailability, DipAvailability, ByteCount |
-| `Microsoft.Insights/components` | Requests, Exceptions, Availability, Dependencies |
+**Delete Diagnostic Setting** — communicate the data-flow gap (logs/metrics stop streaming) before deletion.
 
 ## Quality Gate
 
-This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
-See `AGENTS.md §3–§8` for the spec.
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
 
 | Parameter | Value |
 |-----------|-------|
@@ -291,15 +143,13 @@ See `AGENTS.md §3–§8` for the spec.
 - QUERY metrics / logs / activity log (read-only) → optional (GCL may be skipped)
 
 ### Read-Only vs Write
-
-Most Monitor operations are read-only (query, list, show). GCL is encouraged but not required
-for read-only operations. All **delete** operations are required to go through GCL.
+Most Monitor operations are read-only (query, list, show). GCL is encouraged but not required for read-only operations. All **delete** operations are required to go through GCL.
 
 ## Reference Files
 
-- [Core Concepts](references/core-concepts.md)
+- [Core Concepts](references/core-concepts.md) — Monitor components, alert types, KQL basics
 - [Troubleshooting](references/troubleshooting.md)
-- [Integration Setup](references/integration.md)
+- [Integration Setup](references/integration.md) — full `az monitor` commands, SDK snippets, KQL
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 

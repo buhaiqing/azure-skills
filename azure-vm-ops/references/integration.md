@@ -234,6 +234,41 @@ vm = compute_client.virtual_machines.get('{{rg}}', '{{vm_name}}')
 vms = compute_client.virtual_machines.list_by_resource_group('{{rg}}')
 ```
 
+### Run Command with SDK (Fallback)
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.compute import ComputeManagementClient
+import os
+
+credential = DefaultAzureCredential()
+client = ComputeManagementClient(
+    credential,
+    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
+)
+
+# Run command on VM
+result = client.virtual_machine_run_commands.begin_create_or_update(
+    resource_group_name='{{user.resource_group}}',
+    vm_name='{{user.vm_name}}',
+    run_command_name='my-run-command',
+    parameters={
+        'location': '{{user.location}}',
+        'source': {
+            'script': 'whoami && hostname && df -h'
+        },
+        'timeout_in_seconds': 3600
+    }
+).result()
+
+# Get run command result
+run_command = client.virtual_machine_run_commands.get(
+    resource_group_name='{{user.resource_group}}',
+    vm_name='{{user.vm_name}}',
+    run_command_name='my-run-command'
+)
+```
+
 ## RBAC Roles for VMs
 
 | Role | Permissions |
@@ -368,4 +403,196 @@ dependencies = [
     "azure-mgmt-compute>=27.0.0",
     "azure-mgmt-network>=23.0.0",
 ]
+```
+
+## Full Command Reference (CLI)
+
+> Primary commands referenced from `SKILL.md`. SDK fallbacks for create/run-command are in the sections above.
+
+### Create VM
+
+```bash
+# Create simple Linux VM
+az vm create \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" \
+  --image Ubuntu2204 \
+  --size "{{user.vm_size}}" \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --output json
+
+# Create Windows VM
+az vm create \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" \
+  --image Win2022Datacenter \
+  --size "{{user.vm_size}}" \
+  --admin-username azureuser \
+  --admin-password "{{user.admin_password}}" \
+  --output json
+
+# Create VM with existing VNet and subnet
+az vm create \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" \
+  --image Ubuntu2204 \
+  --size "{{user.vm_size}}" \
+  --vnet-name "{{user.vnet_name}}" \
+  --subnet "{{user.subnet_name}}" \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --output json
+
+# Create VM with public IP and DNS
+az vm create \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" \
+  --image Ubuntu2204 \
+  --size "{{user.vm_size}}" \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --public-ip-address-dns-name "{{user.dns_name}}" \
+  --output json
+```
+
+### Validate Create
+
+```bash
+# Verify VM state
+az vm show --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Check provisioning state: should be "Succeeded"
+az vm get-instance-view --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Verify SSH connectivity (Linux)
+ssh azureuser@{{vm_public_ip}}
+```
+
+### Start / Stop / Restart / Resize / List
+
+```bash
+# Start
+az vm start --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Stop (deallocate - stops billing)
+az vm stop --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Stop without deallocating (still billed)
+az vm stop --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --skip-deallocation --output json
+
+# Restart
+az vm restart --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Resize
+az vm resize \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --size "{{user.new_vm_size}}" \
+  --output json
+
+# List all VMs in subscription
+az vm list --output json
+
+# List VMs in resource group
+az vm list --resource-group "{{user.resource_group}}" --output json
+
+# List with details
+az vm list --resource-group "{{user.resource_group}}" --show-details --output json
+```
+
+### Run Command (Cloud Assistant)
+
+```bash
+# Execute shell script on Linux VM
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunShellScript \
+  --scripts "whoami" "hostname" "df -h" \
+  --output json
+
+# Execute PowerShell script on Windows VM
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunPowerShellScript \
+  --scripts "Get-Process" "Get-Service" \
+  --output json
+
+# Execute multi-line script
+az vm run-command invoke \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --command-id RunShellScript \
+  --scripts @- <<'EOF'
+#!/bin/bash
+apt update
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+EOF
+
+# Check script execution status
+az vm run-command show \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --run-command-name "{{command_name}}" \
+  --output json
+
+# Verify command execution result
+az vm run-command list \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --output json
+
+az vm run-command show \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --run-command-name "{{command_name}}" \
+  --query "instanceView" \
+  --output json
+```
+
+### Delete VM (destructive — requires human confirmation)
+
+```bash
+# Show VM before deletion
+az vm show --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --output json
+
+# Request confirmation - user must type exact VM name
+# Then proceed with deletion:
+az vm delete \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --yes \
+  --output json
+
+# Delete with all related resources (NIC, disks, public IP)
+az vm delete \
+  --name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --yes \
+  --force-deletion \
+  --output json
+```
+
+### Extension (full CLI)
+
+```bash
+# List installed extensions
+az vm extension list \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --output json
+
+# Remove extension
+az vm extension delete \
+  --name CustomScript \
+  --vm-name "{{user.vm_name}}" \
+  --resource-group "{{user.resource_group}}"
 ```

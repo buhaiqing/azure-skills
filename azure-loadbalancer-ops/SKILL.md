@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Azure Load Balancer provides **L4** load balancing for VMs/internal services. Operational runbook: Pre-flight → Execute → Validate → Recover.
+Azure Load Balancer provides **L4** (TCP/UDP) load balancing for VMs/internal services. Operational runbook: Pre-flight → Execute → Validate → Recover.
 
 ## Trigger & Scope
 
@@ -39,24 +39,23 @@ Azure Load Balancer provides **L4** load balancing for VMs/internal services. Op
 - Global/multi-region load balancing → delegate to: `azure-frontdoor-ops`
 - DNS-based routing → delegate to: `azure-trafficmanager-ops`
 - Billing only → delegate to: `azure-cost-ops`
-- Network VNet only → delegate to: `azure-network-ops`
+- Network VNet only → delegate to: `azure-vnet-ops`
 
 ## Variable Convention
 
+Auth env quad (`AZURE_SUBSCRIPTION_ID` / `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET`) is a common skeleton — see [Credential Sources & Priority Order](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order); never ask the user, fail if unset. Business placeholders:
+
 | Placeholder | Source | Agent Action |
 |-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
 | `{{user.resource_group}}` | User input | Ask once; reuse |
-| `{{user.location}}` | User input | Azure region (e.g., eastus) |
+| `{{user.location}}` | User input | Azure Location (e.g., eastus) |
 | `{{user.lb_name}}` | User input | Load Balancer name; ask once |
+| `{{user.vm_name}}` / `{{user.nic_name}}` | User input | Target VM / NIC for backend pool |
 | `{{output.lb_id}}` | Last API response | Parse: `.id` from Azure CLI output |
 
 ## Execution Flow Pattern
 
-Every operation follows: **Pre-flight → Execute → Validate → Recover**
+Every operation follows: **Pre-flight → Execute → Validate → Recover**.
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -65,168 +64,48 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-### Operation: Create Load Balancer
+Pre-flight checks, retry/backoff (CLI fails → retry ≤3× → SDK fallback), and the Recover decision matrix (HALT vs retry for quota/throttling/5xx) are defined in [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md). LB types, SKU, and component tables are in [core-concepts.md](references/core-concepts.md).
 
-#### Pre-flight
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
-| VNet exists (if internal LB) | `az network vnet show --name {{vnet}} --resource-group {{rg}}` | HALT; create VNet first |
-| Public IP exists (if public LB) | `az network public-ip show --name {{pip}} --resource-group {{rg}}` | HALT; create Public IP first |
+## Operations
 
-#### Execute — Azure CLI (Primary)
+### Create Load Balancer
+Primary CLI (public LB with probe + rule):
 ```bash
-# Create Public Load Balancer
-az network lb create \
-  --name "{{user.lb_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "{{user.location}}" \
-  --public-ip-address "{{user.public_ip_name}}" \
-  --frontend-ip-name "frontend-ip" \
-  --backend-pool-name "backend-pool" \
-  --output json
-
-# Create Health Probe
-az network lb probe create \
-  --lb-name "{{user.lb_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --name "health-probe" \
-  --protocol Tcp \
-  --port 80 \
-  --interval 15 \
-  --output json
-
-# Create Load Balancing Rule
-az network lb rule create \
-  --lb-name "{{user.lb_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --name "lb-rule" \
-  --protocol Tcp \
-  --frontend-port 80 \
-  --backend-port 80 \
-  --frontend-ip-name "frontend-ip" \
-  --backend-pool-name "backend-pool" \
-  --probe-name "health-probe" \
-  --output json
+az network lb create --name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" --public-ip-address "{{user.public_ip_name}}" \
+  --frontend-ip-name "frontend-ip" --backend-pool-name "backend-pool" --output json
+az network lb probe create --lb-name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" \
+  --name "health-probe" --protocol Tcp --port 80 --interval 15 --output json
+az network lb rule create --lb-name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" \
+  --name "lb-rule" --protocol Tcp --frontend-port 80 --backend-port 80 \
+  --frontend-ip-name "frontend-ip" --backend-pool-name "backend-pool" --probe-name "health-probe" --output json
 ```
+Full command set + Azure SDK for Python fallback → [integration.md](references/integration.md). Validate: `az network lb show --name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" --output json` (provisioningState = `Succeeded`).
 
-#### Execute — Azure SDK (Fallback)
-```python
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.network import NetworkManagementClient
-import os
-
-credential = DefaultAzureCredential()
-client = NetworkManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Create Load Balancer
-lb = client.load_balancers.begin_create_or_update(
-    resource_group_name='{{user.resource_group}}',
-    load_balancer_name='{{user.lb_name}}',
-    parameters={
-        'location': '{{user.location}}',
-        'frontend_ip_configurations': [{
-            'name': 'frontend-ip',
-            'public_ip_address': {'id': '{{user.public_ip_id}}'}
-        }],
-        'backend_address_pools': [{'name': 'backend-pool'}],
-        'probes': [{
-            'name': 'health-probe',
-            'protocol': 'Tcp',
-            'port': 80,
-            'interval_in_seconds': 15
-        }],
-        'load_balancing_rules': [{
-            'name': 'lb-rule',
-            'protocol': 'Tcp',
-            'frontend_port': 80,
-            'backend_port': 80,
-            'frontend_ip_configuration': {'id': 'frontend-ip-id'},
-            'backend_address_pool': {'id': 'backend-pool-id'},
-            'probe': {'id': 'probe-id'}
-        }]
-    }
-).result()
-```
-
-#### Validate
+### Add VM to Backend Pool
 ```bash
-# Verify Load Balancer state
+NIC_ID=$(az vm show --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" \
+  --query "networkProfile.networkInterfaces[0].id" -o tsv)
+az network nic ip-config address-pool add --address-pool "backend-pool" \
+  --ip-config-name "ipconfig" --nic-name "{{user.nic_name}}" \
+  --resource-group "{{user.resource_group}}" --lb-name "{{user.lb_name}}" --output json
+```
+Full command set → [integration.md](references/integration.md).
+
+### Delete Load Balancer
+
+**Safety Gate**: MUST obtain explicit user confirmation (user types exact LB name) before deletion — deleting the LB **cuts all traffic** routed through it.
+
+```bash
 az network lb show --name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Check provisioning state: should be "Succeeded"
-```
-
-#### Recover
-| Error | Action |
-|-------|--------|
-| InvalidParameter | Fix args; retry once |
-| QuotaExceeded | HALT; request quota increase |
-| Throttling (429) | Backoff, retry 3x |
-| 5xx Internal | Retry 3x, then HALT |
-| Public IP not found | HALT; create Public IP first |
-| VNet not found | HALT; create VNet first |
-
-### Operation: Add VM to Backend Pool
-
-```bash
-# Get VM NIC ID
-NIC_ID=$(az vm show --name "{{user.vm_name}}" --resource-group "{{user.resource_group}}" --query "networkProfile.networkInterfaces[0].id" -o tsv)
-
-# Add NIC to backend pool
-az network nic ip-config address-pool add \
-  --address-pool "backend-pool" \
-  --ip-config-name "ipconfig" \
-  --nic-name "{{user.nic_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --lb-name "{{user.lb_name}}" \
-  --output json
-```
-
-### Operation: Delete Load Balancer
-
-**Safety Gate**: MUST obtain explicit user confirmation before deletion.
-
-```bash
-# Show Load Balancer before deletion
-az network lb show --name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Request confirmation - user must type exact LB name
-# Then proceed with deletion:
+# Confirm exact LB name with user, then:
 az network lb delete --name "{{user.lb_name}}" --resource-group "{{user.resource_group}}" --output json
 ```
-
-## Load Balancer Types
-
-| Type | SKU | Use Case |
-|------|-----|----------|
-| **Public** | Basic/Standard | Internet-facing, inbound traffic |
-| **Internal** | Basic/Standard | Internal services, VNet-only |
-| **Basic** | Basic | Dev/test, limited HA |
-| **Standard** | Standard | Production, zone-redundant, HA ports |
-
-## Key Components
-
-| Component | Purpose | CLI Command |
-|-----------|---------|-------------|
-| **Frontend IP** | Entry point for traffic | `az network lb frontend-ip create` |
-| **Backend Pool** | Target VMs/NICs | `az network lb address-pool create` |
-| **Health Probe** | Health check | `az network lb probe create` |
-| **Load Balancing Rule** | Traffic distribution | `az network lb rule create` |
-| **Inbound NAT Rule** | Port forwarding | `az network lb inbound-nat-rule create` |
-| **Outbound Rule** | Outbound SNAT | `az network lb outbound-rule create` |
+Full command set + SDK fallback → [integration.md](references/integration.md).
 
 ## Quality Gate
 
-This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
-See `AGENTS.md §3–§8` for the spec.
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
 
 | Parameter | Value |
 |-----------|-------|
@@ -245,9 +124,9 @@ See `AGENTS.md §3–§8` for the spec.
 
 ## Reference Files
 
-- [Core Concepts](references/core-concepts.md)
+- [Core Concepts](references/core-concepts.md) — LB types, SKU, components
 - [Troubleshooting](references/troubleshooting.md)
-- [Integration Setup](references/integration.md)
+- [Integration Setup](references/integration.md) — full CLI/SDK commands, credentials
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 

@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Azure Blob Storage is Microsoft's object storage solution for the cloud, optimized for storing massive amounts of unstructured data (text/binary data, images, videos, documents). This skill is an operational runbook with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure Blob Storage is Microsoft's object storage solution for the cloud, optimized for storing massive amounts of unstructured data (text/binary data, images, videos, documents). This skill is an operational runbook with explicit scope, credential rules, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
 
 ## Trigger & Scope
 
@@ -44,17 +44,17 @@ Azure Blob Storage is Microsoft's object storage solution for the cloud, optimiz
 
 ## Variable Convention
 
+Credential sources (the 4 `{{env.AZURE_*}}` vars above + auth priority) are a common skeleton — see [azure-cli-conventions.md § Credential Sources Priority Order](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order). Business placeholders only:
+
 | Placeholder | Source | Agent Action |
 |-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
 | `{{user.resource_group}}` | User input | Ask once; reuse |
-| `{{user.location}}` | User input | Azure region (e.g., eastus) |
+| `{{user.location}}` | User input | Azure Location (e.g., eastus) |
 | `{{user.storage_account_name}}` | User input | Storage account name (3-24 chars, lowercase alphanumeric) |
 | `{{user.container_name}}` | User input | Container name |
 | `{{user.blob_name}}` | User input | Blob/file name |
+| `{{user.local_file_path}}` | User input | Local source file for upload |
+| `{{user.local_destination_path}}` | User input | Local target for download |
 | `{{output.storage_account_id}}` | Last API response | Parse: `.id` from Azure CLI output |
 
 ## Execution Flow Pattern
@@ -68,246 +68,56 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-### Operation: Create Storage Account
+The 5-step Pre-flight table and the CLI-retry-then-SDK fallback rule are common skeletons — see [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md). Full commands and SDK fallback for every operation live in [integration.md](references/integration.md).
 
-#### Pre-flight
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
-| Name valid (3-24 chars, lowercase) | Validate name format | Fix naming convention |
+## Operations
 
-#### Execute — Azure CLI (Primary)
+Each operation below shows the primary Azure CLI entry point. Full command variants, validation, recovery tables, and the Azure SDK for Python fallback are in [integration.md](references/integration.md).
+
+### Create Storage Account
 ```bash
-# Create general-purpose v2 storage account (recommended)
-az storage account create \
-  --name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "{{user.location}}" \
-  --sku Standard_LRS \
-  --kind StorageV2 \
-  --access-tier Hot \
-  --allow-blob-public-access false \
-  --output json
-
-# Create with additional options
-az storage account create \
-  --name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "{{user.location}}" \
-  --sku Standard_GRS \
-  --kind StorageV2 \
-  --access-tier Hot \
-  --min-tls-version TLS1_2 \
-  --allow-blob-public-access false \
-  --enable-hierarchical-namespace false \
-  --output json
+az storage account create --name "{{user.storage_account_name}}" --resource-group "{{user.resource_group}}" --location "{{user.location}}" --sku Standard_LRS --kind StorageV2 --access-tier Hot --allow-blob-public-access false --output json
 ```
 
-#### Execute — Azure SDK (Fallback)
-```python
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.storage import StorageManagementClient
-import os
-
-credential = DefaultAzureCredential()
-client = StorageManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Create storage account
-storage_account = client.storage_accounts.begin_create(
-    resource_group_name='{{user.resource_group}}',
-    account_name='{{user.storage_account_name}}',
-    parameters={
-        'location': '{{user.location}}',
-        'sku': {'name': 'Standard_LRS'},
-        'kind': 'StorageV2',
-        'access_tier': 'Hot',
-        'allow_blob_public_access': False
-    }
-).result()
-```
-
-#### Validate
+### Create Blob Container
 ```bash
-# Verify storage account state
-az storage account show \
-  --name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --output json
-
-# Check provisioning state: should be "Succeeded"
-# Get account keys for further operations
-az storage account keys list \
-  --account-name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --output json
+az storage container create --name "{{user.container_name}}" --account-name "{{user.storage_account_name}}" --account-key "$ACCOUNT_KEY" --public-access off --output json
 ```
 
-#### Recover
-| Error | Action |
-|-------|--------|
-| InvalidParameter | Fix args; retry once |
-| StorageAccountAlreadyExists | Use different name or check existing |
-| QuotaExceeded | HALT; request quota increase |
-| Throttling (429) | Backoff, retry 3x |
-| 5xx Internal | Retry 3x, then HALT |
-
-### Operation: Create Blob Container
-
+### Upload Blob
 ```bash
-# Get storage account key first
-ACCOUNT_KEY=$(az storage account keys list \
-  --account-name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --query "[0].value" -o tsv)
-
-# Create container
-az storage container create \
-  --name "{{user.container_name}}" \
-  --account-name "{{user.storage_account_name}}" \
-  --account-key "$ACCOUNT_KEY" \
-  --public-access off \
-  --output json
+az storage blob upload --account-name "{{user.storage_account_name}}" --container-name "{{user.container_name}}" --name "{{user.blob_name}}" --file "{{user.local_file_path}}" --type block --output json
 ```
 
-### Operation: Upload Blob
-
+### Download Blob
 ```bash
-# Upload file to container
-az storage blob upload \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --name "{{user.blob_name}}" \
-  --file "{{user.local_file_path}}" \
-  --type block \
-  --output json
-
-# Upload with overwrite
-az storage blob upload \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --name "{{user.blob_name}}" \
-  --file "{{user.local_file_path}}" \
-  --overwrite true \
-  --output json
+az storage blob download --account-name "{{user.storage_account_name}}" --container-name "{{user.container_name}}" --name "{{user.blob_name}}" --file "{{user.local_destination_path}}" --output json
 ```
 
-### Operation: Download Blob
-
+### List Blobs
 ```bash
-# Download blob to local file
-az storage blob download \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --name "{{user.blob_name}}" \
-  --file "{{user.local_destination_path}}" \
-  --output json
+az storage blob list --account-name "{{user.storage_account_name}}" --container-name "{{user.container_name}}" --output json
 ```
 
-### Operation: List Blobs
-
-```bash
-# List all blobs in container
-az storage blob list \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --output json
-
-# List with prefix filter
-az storage blob list \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --prefix "{{user.prefix}}" \
-  --output json
-```
-
-### Operation: Delete Blob
+### Delete Blob
 
 **Safety Gate**: MUST obtain explicit user confirmation before deletion.
 
 ```bash
-# Show blob before deletion
-az storage blob show \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --name "{{user.blob_name}}" \
-  --output json
-
-# Request confirmation
-# Then proceed with deletion:
-az storage blob delete \
-  --account-name "{{user.storage_account_name}}" \
-  --container-name "{{user.container_name}}" \
-  --name "{{user.blob_name}}" \
-  --output json
+az storage blob delete --account-name "{{user.storage_account_name}}" --container-name "{{user.container_name}}" --name "{{user.blob_name}}" --output json
 ```
 
-### Operation: Delete Storage Account
+### Delete Storage Account
 
 **Safety Gate**: MUST obtain explicit user confirmation before deletion. All data will be permanently lost.
 
 ```bash
-# Show storage account before deletion
-az storage account show \
-  --name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --output json
-
-# List containers to warn about data loss
-az storage container list \
-  --account-name "{{user.storage_account_name}}" \
-  --output json
-
-# Request confirmation - user must type exact account name
-# Then proceed with deletion:
-az storage account delete \
-  --name "{{user.storage_account_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --yes \
-  --output json
+az storage account delete --name "{{user.storage_account_name}}" --resource-group "{{user.resource_group}}" --yes --output json
 ```
 
-## Storage Account Types
+## Account Key Security
 
-| Kind | Description | Use Case |
-|------|-------------|----------|
-| **StorageV2** | General-purpose v2 (recommended) | Most scenarios, all features |
-| **Storage** | General-purpose v1 (legacy) | Legacy systems |
-| **BlobStorage** | Blob-only (legacy) | Blob-only scenarios |
-| **BlockBlobStorage** | Premium block blob | High-performance blobs |
-| **FileStorage** | Premium file shares | High-performance SMB |
-
-## SKU Tiers
-
-| SKU | Replication | Price | Use Case |
-|-----|-------------|-------|----------|
-| **Standard_LRS** | Local redundant | Lowest | Dev/test, non-critical |
-| **Standard_ZRS** | Zone redundant | Medium | Production, HA within region |
-| **Standard_GRS** | Geo redundant | Higher | Disaster recovery |
-| **Standard_GZRS** | Geo + Zone redundant | Highest | Mission-critical |
-| **Premium_LRS** | Premium local | High performance | High IOPS requirements |
-
-## Access Tiers
-
-| Tier | Description | Use Case |
-|------|-------------|----------|
-| **Hot** | Frequent access, higher storage cost | Active data |
-| **Cool** | Infrequent access, lower storage cost | Backup, archives (30+ days) |
-| **Cold** | Rarely accessed, lowest storage cost | Long-term backup (90+ days) |
-
-## Blob Types
-
-| Type | Description | Use Case |
-|------|-------------|----------|
-| **Block Blob** | Blocks uploaded independently | Documents, images, videos |
-| **Append Blob** | Append-only operations | Logs, audit trails |
-| **Page Blob** | 512-byte pages | VHDs, random write |
+Storage account data-plane commands use `--account-key` (or SAS token) for authentication. Never print the key value into logs or GCL traces — mask as `***`. Prefer Azure AD auth (`Storage Blob Data Contributor`) over shared keys where possible.
 
 ## Quality Gate
 
@@ -329,17 +139,14 @@ See `AGENTS.md §3–§8` for the spec.
 - UPLOAD with overwrite → **required**; explicit `--overwrite true` consent
 - LIST / SHOW / DOWNLOAD (read-only) → recommended
 
-### Account Key Security
-
-Storage account commands use `--account-key` for authentication. The GCL trace MUST NOT contain
-the account key value. The Critic scans for base64-encoded key strings in output. If detected,
-safety=0 → ABORT, regardless of operation success.
+### Account Key Security (GCL scanning)
+Storage account commands use `--account-key` for authentication. The GCL trace MUST NOT contain the account key value. The Critic scans for base64-encoded key strings in output. If detected, safety=0 → ABORT, regardless of operation success.
 
 ## Reference Files
 
-- [Core Concepts](references/core-concepts.md)
+- [Core Concepts](references/core-concepts.md) — account types, SKU/replication, access tiers, blob types
 - [Troubleshooting](references/troubleshooting.md)
-- [Integration Setup](references/integration.md)
+- [Integration Setup](references/integration.md) — full CLI commands, SDK fallback, SAS, AzCopy
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 

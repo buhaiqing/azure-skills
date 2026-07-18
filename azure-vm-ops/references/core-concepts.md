@@ -298,3 +298,43 @@ Common extensions:
   2. Configure Ultra Disk for high IOPS
   3. Enable accelerated networking
   4. Optimize for workload
+
+## Common VM Sizes (Quick Reference)
+
+| Size | vCPUs | Memory | Use Case |
+|------|-------|--------|----------|
+| **Standard_B2s** | 2 | 4GB | Dev/test |
+| **Standard_DS2_v2** | 2 | 7GB | Small production |
+| **Standard_DS3_v2** | 4 | 14GB | Medium production |
+| **Standard_D4s_v3** | 4 | 16GB | General purpose |
+| **Standard_E2s_v3** | 2 | 16GB | Memory-intensive |
+| **Standard_F2s_v2** | 2 | 4GB | Compute-intensive |
+
+## Common VM Images (Quick Reference)
+
+| Image | Publisher | Offer | SKU |
+|-------|-----------|-------|-----|
+| Ubuntu 22.04 LTS | Canonical | UbuntuServer | 22_04-lts |
+| Ubuntu 20.04 LTS | Canonical | UbuntuServer | 20_04-lts |
+| Windows Server 2022 | MicrosoftWindowsServer | WindowsServer | 2022-datacenter |
+| Windows Server 2019 | MicrosoftWindowsServer | WindowsServer | 2019-datacenter |
+| CentOS 8 | OpenLogic | CentOS | 8_5 |
+| Debian 11 | Debian | Debian | 11 |
+| RHEL 8 | RedHat | RHEL | 8_8 |
+
+## Remote Command Execution (Cloud Assistant)
+
+| Method | Description | Use Case |
+|--------|-------------|----------|
+| **RunCommand** | One-time command execution | Quick diagnostics, one-off tasks |
+| **VM Extension** | Persistent agent with scripts | Long-running config, monitoring |
+| **SSH/RDP** | Direct interactive access | Full interactive session |
+
+### Available RunCommand IDs
+
+| OS | Command ID | Description |
+|----|------------|-------------|
+| **Linux** | RunShellScript | Execute bash shell script |
+| **Linux** | RunPowerShellScript | Execute PowerShell (if installed) |
+| **Linux** | ifconfig | Network interface info |
+| **Windows** | RunPowerShellScript | Execute PowerShell script |

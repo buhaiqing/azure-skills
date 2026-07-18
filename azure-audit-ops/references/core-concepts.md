@@ -113,3 +113,26 @@ This skill is **read-only**. Remediation actions must be delegated:
 | Public blob access | `azure-blobstorage-ops` |
 | NSG rule too permissive | `azure-network-ops` |
 | Policy non-compliant | `az policy remediation create` or fix resource config
+
+## Audit Report Template
+
+Findings are structured as a table:
+
+| Category | Finding | Severity | Resource | Recommendation |
+|----------|---------|----------|----------|----------------|
+| RBAC | Contributor assignment at subscription scope for user@example.com | Medium | /subscriptions/... | Scope to resource group |
+| Security | Storage account myaccount has public blob access enabled | High | /subscriptions/.../storageAccounts/... | Disable public access |
+| Lock | Resource group prod-rg has no CanNotDelete lock | Medium | /subscriptions/.../resourceGroups/prod-rg | Add CanNotDelete lock |
+| Diagnostic | VM my-vm has no diagnostic settings configured | Low | /subscriptions/.../virtualMachines/... | Enable diagnostics |
+| Policy | 3 resources non-compliant with "Require tag" policy | Medium | (varies) | Apply required tags |
+
+## Delegation Rules (detailed)
+
+| Finding | Delegate To | Action |
+|---------|-------------|--------|
+| Missing diagnostic settings | `azure-monitor-ops` | Create diagnostic setting |
+| Public blob access | `azure-blobstorage-ops` | Update `--allow-blob-public-access false` |
+| Missing resource lock | `azure-resourcelock-ops` or direct `az lock create` | Add CanNotDelete lock |
+| Unrestricted NSG rule | `azure-network-ops` | Update NSG rule |
+| RBAC misconfiguration | `azure-rbac-ops` or `az role assignment create/delete` | Fix role assignment |
+| Non-compliant policy | (varies by policy) | Follow specific skill |

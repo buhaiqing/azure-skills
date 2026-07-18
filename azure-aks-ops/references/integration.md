@@ -385,3 +385,94 @@ az aks list
 # Delete cluster
 az aks delete --name myAKS --resource-group myRG --yes
 ```
+
+## Node Pool Operations
+
+### Add Node Pool
+
+```bash
+az aks nodepool add \
+  --cluster-name "{{user.aks_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --name "{{user.nodepool_name}}" \
+  --node-count "{{user.node_count}}" \
+  --node-vm-size "{{user.node_vm_size}}" \
+  --output json
+```
+
+### Scale Node Pool
+
+```bash
+# Scale a specific node pool
+az aks nodepool scale \
+  --cluster-name "{{user.aks_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --name "{{user.nodepool_name}}" \
+  --node-count "{{user.new_node_count}}" \
+  --output json
+
+# Scale the default node pool
+az aks scale \
+  --name "{{user.aks_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --node-count "{{user.new_node_count}}" \
+  --output json
+```
+
+## Cluster Upgrade
+
+### Check Available Upgrades
+
+```bash
+az aks get-upgrades \
+  --name "{{user.aks_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --output json
+```
+
+### Upgrade Kubernetes Version
+
+```bash
+az aks upgrade \
+  --name "{{user.aks_name}}" \
+  --resource-group "{{user.resource_group}}" \
+  --kubernetes-version "{{user.target_version}}" \
+  --output json
+```
+
+## Azure SDK Fallback (Python)
+
+### Create Cluster
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.containerservice import ContainerServiceClient
+import os
+
+credential = DefaultAzureCredential()
+client = ContainerServiceClient(
+    credential,
+    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
+)
+
+cluster = client.managed_clusters.begin_create_or_update(
+    resource_group_name='{{user.resource_group}}',
+    resource_name='{{user.aks_name}}',
+    parameters={
+        'location': '{{user.location}}',
+        'identity': {'type': 'SystemAssigned'},
+        'agent_pool_profiles': [{
+            'name': 'agentpool',
+            'count': {{user.node_count}},
+            'vm_size': '{{user.node_vm_size}}',
+            'mode': 'System',
+            'os_type': 'Linux'
+        }],
+        'dns_prefix': '{{user.aks_name}}',
+        'network_profile': {
+            'network_plugin': 'azure',
+            'network_policy': 'calico'
+        }
+    }
+).result()
+```

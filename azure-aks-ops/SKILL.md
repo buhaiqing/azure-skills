@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Azure Kubernetes Service (AKS) is Azure's managed Kubernetes service for deploying, managing, and scaling containerized applications. This skill is an operational runbook with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure Kubernetes Service (AKS) is Azure's managed Kubernetes service for deploying, managing, and scaling containerized applications. This skill is an operational runbook: explicit scope, credential rules, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
 
 ## Trigger & Scope
 
@@ -32,35 +32,32 @@ Azure Kubernetes Service (AKS) is Azure's managed Kubernetes service for deployi
 - User mentions "Azure Kubernetes Service", "AKS", "Kubernetes", "K8s"
 - Task involves CRUD on **AKS clusters** (create, show, update, delete, list)
 - Keywords: aks, kubernetes, cluster, node pool, pod, deployment, container, helm, kubectl
-- Managed Kubernetes requirements
-- Container orchestration operations
+- Managed Kubernetes requirements / container orchestration operations
 
-### SHOULD NOT Use When
-- Container Instances only → delegate to: `azure-containerinstance-ops`
-- Container Registry only → delegate to: `azure-acr-ops`
-- Billing only → delegate to: `azure-cost-ops`
-- RBAC/IAM only → delegate to: `azure-rbac-ops`
-- Network VNet only → delegate to: `azure-network-ops`
+### SHOULD NOT Use When (delegate)
+- Container Instances only → `azure-aci-ops`
+- Container Registry only → `azure-acr-ops`
+- Billing only → `azure-cost-ops`
+- RBAC/IAM only → `azure-rbac-ops`
+- Network VNet only → `azure-vnet-ops`
 
 ## Variable Convention
 
-| Placeholder | Source | Agent Action |
-|-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{user.resource_group}}` | User input | Ask once; reuse |
-| `{{user.location}}` | User input | Azure region (e.g., eastus) |
-| `{{user.aks_name}}` | User input | AKS cluster name; ask once |
-| `{{user.node_count}}` | User input | Number of nodes (default: 3) |
-| `{{user.node_vm_size}}` | User input | VM size for nodes (default: Standard_DS2_v2) |
-| `{{output.aks_id}}` | Last API response | Parse: `.id` from Azure CLI output |
-| `{{output.kube_config}}` | Last API response | Parse: `.kubeConfig` or fetch via `az aks get-credentials` |
+Auth env quad (`AZURE_SUBSCRIPTION_ID` / `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET`) is a common skeleton — see [Credential Sources & Priority Order](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order). Business placeholders used in this skill:
+
+- `{{user.resource_group}}` — Resource Group (ask once; reuse)
+- `{{user.location}}` — Location (e.g., eastus)
+- `{{user.aks_name}}` — AKS cluster name (ask once)
+- `{{user.node_count}}` / `{{user.new_node_count}}` — node count (default 3)
+- `{{user.node_vm_size}}` — VM size (default Standard_DS2_v2)
+- `{{user.nodepool_name}}` — node pool name
+- `{{user.target_version}}` — target Kubernetes version
+- `{{output.aks_id}}` — parse `.id` from CLI output
+- `{{output.kube_config}}` — parse `.kubeConfig` or fetch via `az aks get-credentials`
 
 ## Execution Flow Pattern
 
-Every operation follows: **Pre-flight → Execute → Validate → Recover**
+Every operation follows: **Pre-flight → Execute → Validate → Recover**.
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -69,235 +66,67 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-### Operation: Create AKS Cluster
+Pre-flight checks (CLI/credential/subscription/RG/location/quota/kubectl) and the 3× retry-then-SDK fallback are defined in [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md). Full `az aks ...` command blocks + Azure SDK for Python snippets live in [integration.md](references/integration.md).
 
-#### Pre-flight
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
-| Quota check | `az vm list-skus --location {{location}}` | HALT; request quota increase |
-| kubectl available | `kubectl version --client` | Install kubectl |
+## Operations
 
-#### Execute — Azure CLI (Primary)
+### Create Cluster
 ```bash
-# Create AKS cluster with default node pool
-az aks create \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "{{user.location}}" \
-  --node-count "{{user.node_count}}" \
-  --node-vm-size "{{user.node_vm_size}}" \
-  --generate-ssh-keys \
-  --enable-managed-identity \
-  --output json
-
-# Get cluster credentials for kubectl
-az aks get-credentials \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --output json
+az aks create --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" \
+  --location "{{user.location}}" --node-count "{{user.node_count}}" \
+  --node-vm-size "{{user.node_vm_size}}" --generate-ssh-keys \
+  --enable-managed-identity --output json
+az aks get-credentials --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
 ```
+Full commands (multi-node-pool, advanced networking, monitoring addon) + SDK fallback: [integration.md](references/integration.md).
 
-#### Execute — Azure CLI (Advanced Options)
+### Add / Scale Node Pool
 ```bash
-# Create AKS with multiple node pools
-az aks create \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --location "{{user.location}}" \
-  --node-count 3 \
-  --node-vm-size "Standard_DS2_v2" \
-  --nodepool-name "systempool" \
-  --generate-ssh-keys \
-  --enable-managed-identity \
-  --network-plugin azure \
-  --network-policy calico \
-  --enable-addons monitoring \
-  --output json
-
-# Add additional node pool
-az aks nodepool add \
-  --cluster-name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --name "userpool" \
-  --node-count 5 \
-  --node-vm-size "Standard_DS3_v2" \
-  --output json
+az aks nodepool add --cluster-name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" \
+  --name "{{user.nodepool_name}}" --node-count "{{user.node_count}}" --node-vm-size "{{user.node_vm_size}}" --output json
+az aks nodepool scale --cluster-name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" \
+  --name "{{user.nodepool_name}}" --node-count "{{user.new_node_count}}" --output json
 ```
+Scale default pool: `az aks scale ... --node-count "{{user.new_node_count}}"`. Full + SDK: [integration.md](references/integration.md).
 
-#### Execute — Azure SDK (Fallback)
-```python
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.containerservice import ContainerServiceClient
-import os
-
-credential = DefaultAzureCredential()
-client = ContainerServiceClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Create AKS cluster
-cluster = client.managed_clusters.begin_create_or_update(
-    resource_group_name='{{user.resource_group}}',
-    resource_name='{{user.aks_name}}',
-    parameters={
-        'location': '{{user.location}}',
-        'identity': {'type': 'SystemAssigned'},
-        'agent_pool_profiles': [{
-            'name': 'agentpool',
-            'count': {{user.node_count}},
-            'vm_size': '{{user.node_vm_size}}',
-            'mode': 'System',
-            'os_type': 'Linux'
-        }],
-        'dns_prefix': '{{user.aks_name}}',
-        'network_profile': {
-            'network_plugin': 'azure',
-            'network_policy': 'calico'
-        }
-    }
-).result()
-```
-
-#### Validate
+### Upgrade Cluster
 ```bash
-# Verify AKS cluster state
-az aks show --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Check provisioning state: should be "Succeeded"
-# Verify node status via kubectl
-kubectl get nodes
-kubectl get pods -A
+az aks get-upgrades --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
+az aks upgrade --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" \
+  --kubernetes-version "{{user.target_version}}" --output json
 ```
+Full + SDK + rollback strategy: [integration.md](references/integration.md).
 
-#### Recover
-| Error | Action |
-|-------|--------|
-| InvalidParameter | Fix args; retry once |
-| QuotaExceeded | HALT; request quota increase |
-| Throttling (429) | Backoff, retry 3x |
-| 5xx Internal | Retry 3x, then HALT |
-| VMSizeNotAvailable | Suggest alternative VM size |
-| NetworkProfileConflict | Check VNet/subnet config |
-
-### Operation: Scale Node Pool
-
+### List / Show Clusters
 ```bash
-# Scale node count in default node pool
-az aks scale \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --node-count "{{user.new_node_count}}" \
-  --output json
-
-# Scale specific node pool
-az aks nodepool scale \
-  --cluster-name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --name "{{user.nodepool_name}}" \
-  --node-count "{{user.new_node_count}}" \
-  --output json
-```
-
-### Operation: Upgrade Cluster
-
-```bash
-# Check available upgrades
-az aks get-upgrades \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --output json
-
-# Upgrade Kubernetes version
-az aks upgrade \
-  --name "{{user.aks_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --kubernetes-version "{{user.target_version}}" \
-  --output json
-```
-
-### Operation: List AKS Clusters
-
-```bash
-# List all AKS clusters in subscription
 az aks list --output json
-
-# List AKS clusters in specific resource group
 az aks list --resource-group "{{user.resource_group}}" --output json
+az aks show --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
 ```
 
-### Operation: Delete AKS Cluster
-
-**Safety Gate**: MUST obtain explicit user confirmation before deletion.
-
+### Get Credentials (kubectl)
 ```bash
-# Show AKS cluster before deletion
-az aks show --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
+az aks get-credentials --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
+```
+Verify with `kubectl get nodes`. kubectl cheat sheet: [core-concepts.md](references/core-concepts.md#kubectl-cheat-sheet).
 
-# Request confirmation - user must type exact cluster name
-# Then proceed with deletion:
+### Delete Cluster — ⚠️ Safety Gate
+**MUST obtain explicit user confirmation (type exact cluster name) before deletion.**
+```bash
+az aks show --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --output json
 az aks delete --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}" --yes --output json
 ```
 
-## AKS Cluster Configuration
+## Safety & Delegation Notes
 
-### Network Models
-| Model | Description | Use Case |
-|-------|-------------|----------|
-| **kubenet** | Basic networking, VNet not required | Simple dev/test |
-| **azure** | Advanced CNI, VNet integration | Production, VNet integration |
-
-### Identity Models
-| Model | Description | Recommendation |
-|-------|-------------|----------------|
-| **SystemAssigned** | Managed identity created with cluster | Recommended |
-| **UserAssigned** | Pre-existing managed identity | Advanced scenarios |
-
-### Node Pool Modes
-| Mode | Purpose | Constraints |
-|------|---------|-------------|
-| **System** | Runs critical system pods | At least 1 required |
-| **User** | Runs user workloads | Can have multiple |
-
-## Key Components
-
-| Component | Purpose | CLI Command |
-|-----------|---------|-------------|
-| **Managed Cluster** | AKS cluster resource | `az aks create/show/delete` |
-| **Node Pool** | Group of nodes with same config | `az aks nodepool add/scale/delete` |
-| **kubeconfig** | Cluster access credentials | `az aks get-credentials` |
-| **Addons** | Monitoring, HTTP app routing | `az aks enable-addons` |
-| **Network Profile** | CNI, network policy | Specified at creation |
-| **Upgrade** | Kubernetes version update | `az aks upgrade` |
-
-## kubectl Integration
-
-After cluster creation, use kubectl for Kubernetes operations:
-
-```bash
-# Get credentials (merges into ~/.kube/config)
-az aks get-credentials --name "{{user.aks_name}}" --resource-group "{{user.resource_group}}"
-
-# Verify cluster access
-kubectl cluster-info
-kubectl get nodes
-kubectl get namespaces
-
-# Deploy application
-kubectl create deployment nginx --image=nginx
-kubectl scale deployment nginx --replicas=3
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-```
+- **Destructive ops** (`delete`, `stop`, scale node pool to 0, node pool delete) require an explicit human-confirmation gate — never auto-execute.
+- **ACR integration** (attach registry, grant AcrPull) is delegated to `azure-acr-ops`; this skill only calls `az aks update --attach-acr`. See [integration.md](references/integration.md#acr-integration-setup).
+- **Networking** (VNet/subnet for Azure CNI) is delegated to `azure-vnet-ops`; this skill passes `--vnet-subnet-id` only.
+- **Recovery decisions** (QuotaExceeded → HALT; Throttling 429 / 5xx → backoff retry 3×) follow [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md).
 
 ## Quality Gate
 
-This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
-See `AGENTS.md §3–§8` for the spec.
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
 
 | Parameter | Value |
 |-----------|-------|
@@ -316,9 +145,9 @@ See `AGENTS.md §3–§8` for the spec.
 
 ## Reference Files
 
-- [Core Concepts](references/core-concepts.md)
-- [Troubleshooting](references/troubleshooting.md)
-- [Integration Setup](references/integration.md)
+- [Core Concepts](references/core-concepts.md) — architecture, node pools, networking models, identity, kubectl cheat sheet
+- [Troubleshooting](references/troubleshooting.md) — cluster/node pool issues, upgrade failures
+- [Integration Setup](references/integration.md) — full `az aks ...` commands + Azure SDK fallback, ACR/VNet/monitoring
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 

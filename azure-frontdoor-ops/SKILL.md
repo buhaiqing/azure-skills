@@ -25,7 +25,7 @@ metadata:
 
 ## Overview
 
-Azure Front Door provides **global Layer 7** load balancing with CDN acceleration, multi-region routing, and Web Application Firewall (WAF). This skill is an operational runbook with explicit scope, credential rules, pre-flight checks, dual-path execution (Azure CLI + Azure SDK), validation, and recovery.
+Azure Front Door provides **global Layer 7** load balancing with CDN acceleration, multi-region routing, and Web Application Firewall (WAF). This skill is an operational runbook: scope, credential rules, dual-path execution (Azure CLI + Azure SDK), validation, and recovery. Full commands and tables live in `references/`.
 
 ## Trigger & Scope
 
@@ -33,9 +33,7 @@ Azure Front Door provides **global Layer 7** load balancing with CDN acceleratio
 - User mentions "Front Door", "FD", "Front Door Standard", "Front Door Premium"
 - Task involves CRUD on **Front Door** resources
 - Keywords: front door, frontend, backend pool, routing rule, health probe, origin group, endpoint, rule set
-- Global/multi-region load balancing requirements
-- CDN acceleration, caching, compression
-- Web Application Firewall (WAF) at global edge
+- Global/multi-region load balancing, CDN acceleration, WAF at global edge
 
 ### SHOULD NOT Use When
 - L4 (TCP/UDP) load balancing → delegate to: `azure-loadbalancer-ops`
@@ -45,20 +43,20 @@ Azure Front Door provides **global Layer 7** load balancing with CDN acceleratio
 
 ## Variable Convention
 
+Auth env quad (`{{env.AZURE_SUBSCRIPTION_ID/TENANT_ID/CLIENT_ID/SECRET}}`) is a common skeleton — see [Credential Sources & Priority Order](../../azure-skill-generator/references/azure-cli-conventions.md#credential-sources-priority-order); never ask the user, fail if unset. Business placeholders:
+
 | Placeholder | Source | Agent Action |
 |-------------|--------|--------------|
-| `{{env.AZURE_SUBSCRIPTION_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_TENANT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_ID}}` | Runtime env | NEVER ask user; fail if unset |
-| `{{env.AZURE_CLIENT_SECRET}}` | Runtime env | NEVER ask user; fail if unset |
 | `{{user.resource_group}}` | User input | Ask once; reuse |
 | `{{user.fd_name}}` | User input | Front Door profile name; ask once |
 | `{{user.endpoint_name}}` | User input | Front Door endpoint name; ask once |
+| `{{user.backend_host}}` | User input | Origin backend hostname |
+| `{{user.custom_domain}}` | User input | Custom domain hostname |
 | `{{output.fd_id}}` | Last API response | Parse: `.id` from Azure CLI output |
 
 ## Execution Flow Pattern
 
-Every operation follows: **Pre-flight → Execute → Validate → Recover**
+Every operation follows: **Pre-flight → Execute → Validate → Recover**.
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -67,215 +65,37 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-### Operation: Create Front Door Profile
+Pre-flight checks (CLI/credentials/subscription/RG/name uniqueness) and the 3× retry then SDK fallback follow [azure-cli-conventions.md](../../azure-skill-generator/references/azure-cli-conventions.md). Full `az afd` command blocks + SDK fallback + Recover table are in [integration.md](references/integration.md). SKU/components/FD-vs-AGW comparison tables are in [core-concepts.md](references/core-concepts.md).
 
-#### Pre-flight
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Front Door name globally unique | Front Door endpoint names must be globally unique | HALT; choose unique name |
+## Operations
 
-#### Execute — Azure CLI (Primary)
+### Create Front Door Profile (profile + endpoint + origin-group + origin + route)
 ```bash
-# Create Front Door Standard/Premium profile
-az afd profile create \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --sku Standard_AzureFrontDoor \
-  --output json
-
-# Create endpoint
-az afd endpoint create \
-  --endpoint-name "{{user.endpoint_name}}" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --enabled-state Enabled \
-  --output json
-
-# Create origin group (backend pool)
-az afd origin-group create \
-  --origin-group-name "origin-group" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --probe-name "health-probe" \
-  --output json
-
-# Create health probe
-az afd probe create \
-  --probe-name "health-probe" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --probe-interval-in-seconds 60 \
-  --probe-path "/" \
-  --probe-protocol Https \
-  --output json
-
-# Create origin (backend server)
-az afd origin create \
-  --origin-name "origin-1" \
-  --origin-group-name "origin-group" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --origin-host-name "{{user.backend_host}}" \
-  --origin-host-header "{{user.backend_host}}" \
-  --http-port 80 \
-  --https-port 443 \
-  --priority 1 \
-  --weight 1000 \
-  --output json
-
-# Create route (routing rule)
-az afd route create \
-  --route-name "route" \
-  --endpoint-name "{{user.endpoint_name}}" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --origin-group "origin-group" \
-  --patterns-to-match "/*" \
-  --supported-protocols Http Https \
-  --forward-protocol Https \
-  --output json
+az afd profile create --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --sku Standard_AzureFrontDoor --output json
 ```
+Full multi-step create (endpoint, origin-group, origin, route, probe) + Azure SDK fallback: [integration.md](references/integration.md).
 
-#### Execute — Azure SDK (Fallback)
-```python
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.cdn import CdnManagementClient
-import os
-
-credential = DefaultAzureCredential()
-client = CdnManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Create Front Door profile
-profile = client.profiles.begin_create(
-    resource_group_name='{{user.resource_group}}',
-    profile_name='{{user.fd_name}}',
-    profile={
-        'location': 'Global',
-        'sku': {'name': 'Standard_AzureFrontDoor'},
-        'origin_response_timeout_seconds': 30
-    }
-).result()
-```
-
-#### Validate
+### Add Custom Domain
 ```bash
-# Verify Front Door profile state
-az afd profile show --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Verify endpoint state
-az afd endpoint show --endpoint-name "{{user.endpoint_name}}" --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Check provisioning state: should be "Succeeded"
-# Check endpoint hostname: `{{endpoint_name}}-{{hash}}.azurefd.net`
+az afd custom-domain create --custom-domain-name "{{user.custom_domain_name}}" --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --host-name "{{user.custom_domain}}" --certificate-type ManagedCertificate --minimum-tls-version TLS12 --output json
 ```
+Associate with endpoint: `az afd route update ... --custom-domains ...`. Full: [integration.md](references/integration.md).
 
-#### Recover
-| Error | Action |
-|-------|--------|
-| InvalidParameter | Fix args; retry once |
-| QuotaExceeded | HALT; request quota increase |
-| NameNotAvailable | HALT; endpoint name must be globally unique |
-| Throttling (429) | Backoff, retry 3x |
-| 5xx Internal | Retry 3x, then HALT |
-
-### Operation: Add Custom Domain
-
+### Enable WAF Policy
 ```bash
-# Create custom domain
-az afd custom-domain create \
-  --custom-domain-name "{{user.custom_domain_name}}" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --host-name "{{user.custom_domain}}" \
-  --certificate-type ManagedCertificate \
-  --minimum-tls-version TLS12 \
-  --output json
-
-# Associate custom domain with endpoint
-az afd route update \
-  --route-name "route" \
-  --endpoint-name "{{user.endpoint_name}}" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --custom-domains "{{user.custom_domain_name}}" \
-  --output json
+az network front-door waf-policy create --name "{{user.waf_policy_name}}" --resource-group "{{user.resource_group}}" --mode Prevention --output json
 ```
+Associate via `az afd security-policy create ...`. Full: [integration.md](references/integration.md).
 
-### Operation: Enable WAF Policy
-
+### Delete Front Door Profile — Safety Gate
+**MUST obtain explicit user confirmation (user types exact profile name) before deletion — deleting cuts all traffic to all endpoints.**
 ```bash
-# Create WAF policy
-az network front-door waf-policy create \
-  --name "{{user.waf_policy_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --mode Prevention \
-  --output json
-
-# Associate WAF policy with Front Door
-az afd security-policy create \
-  --security-policy-name "waf-policy" \
-  --profile-name "{{user.fd_name}}" \
-  --resource-group "{{user.resource_group}}" \
-  --waf-policy "{{user.waf_policy_id}}" \
-  --output json
+az afd profile show ... → confirm → az afd profile delete --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
 ```
-
-### Operation: Delete Front Door Profile
-
-**Safety Gate**: MUST obtain explicit user confirmation before deletion.
-
-```bash
-# Show Front Door profile before deletion
-az afd profile show --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
-
-# Request confirmation - user must type exact profile name
-# Then proceed with deletion:
-az afd profile delete --profile-name "{{user.fd_name}}" --resource-group "{{user.resource_group}}" --output json
-```
-
-## Front Door SKUs
-
-| SKU | Use Case |
-|-----|----------|
-| **Standard_AzureFrontDoor** | Global load balancing, CDN acceleration |
-| **Premium_AzureFrontDoor** | Standard + WAF, private link origins |
-
-## Key Components
-
-| Component | Purpose | CLI Command |
-|-----------|---------|-------------|
-| **Profile** | Front Door container | `az afd profile` |
-| **Endpoint** | Entry point (hostname) | `az afd endpoint` |
-| **Origin Group** | Backend pool | `az afd origin-group` |
-| **Origin** | Backend server | `az afd origin` |
-| **Health Probe** | Health check | `az afd probe` |
-| **Route** | Routing rule | `az afd route` |
-| **Custom Domain** | Custom hostname | `az afd custom-domain` |
-| **Rule Set** | Traffic rules | `az afd rule-set` |
-| **Security Policy** | WAF association | `az afd security-policy` |
-
-## Front Door vs Application Gateway
-
-| Feature | Front Door | Application Gateway |
-|---------|------------|---------------------|
-| Scope | Global/multi-region | Single-region |
-| Layer | L7 (HTTP/HTTPS) | L7 (HTTP/HTTPS) |
-| CDN | Built-in | Not available |
-| WAF | Edge-level | Regional |
-| SSL | Global certificate | Regional certificate |
-| Routing | Global latency-based | URL-based |
 
 ## Quality Gate
 
-This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate.
-See `AGENTS.md §3–§8` for the spec.
+This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
 
 | Parameter | Value |
 |-----------|-------|
@@ -294,14 +114,13 @@ See `AGENTS.md §3–§8` for the spec.
 
 ### Command Family Enforcement
 
-This skill uses `az afd` commands (Front Door Standard/Premium). The deprecated
-`az network front-door` MUST NOT be used. Violation → spec_compliance = 0.
+This skill uses `az afd` commands (Front Door Standard/Premium). The deprecated `az network front-door` MUST NOT be used. Violation → spec_compliance = 0.
 
 ## Reference Files
 
-- [Core Concepts](references/core-concepts.md)
+- [Core Concepts](references/core-concepts.md) — SKU, components, FD vs AGW comparison
 - [Troubleshooting](references/troubleshooting.md)
-- [Integration Setup](references/integration.md)
+- [Integration Setup](references/integration.md) — full `az afd` commands, SDK fallback, Recover table
 - [Rubric](references/rubric.md)
 - [Prompt Templates](references/prompt-templates.md)
 
