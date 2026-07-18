@@ -1,6 +1,6 @@
-# L4 策略覆盖扩充计划 ✅ 已完成
+# L4 策略覆盖扩充 + 文档补全计划 ✅ 已完成
 
-> **最终 commit**: `535408b`（自复盘修复后最终版）
+> **最终 commit**: `c5ed2ec`（用户手册完成后最终版）
 > **目标**: 将 self-healing 策略从 6 个 skill 扩充到 31 个，达到 L4 覆盖门槛
 > **实际**: 6 → 31 skill（100% 全量覆盖），超越目标
 
@@ -16,6 +16,7 @@
 | 测试覆盖 | 14/14（新增 `test_all_31_policies_load` 验证全部 31 个） |
 | README 注释 | 已更新为"31个Azure skill全量覆盖" |
 | `self_healing/__init__.py` | 已创建（Python package best practice） |
+| `manual/` | 4 篇用户手册（总览/快速入门/用户指南/FAQ，718行） |
 
 ---
 
