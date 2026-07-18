@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "skills": {
     "azure-vm-ops": "vm_heal.json",
     "azure-aks-ops": "aks_heal.json",
@@ -14,6 +14,8 @@
     "azure-monitor-ops": "monitor_heal.json",
     "azure-cosmos-ops": "cosmos_heal.json",
     "azure-acr-ops": "acr_heal.json",
-    "azure-function-ops": "function_heal.json"
+    "azure-function-ops": "function_heal.json",
+    "azure-keyvault-ops": "keyvault_heal.json",
+    "azure-nsg-ops": "nsg_heal.json"
   }
 }

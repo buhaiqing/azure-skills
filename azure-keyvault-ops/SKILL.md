@@ -131,6 +131,24 @@ GCL is required for destructive/security-sensitive operations and recommended fo
 
 Persist GCL traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secrets masked as `***`.
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-keyvault-ops \
+  --operation vault_create \
+  --command "az keyvault create --name {{user.vault_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"properties.provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (vault_create, secret_set): auto-feedback loop active
+- **Risky operations** (delete/purge, secret/key/cert overwrite, RBAC change): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/keyvault_heal.json`](../../scripts/self_healing/keyvault_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)

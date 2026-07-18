@@ -1,0 +1,36 @@
+{
+  "skill": "azure-keyvault-ops",
+  "operations": {
+    "vault_create": {
+      "health_check": {
+        "api": "az keyvault show",
+        "args_template": ["keyvault", "show", "--name", "{{vault_name}}", "--resource-group", "{{resource_group}}", "--output", "json"],
+        "parse_field": "properties.provisioningState",
+        "expected": "Succeeded"
+      },
+      "healing_rules": [
+        {
+          "condition_type": "field_not_equal",
+          "condition_field": "properties.provisioningState",
+          "condition_value": "Succeeded",
+          "heal_action": "az keyvault wait",
+          "heal_args_template": ["keyvault", "wait", "--name", "{{vault_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
+          "max_attempts": 4,
+          "backoff_sec": 30
+        }
+      ],
+      "escalate_on": ["Failed", "quota_exceeded"],
+      "risky": false
+    },
+    "secret_set": {
+      "risky": false,
+      "healing_rules": [],
+      "escalate_on": []
+    },
+    "vault_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
+    }
+  }
+}

@@ -124,6 +124,24 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 - Security rule create/update → **required**; priority conflict and reachability check required
 - LIST / SHOW / effective rule inspection → recommended
 
+## L4 Auto-Feedback Loop
+
+For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-nsg-ops \
+  --operation nsg_create \
+  --command "az network nsg create --name {{user.nsg_name}} --resource-group {{user.resource_group}} ..." \
+  --desired-state '{"provisioningState": "Succeeded"}' \
+  [--dry-run] [--trace-id <uuid>]
+```
+
+- **Non-risky operations** (nsg_create, nsg_rule_create): auto-feedback loop active
+- **Risky operations** (delete NSG/rule, dissociate NSG from subnet/NIC): always bypass loop and require explicit human confirmation
+- Healing policy: see [`scripts/self_healing/nsg_heal.json`](../../scripts/self_healing/nsg_heal.json)
+- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+
 ## Reference Files
 
 - [Core Concepts](references/core-concepts.md)
