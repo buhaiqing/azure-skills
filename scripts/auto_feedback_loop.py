@@ -86,25 +86,86 @@ def _expand_vars(template: str | list, env: dict) -> str | list:
     return template
 
 
-def _apply_heal_rule(rule: dict, actual: dict, parsed: Optional[str], env: dict) -> tuple[bool, str]:
-    """判断条件是否满足，满足则执行 heal action。返回 (applied, message)"""
+def _apply_heal_rule(rule: dict, actual: dict, parsed: Optional[str], env: dict,
+                     trend_history: Optional[list[dict]] = None) -> tuple[bool, str]:
+    """判断条件是否满足，满足则执行 heal action。返回 (applied, message)
+    
+    condition_type 支持：
+      - field_not_equal: 字段值不等于 expected
+      - field_above_threshold: 字段值 > threshold_value
+      - field_below_threshold: 字段值 < threshold_value
+      - trend_increasing: 连续 trend_window 次观测值递增
+      - rate_of_change: 字段值变化率 > threshold_value (最近两次观测)
+    """
     cond_type = rule.get("condition_type")
+    field = rule.get("condition_field", "")
+    actual_val = _jmespath_simple(field, actual)
+
+    condition_met = False
+
     if cond_type == "field_not_equal":
-        field = rule.get("condition_field", "")
         expected = rule.get("condition_value", "")
-        actual_val = _jmespath_simple(field, actual)
-        if actual_val != expected:
-            action = rule.get("heal_action", "")
-            args = _expand_vars(rule.get("heal_args_template", []), env)
-            cmd = action.split() + args
+        condition_met = (actual_val != expected)
+
+    elif cond_type == "field_above_threshold":
+        threshold = rule.get("threshold_value", 0)
+        try:
+            num_val = float(actual_val) if actual_val is not None else 0
+            condition_met = num_val > threshold
+        except (TypeError, ValueError):
+            condition_met = False
+
+    elif cond_type == "field_below_threshold":
+        threshold = rule.get("threshold_value", 0)
+        try:
+            num_val = float(actual_val) if actual_val is not None else 0
+            condition_met = num_val < threshold
+        except (TypeError, ValueError):
+            condition_met = False
+
+    elif cond_type == "trend_increasing":
+        window = rule.get("trend_window", 3)
+        if trend_history and len(trend_history) >= window:
+            # 检查最近 window 次观测值是否单调递增
+            vals = []
+            for h in trend_history[-window:]:
+                v = _jmespath_simple(field, h.get("state", {}))
+                try:
+                    vals.append(float(v) if v is not None else 0)
+                except (TypeError, ValueError):
+                    vals.append(0)
+            condition_met = all(vals[i] < vals[i + 1] for i in range(len(vals) - 1))
+        else:
+            condition_met = False
+
+    elif cond_type == "rate_of_change":
+        threshold = rule.get("threshold_value", 0.5)
+        if trend_history and len(trend_history) >= 2:
+            last_two = trend_history[-2:]
+            v0 = _jmespath_simple(field, last_two[0].get("state", {}))
+            v1 = _jmespath_simple(field, last_two[1].get("state", {}))
             try:
-                result = subprocess.run(
-                    ["az"] + cmd,
-                    capture_output=True, text=True, timeout=120,
-                )
-                return True, f"heal applied: {action} -> exit={result.returncode}"
-            except Exception as exc:
-                return True, f"heal applied but failed: {exc}"
+                v0_f, v1_f = float(v0) if v0 is not None else 0, float(v1) if v1 is not None else 0
+                if v0_f != 0:
+                    change_rate = abs((v1_f - v0_f) / v0_f)
+                    condition_met = change_rate > threshold
+            except (TypeError, ValueError):
+                condition_met = False
+        else:
+            condition_met = False
+
+    if condition_met:
+        action = rule.get("heal_action", "")
+        args = _expand_vars(rule.get("heal_args_template", []), env)
+        cmd = action.split() + args
+        try:
+            result = subprocess.run(
+                ["az"] + cmd,
+                capture_output=True, text=True, timeout=120,
+            )
+            return True, f"heal applied: {action} -> exit={result.returncode}"
+        except Exception as exc:
+            return True, f"heal applied but failed: {exc}"
     return False, "condition not met"
 
 
@@ -296,11 +357,13 @@ def run_with_feedback(
         return fb_result
 
     heal_history: list = []
+    trend_history: list = []
     for attempt in range(1, max_heal_attempts + 1):
         applied_any = False
         for rule in heal_rules:
             rule_name = rule.get("heal_action", "unknown")
-            ok, msg = _apply_heal_rule(rule, actual_state, parsed_val, {})
+            ok, msg = _apply_heal_rule(rule, actual_state, parsed_val, {},
+                                        trend_history if trend_history else None)
             heal_history.append({
                 "attempt": attempt,
                 "rule_name": rule_name,
@@ -322,6 +385,7 @@ def run_with_feedback(
                     )
                     actual_state = obs.raw
                     parsed_val = obs.parsed
+                    trend_history.append({"state": actual_state, "parsed": parsed_val})
                     if obs.error:
                         break
                 # Re-diff

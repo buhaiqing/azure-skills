@@ -34,6 +34,29 @@
       "risky": true,
       "healing_rules": [],
       "escalate_on": []
+    },
+    "metric_query": {
+      "risky": false,
+      "healing_rules": [],
+      "_reason": "read-only query — no state to correct or wait for",
+      "escalate_on": []
+    },
+    "diagnostic_setting_create": {
+      "risky": false,
+      "health_check": {
+        "api": "az monitor diagnostic-setting show",
+        "args_template": ["monitor", "diagnostic-setting", "show", "--name", "{{setting_name}}", "--resource", "{{resource_id}}", "--output", "json"],
+        "parse_field": "logs[0].enabled",
+        "expected": "true"
+      },
+      "healing_rules": [],
+      "_reason": "diagnostic setting creation is idempotent",
+      "escalate_on": []
+    },
+    "diagnostic_setting_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "escalate_on": []
     }
   }
 }

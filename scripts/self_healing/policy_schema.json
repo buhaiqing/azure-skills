@@ -51,8 +51,10 @@
               "properties": {
                 "condition_type": {
                   "type": "string",
-                  "enum": ["field_not_equal"]
+                  "enum": ["field_not_equal", "field_above_threshold", "field_below_threshold", "trend_increasing", "rate_of_change"]
                 },
+                "threshold_value": { "type": "number", "description": "For field_above_threshold / field_below_threshold / rate_of_change" },
+                "trend_window": { "type": "integer", "minimum": 2, "maximum": 100, "description": "For trend_increasing: number of consecutive observations to check" },
                 "condition_field": { "type": "string" },
                 "condition_value": { "type": "string" },
                 "heal_action": { "type": "string" },

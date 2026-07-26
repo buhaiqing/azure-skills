@@ -5,6 +5,29 @@
       "risky": false,
       "healing_rules": [],
       "_reason": "read-only query — no state to correct or wait for"
+    },
+    "budget_create": {
+      "risky": false,
+      "health_check": {
+        "api": "az consumption budget show",
+        "args_template": ["consumption", "budget", "show", "--budget-name", "{{budget_name}}", "--scope", "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}", "--output", "json"],
+        "parse_field": "currentSpend.amount",
+        "expected": ""
+      },
+      "healing_rules": [],
+      "_reason": "budget creation is idempotent; existence check via health_check",
+      "escalate_on": []
+    },
+    "budget_delete": {
+      "risky": true,
+      "healing_rules": [],
+      "_reason": "destructive — human confirmation required",
+      "escalate_on": []
+    },
+    "reservation_check": {
+      "risky": false,
+      "healing_rules": [],
+      "_reason": "read-only query — no state to correct or wait for"
     }
   }
 }
