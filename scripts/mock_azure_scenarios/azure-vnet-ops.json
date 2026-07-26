@@ -1,0 +1,36 @@
+{
+  "skill": "azure-vnet-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 VNet 操作场景：创建 → 查询 → 子网列表 → IP 可用性检查 → 对等列表 → 删除",
+      "commands": [
+        "az network vnet create --name test-vnet --resource-group test-rg --address-prefix 10.0.0.0/16",
+        "az network vnet show --name test-vnet --resource-group test-rg",
+        "az network vnet subnet list --vnet-name test-vnet --resource-group test-rg",
+        "az network vnet check-ip-address --name test-vnet --resource-group test-rg --ip-address 10.0.1.10",
+        "az network vnet peering list --vnet-name test-vnet --resource-group test-rg",
+        "az network vnet delete --name test-vnet --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：VNet 创建成功但子网创建失败（地址范围重叠）",
+      "commands": [
+        "az network vnet create --name fail-vnet --resource-group test-rg --address-prefix 10.0.0.0/16",
+        "az network vnet subnet create --vnet-name fail-vnet --resource-group test-rg --name test-subnet --address-prefix 10.0.0.0/24"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：VNet 不存在",
+      "commands": [
+        "az network vnet show --name nonexistent-vnet --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

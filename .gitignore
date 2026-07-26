@@ -233,6 +233,9 @@ audit-results/
 # Code graph cache
 .codegraph/
 
+# L4 health report (generated at runtime)
+l4-health-report.json
+
 # Pi Agent runtime state
 .pi/
 

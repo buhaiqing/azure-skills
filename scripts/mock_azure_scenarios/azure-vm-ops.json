@@ -1,0 +1,35 @@
+{
+  "skill": "azure-vm-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 VM 操作场景：创建 → 查询 → 启动 → 停止 → 删除",
+      "commands": [
+        "az vm create --name test-vm --resource-group test-rg --image Ubuntu2204",
+        "az vm show --name test-vm --resource-group test-rg",
+        "az vm start --name test-vm --resource-group test-rg",
+        "az vm stop --name test-vm --resource-group test-rg",
+        "az vm delete --name test-vm --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：创建成功但启动失败（资源不可用）",
+      "commands": [
+        "az vm create --name fail-vm --resource-group test-rg --image Ubuntu2204",
+        "az vm start --name fail-vm --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：资源不存在",
+      "commands": [
+        "az vm show --name nonexistent-vm --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

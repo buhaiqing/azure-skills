@@ -1,0 +1,36 @@
+{
+  "skill": "azure-appgateway-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Application Gateway 操作场景：创建 → 查询 → 探测查看 → 停止 → 启动 → 删除",
+      "commands": [
+        "az network application-gateway create --name test-gateway --resource-group test-rg --capacity 2 --sku Standard_v2",
+        "az network application-gateway show --name test-gateway --resource-group test-rg",
+        "az network application-gateway probe show --gateway-name test-gateway --resource-group test-rg --name health-probe",
+        "az network application-gateway stop --name test-gateway --resource-group test-rg",
+        "az network application-gateway start --name test-gateway --resource-group test-rg",
+        "az network application-gateway delete --name test-gateway --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：网关创建成功但启动失败（后端池不健康）",
+      "commands": [
+        "az network application-gateway create --name fail-gateway --resource-group test-rg --capacity 1 --sku Standard_v2",
+        "az network application-gateway start --name fail-gateway --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Application Gateway 不存在",
+      "commands": [
+        "az network application-gateway show --name nonexistent-gateway --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

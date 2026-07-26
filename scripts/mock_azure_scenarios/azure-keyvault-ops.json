@@ -1,0 +1,35 @@
+{
+  "skill": "azure-keyvault-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Key Vault 操作场景：创建 → 查询 → 密钥列表 → 密钥列表 → 删除",
+      "commands": [
+        "az keyvault create --name test-kv --resource-group test-rg",
+        "az keyvault show --name test-kv",
+        "az keyvault secret list --vault-name test-kv",
+        "az keyvault key list --vault-name test-kv",
+        "az keyvault delete --name test-kv --resource-group test-rg"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：Key Vault 创建成功但密钥检索失败（访问策略未配置）",
+      "commands": [
+        "az keyvault create --name fail-kv --resource-group test-rg",
+        "az keyvault secret show --vault-name fail-kv --name my-secret"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Key Vault 不存在",
+      "commands": [
+        "az keyvault show --name nonexistent-kv"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

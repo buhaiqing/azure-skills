@@ -1,0 +1,35 @@
+{
+  "skill": "azure-loadbalancer-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Load Balancer 操作场景：创建 → 查询 → 规则列表 → 探测列表 → 删除",
+      "commands": [
+        "az network lb create --name test-lb --resource-group test-rg",
+        "az network lb show --name test-lb --resource-group test-rg",
+        "az network lb rule list --lb-name test-lb --resource-group test-rg",
+        "az network lb probe list --lb-name test-lb --resource-group test-rg",
+        "az network lb delete --name test-lb --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：负载均衡器创建成功但创建探测失败（端口冲突）",
+      "commands": [
+        "az network lb create --name fail-lb --resource-group test-rg",
+        "az network lb probe create --lb-name fail-lb --resource-group test-rg --name health-probe --protocol Tcp --port 80"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：负载均衡器不存在",
+      "commands": [
+        "az network lb show --name nonexistent-lb --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

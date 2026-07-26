@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://azure-skills/schemas/memory-store.schema.json",
+  "title": "Memory Store Record Schema",
+  "description": "Schema for execution memory store records in azure-skills",
+  "type": "object",
+  "properties": {
+    "skill": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Azure service skill name"
+    },
+    "symptom": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Symptom/condition observed"
+    },
+    "strategy": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Repair strategy executed"
+    },
+    "success": {
+      "type": "boolean",
+      "description": "Whether the strategy succeeded"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the record"
+    },
+    "deprecated": {
+      "type": "boolean",
+      "description": "Whether this strategy is deprecated"
+    },
+    "deprecated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the strategy was deprecated"
+    }
+  },
+  "required": ["skill", "symptom", "strategy", "success", "timestamp"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "deprecated": {
+            "const": true
+          }
+        },
+        "required": ["deprecated"]
+      },
+      "then": {
+        "required": ["deprecated_at"]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "skill": "azure-vm-ops",
+      "symptom": "powerState != running",
+      "strategy": "az vm start",
+      "success": true,
+      "timestamp": "2026-07-26T12:00:00+00:00"
+    },
+    {
+      "skill": "azure-vm-ops",
+      "symptom": "powerState != running",
+      "strategy": "az vm restart",
+      "success": false,
+      "timestamp": "2026-07-20T12:00:00+00:00",
+      "deprecated": true,
+      "deprecated_at": "2026-07-26T12:00:00+00:00"
+    }
+  ]
+}

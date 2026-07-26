@@ -1,0 +1,35 @@
+{
+  "skill": "azure-aks-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 AKS 操作场景：创建集群 → 查询 → 获取凭据 → 节点池列表 → 删除",
+      "commands": [
+        "az aks create --name test-cluster --resource-group test-rg --node-count 3",
+        "az aks show --name test-cluster --resource-group test-rg",
+        "az aks get-credentials --name test-cluster --resource-group test-rg",
+        "az aks nodepool list --cluster-name test-cluster --resource-group test-rg",
+        "az aks delete --name test-cluster --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：集群创建成功但节点池升级失败",
+      "commands": [
+        "az aks create --name fail-cluster --resource-group test-rg --node-count 1",
+        "az aks nodepool upgrade --cluster-name fail-cluster --name nodepool1 --resource-group test-rg --kubernetes-version 1.28"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：集群不存在",
+      "commands": [
+        "az aks show --name nonexistent-cluster --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

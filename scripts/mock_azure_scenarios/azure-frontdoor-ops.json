@@ -1,0 +1,34 @@
+{
+  "skill": "azure-frontdoor-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Front Door 操作场景：创建 Profile → 端点查询 → 清除缓存 → 删除",
+      "commands": [
+        "az afd profile create --profile-name test-profile --resource-group test-rg --sku Standard_AzureFrontDoor",
+        "az afd endpoint show --profile-name test-profile --resource-group test-rg --endpoint-name test-endpoint",
+        "az afd endpoint purge --profile-name test-profile --resource-group test-rg --endpoint-name test-endpoint --content-paths '/*'",
+        "az afd profile delete --profile-name test-profile --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：Profile 创建成功但清除缓存失败（端点未部署）",
+      "commands": [
+        "az afd profile create --profile-name fail-profile --resource-group test-rg --sku Standard_AzureFrontDoor",
+        "az afd endpoint purge --profile-name fail-profile --resource-group test-rg --endpoint-name test-endpoint --content-paths '/*'"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Front Door Profile 不存在",
+      "commands": [
+        "az afd profile show --profile-name nonexistent-profile --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}
