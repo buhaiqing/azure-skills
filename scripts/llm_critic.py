@@ -206,8 +206,10 @@ class CriticModel:
     api_key: str | None = field(default=None)
     azure_endpoint: str | None = field(default=None)
     azure_api_version: str = "2024-08-01-preview"
+    base_url: str | None = field(default=None)  # For qwen / OpenAI-compatible endpoints
 
-    VALID_PROVIDERS = frozenset({"openai", "azure_openai", "anthropic"})
+    VALID_PROVIDERS = frozenset({"openai", "azure_openai", "anthropic", "qwen"})
+    DEFAULT_QWEN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
     def __post_init__(self) -> None:
         if self.provider not in self.VALID_PROVIDERS:
@@ -228,6 +230,7 @@ class CriticModel:
             "openai": "OPENAI_API_KEY",
             "azure_openai": "AZURE_OPENAI_API_KEY",
             "anthropic": "ANTHROPIC_API_KEY",
+            "qwen": "DASHSCOPE_API_KEY",
         }
         return os.environ.get(env_map[self.provider])
 
@@ -237,6 +240,8 @@ class CriticModel:
         if not api_key:
             return False
         if self.provider == "azure_openai" and not self.azure_endpoint:
+            return False
+        if self.provider == "qwen" and not (self.base_url or self.DEFAULT_QWEN_URL):
             return False
         return True
 
@@ -317,6 +322,30 @@ class CriticModel:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 body = _json.loads(resp.read())
                 return body["content"][0]["text"]
+
+        elif self.provider == "qwen":
+            import json as _json
+
+            import urllib.request
+
+            base = self.base_url or self.DEFAULT_QWEN_URL
+            data = _json.dumps({
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.0,
+                "max_tokens": 512,
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                f"{base}/chat/completions",
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = _json.loads(resp.read())
+                return body["choices"][0]["message"]["content"]
 
         raise RuntimeError(f"Unreachable: provider={self.provider}")
 

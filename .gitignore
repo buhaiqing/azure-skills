@@ -241,3 +241,6 @@ l4-health-report.json
 
 # L4 feedback loop findings (generated at runtime)
 .runtime/
+
+# Pi subagents state
+.pi-subagents/

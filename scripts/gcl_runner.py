@@ -274,13 +274,19 @@ def critic_score(trace: dict, rubric: dict) -> dict:
 # --- Main Orchestrator ---
 
 def _load_critic_model(skill: str) -> object | None:
-    """Load LLM CriticModel for skill if rubric JSON exists."""
+    """Load LLM CriticModel for skill if rubric JSON exists.
+
+    Provider is read from CRITIC_PROVIDER env var (defaults to 'openai').
+    Supported: openai, azure_openai, anthropic, qwen.
+    """
     rubric_path = REPO_ROOT / "scripts" / "critic_models" / f"{skill}.json"
     if not rubric_path.exists():
         return None
     try:
         from llm_critic import CriticModel
-        return CriticModel(provider="openai", model_name="gpt-4o-mini")
+        provider = os.environ.get("CRITIC_PROVIDER", "openai")
+        model_name = os.environ.get("CRITIC_MODEL", "gpt-4o-mini")
+        return CriticModel(provider=provider, model_name=model_name)
     except ImportError:
         return None
 
