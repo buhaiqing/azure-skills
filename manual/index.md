@@ -1,69 +1,128 @@
-# Azure Skills L4 用户手册
-
-> 面向 AI Agent 运维操作员的 L4 自动化闭环使用指南
-
+---
+title: Azure Skills 文档中心
+description: azure-skills L4 自动化闭环完整文档
 ---
 
-## 这套系统能做什么
+# Azure Skills 文档中心
 
-当 AI Agent 执行 Azure 云操作时，这套 L4 自动化闭环会自动：
+> 面向 AI Agent 开发者和 DevOps 工程师，支持 **31 个 Azure 服务**的 L4 自动化闭环。
 
-1. **感知结果** — 操作完成后调用 Azure API 获取资源真实状态
-2. **比对目标** — 自动比对"期望状态"和"实际状态"
-3. **自我修复** — 如果状态不对，自动尝试补偿（最多 2 次）
-4. **升人工** — 修复不了时，生成带完整上下文的诊断报告交给人工
-
-**不做什么**：不写代码、不做应用层决策、不处理业务逻辑。
-
----
-
-## 文档结构
-
-| 文档 | 内容 |
-|------|------|
-| [快速入门](quick-start.md) | 5 分钟上手，运行第一个 L4 闭环 |
-| [用户指南](user-guide.md) | 完整功能说明、所有参数、示例 |
-| [常见问题](faq.md) | FAQ、错误处理、故障排查 |
-
----
-
-## 核心概念
-
-### Skill（技能）
-
-每个 Azure 服务对应一个 Skill。例如创建 VM 用 `azure-vm-ops`，创建 Kubernetes 集群用 `azure-aks-ops`。
-
-目前支持 **31 个 Azure 服务**的全量覆盖。
-
-### desired_state（期望状态）
-
-用户告诉 Agent"你把这个 VM 创建好之后，它应该是 `running` 状态"。这就是 desired_state。
-
-```json
-{"statuses[1].displayStatus": "VM running"}
-```
-
-### 闭环流程
+## 📚 文档结构
 
 ```
-执行命令 → 观察状态 → 比对目标
-                       ↓
-           一致 → ✅ 完成
-           不一致 → 查修复策略 → 补偿执行
-                     ↓
-           修复成功 → ✅ 完成
-           修复失败 → 升人工
+manual/
+├── index.md                 # 文档中心（本文）
+├── quick-start.md          # 5 分钟快速入门
+├── architecture.md         # 系统架构设计
+├── l4闭环.md               # L4 自动化闭环
+├── llm-critic.md          # LLM 质量审核
+├── orchestrator.md         # 跨服务编排
+├── memory.md               # 执行记忆层
+├── dashboard.md            # 健康仪表板
+├── mock.md                 # Mock 验证
+├── configuration.md        # 环境变量配置
+├── troubleshooting.md       # 故障排查
+├── best-practices.md       # 最佳实践
+├── api-reference.md        # API 参考
+└── extension.md            # 扩展指南
 ```
 
-### risky 操作
+## 🚀 快速链接
 
-危险操作（delete、stop、purge、scale-to-zero）**永远不走自动闭环**，必须人工确认。
+| 场景 | 文档 | 关键命令 |
+|------|------|----------|
+| 第一次使用 | [快速入门](./quick-start.md) | `python scripts/auto_feedback_loop.py --skill azure-vm-ops ...` |
+| 理解架构 | [系统架构](./architecture.md) | — |
+| 自动修复 | [L4 闭环](./l4闭环.md) | `--desired-state '{"powerState": "VM running"}'` |
+| 质量审核 | [LLM Critic](./llm-critic.md) | `--critic llm` |
+| 跨服务问题 | [编排引擎](./orchestrator.md) | `--diagnose "AKS node not ready"` |
+| 经验复用 | [记忆层](./memory.md) | `store.recommend()` |
+| 查看健康 | [仪表板](./dashboard.md) | `python scripts/health_dashboard.py` |
+| 本地测试 | [Mock 验证](./mock.md) | `python scripts/run_all_scenarios.py` |
+| 配置环境 | [环境配置](./configuration.md) | `cp .env.example .env` |
 
----
+## 📊 核心能力矩阵
 
-## 快速链接
+| 能力 | 组件 | 自动化程度 | 适用场景 |
+|------|------|-----------|---------|
+| L4 闭环 | `auto_feedback_loop.py` | 全自动 | 资源创建/修改 |
+| LLM 审核 | `llm_critic.py` | 半自动 | 质量评分 |
+| 跨服务诊断 | `orchestrator.py` | 全自动 | 依赖链分析 |
+| 执行记忆 | `memory_store.py` | 全自动 | 策略推荐 |
+| 健康仪表板 | `health_dashboard.py` | 只读 | 状态监控 |
+| Mock 测试 | `mock_azure.py` | 全自动 | 离线验证 |
 
-- **创建 VM 并自动等待就绪** → [快速入门 - 示例 1](quick-start.md#示例-1-创建-vm-并等待就绪)
-- **创建 AKS 集群并验证** → [快速入门 - 示例 2](quick-start.md#示例-2-创建-aks-集群)
-- **我想自己选择是否启用闭环** → [用户指南 - 何时使用 L4](user-guide.md#何时使用-l4)
-- **操作失败了怎么办** → [常见问题 - 状态是什么含义](faq.md#状态是什么含义)
+## 🔧 决策树
+
+```
+需要执行 Azure 操作？
+     │
+     ├── destructive (delete/stop)？
+     │      YES → SKILL.md Safety Gate（必须人工确认）
+     │      NO  ↓
+     │
+     ├── 有 desired_state？
+     │      YES → auto_feedback_loop.py（自动校验+修复）
+     │      NO  ↓
+     │
+     ├── 需要质量评分？
+     │      YES → gcl_runner.py（+ llm_critic 可选）
+     │      NO  ↓
+     │
+     └── 直接执行 az 命令
+```
+
+## 📈 L4 认证指标
+
+| 指标 | 目标 | 当前 | 状态 |
+|------|------|------|------|
+| 安全通过率 | 100% | 100% | ✅ |
+| 自愈成功率 | ≥ 85% | 93% | ✅ |
+| 人工介入率 | ≤ 15% | 6% | ✅ |
+| CADL 沉淀 | 100% | 94% | ✅ |
+
+> 查看完整认证报告：[l4-certification-2026-07-27.md](../docs/superpowers/reports/l4-certification-2026-07-27.md)
+
+## 🎯 常见任务
+
+### 创建 VM 并自动等待就绪
+
+```bash
+python scripts/auto_feedback_loop.py \
+  --skill azure-vm-ops \
+  --operation vm_create \
+  --command "az vm create --name my-vm --resource-group my-rg --image UbuntuLTS" \
+  --desired-state '{"powerState": "VM running"}'
+```
+
+### 诊断 AKS 问题
+
+```bash
+python scripts/orchestrator.py --diagnose "AKS node not ready"
+```
+
+### 使用 LLM 评分
+
+```bash
+export DASHSCOPE_API_KEY=sk-xxx
+python scripts/gcl_runner.py --skill azure-vm-ops --critic llm --request "az vm list"
+```
+
+### 查看健康状态
+
+```bash
+python scripts/health_dashboard.py
+```
+
+## 🔗 相关链接
+
+- [L4 达成报告](../docs/superpowers/reports/l4-achievement-2026-07-27.md)
+- [开发路线图](../docs/superpowers/plans/2026-07-26-L3.5-to-L4-roadmap.md)
+- [GitHub 仓库](https://github.com/buhaiqing/azure-skills)
+- [问题反馈](https://github.com/buhaiqing/azure-skills/issues)
+
+## 📝 文档版本
+
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| 1.0 | 2026-07-27 | 初始版本，L4 达成 |
