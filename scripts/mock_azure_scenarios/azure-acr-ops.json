@@ -1,0 +1,34 @@
+{
+  "skill": "azure-acr-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 ACR 操作场景：创建注册表 → 登录 → 列出镜像 → 删除",
+      "commands": [
+        "az acr create --name testregistry --resource-group test-rg --sku Standard",
+        "az acr show --name testregistry --resource-group test-rg",
+        "az acr repository list --name testregistry",
+        "az acr delete --name testregistry --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：注册表创建成功但镜像列表获取失败",
+      "commands": [
+        "az acr create --name failregistry --resource-group test-rg --sku Basic",
+        "az acr repository list --name failregistry"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：注册表不存在",
+      "commands": [
+        "az acr show --name nonexistent-registry --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

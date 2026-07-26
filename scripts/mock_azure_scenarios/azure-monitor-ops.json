@@ -1,0 +1,34 @@
+{
+  "skill": "azure-monitor-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Monitor 操作场景：创建警报规则 → 列出警报 → 查询指标 → 删除规则",
+      "commands": [
+        "az monitor alert create --name test-alert --resource-group test-rg --condition count > 0 --target test-vm",
+        "az monitor alert show --name test-alert --resource-group test-rg",
+        "az monitor metrics list --resource-group test-rg --interval 5m",
+        "az monitor alert delete --name test-alert --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：警报规则创建成功但指标查询失败",
+      "commands": [
+        "az monitor alert create --name fail-alert --resource-group test-rg --condition count > 0 --target test-vm",
+        "az monitor metrics list --resource-group nonexistent-rg --interval 5m"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：警报规则不存在",
+      "commands": [
+        "az monitor alert show --name nonexistent-alert --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

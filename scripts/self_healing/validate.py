@@ -51,8 +51,22 @@ def validate_policy(policy_file: Path) -> list[str]:
             errors.append(f"operation '{op_name}': missing required field: risky")
 
         for rule in op_config.get("healing_rules", []):
-            required_fields = ["condition_type", "condition_field", "condition_value",
-                               "heal_action", "heal_args_template", "max_attempts", "backoff_sec"]
+            # 基础必填字段（所有 condition_type 通用）
+            base_required = ["condition_type", "heal_action", "heal_args_template", "max_attempts", "backoff_sec"]
+            # condition_type 相关的额外必填字段
+            ct = rule.get("condition_type")
+            if ct in ("field_not_equal",):
+                ct_required = ["condition_field", "condition_value"]
+            elif ct in ("field_above_threshold", "field_below_threshold"):
+                ct_required = ["condition_field", "threshold_value"]
+            elif ct in ("trend_increasing",):
+                ct_required = ["condition_field", "trend_window"]
+            elif ct in ("rate_of_change",):
+                ct_required = ["condition_field", "threshold_value", "trend_window"]
+            else:
+                ct_required = []
+
+            required_fields = base_required + ct_required
             missing = [f for f in required_fields if f not in rule]
             if missing:
                 errors.append(f"operation '{op_name}': healing_rule missing fields: {missing}")
@@ -65,7 +79,11 @@ def validate_policy(policy_file: Path) -> list[str]:
             if not (5 <= backoff <= 300):
                 errors.append(f"operation '{op_name}': healing_rule backoff_sec={backoff} must be 5-300")
 
-            if rule.get("condition_type") not in (None, "field_not_equal"):
+            VALID_CONDITION_TYPES = {
+                "field_not_equal", "field_above_threshold", "field_below_threshold",
+                "trend_increasing", "rate_of_change",
+            }
+            if rule.get("condition_type") not in (None, *VALID_CONDITION_TYPES):
                 errors.append(f"operation '{op_name}': unknown condition_type: {rule.get('condition_type')}")
 
             if not isinstance(rule.get("heal_args_template", []), list):

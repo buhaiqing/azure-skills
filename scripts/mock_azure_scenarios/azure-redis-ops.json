@@ -1,0 +1,35 @@
+{
+  "skill": "azure-redis-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Redis Cache 操作场景：创建 Redis → 设置键值 → 获取键 → 列出密钥 → 删除",
+      "commands": [
+        "az redis create --name test-redis --resource-group test-rg --location eastus --sku Basic --vm-size c0",
+        "az redis show --name test-redis --resource-group test-rg",
+        "az redis set --name test-redis --resource-group test-rg --key test-key --value 'Hello World'",
+        "az redis get --name test-redis --resource-group test-rg --key test-key",
+        "az redis delete --name test-redis --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：Redis 创建成功但获取键失败",
+      "commands": [
+        "az redis create --name fail-redis --resource-group test-rg --location eastus --sku Basic --vm-size c0",
+        "az redis get --name fail-redis --resource-group test-rg --key nonexistent-key"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Redis 实例不存在",
+      "commands": [
+        "az redis show --name nonexistent-redis --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

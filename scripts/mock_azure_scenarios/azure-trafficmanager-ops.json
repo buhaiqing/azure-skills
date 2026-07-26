@@ -1,0 +1,35 @@
+{
+  "skill": "azure-trafficmanager-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Traffic Manager 操作场景：创建配置文件 → 添加终结点 → 列出终结点 → 查询配置文件 → 删除",
+      "commands": [
+        "az network traffic-manager profile create --name test-tm-profile --resource-group test-rg --routing-method Performance",
+        "az network traffic-manager endpoint create --name test-endpoint --profile-name test-tm-profile --resource-group test-rg --type ExternalEndpoints --target target1.example.com",
+        "az network traffic-manager endpoint list --profile-name test-tm-profile --resource-group test-rg",
+        "az network traffic-manager profile show --name test-tm-profile --resource-group test-rg",
+        "az network traffic-manager profile delete --name test-tm-profile --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：配置文件创建成功但终结点创建失败",
+      "commands": [
+        "az network traffic-manager profile create --name fail-tm-profile --resource-group test-rg --routing-method Performance",
+        "az network traffic-manager endpoint create --name fail-endpoint --profile-name fail-tm-profile --resource-group test-rg --type ExternalEndpoints --target target1.example.com"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：配置文件不存在",
+      "commands": [
+        "az network traffic-manager profile show --name nonexistent-tm-profile --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "skill": "azure-appgateway-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Application Gateway operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Application Gateway provisioningState is Succeeded or Failed",
+        "backendAddressPools are correctly configured with target FQDNs or IPs",
+        "routing rules (path-based/basic) match the requested listener configuration",
+        "SKU name and tier match the requested Application Gateway tier (WAF_v2/Standard_v2)"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete Application Gateway operations include pre-confirmation show command",
+        "WAF policy changes include pre-check of current policy state",
+        "No credential or sensitive data in stdout/stderr",
+        "Gateway deletion warns about traffic disruption to all configured backends"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Backend pool updates merge rather than replace existing pool members",
+        "Routing rule creation checks for listener name conflicts",
+        "Delete operations on already-deleted gateways return success"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Listener configuration (ports, protocols, certificates) is documented",
+        "Health probe settings and backend health status are logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Application Gateway name follows Azure naming conventions",
+        "--location parameter is specified for gateway creation"
+      ]
+    }
+  }
+}

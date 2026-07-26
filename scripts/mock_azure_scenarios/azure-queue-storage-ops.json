@@ -1,0 +1,36 @@
+{
+  "skill": "azure-queue-storage-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Queue Storage 操作场景：创建存储账户 → 创建队列 → 发送消息 → 接收消息 → 删除",
+      "commands": [
+        "az storage account create --name testqueuestorage --resource-group test-rg --sku Standard_LRS",
+        "az storage queue create --name test-queue --account-name testqueuestorage",
+        "az storage message put --queue-name test-queue --content 'Hello' --account-name testqueuestorage",
+        "az storage message get --queue-name test-queue --account-name testqueuestorage",
+        "az storage account delete --name testqueuestorage --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：存储账户创建成功但消息获取失败",
+      "commands": [
+        "az storage account create --name failqueuestorage --resource-group test-rg --sku Standard_LRS",
+        "az storage queue create --name fail-queue --account-name failqueuestorage",
+        "az storage message get --queue-name fail-queue --account-name failqueuestorage"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [2]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：存储账户不存在",
+      "commands": [
+        "az storage account show --name nonexistent-queue-storage --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

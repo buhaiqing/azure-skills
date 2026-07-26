@@ -1,0 +1,35 @@
+{
+  "skill": "azure-cosmos-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Cosmos DB 操作场景：创建账户 → 创建数据库 → 创建容器 → 查询 → 删除",
+      "commands": [
+        "az cosmosdb create --name test-cosmosdb --resource-group test-rg",
+        "az cosmosdb database create --name test-cosmosdb --resource-group test-rg --db-name test-db",
+        "az cosmosdb collection create --name test-cosmosdb --resource-group test-rg --db-name test-db --collection-name test-coll --throughput 400",
+        "az cosmosdb show --name test-cosmosdb --resource-group test-rg",
+        "az cosmosdb delete --name test-cosmosdb --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：Cosmos DB 创建成功但容器创建失败",
+      "commands": [
+        "az cosmosdb create --name fail-cosmosdb --resource-group test-rg",
+        "az cosmosdb collection create --name fail-cosmosdb --resource-group test-rg --db-name test-db --collection-name test-coll --throughput 400"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Cosmos DB 账户不存在",
+      "commands": [
+        "az cosmosdb show --name nonexistent-cosmosdb --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

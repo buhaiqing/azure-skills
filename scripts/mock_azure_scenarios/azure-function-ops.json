@@ -1,0 +1,36 @@
+{
+  "skill": "azure-function-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Function App 操作场景：创建应用服务计划 → 创建函数应用 → 触发部署 → 删除",
+      "commands": [
+        "az functionapp plan create --name test-plan --resource-group test-rg --location eastus --sku B1",
+        "az functionapp create --name test-function --resource-group test-rg --plan test-plan --storage-account teststorage",
+        "az functionapp show --name test-function --resource-group test-rg",
+        "az functionapp deployment source config-zip --name test-function --resource-group test-rg --src app.zip",
+        "az functionapp delete --name test-function --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：函数应用创建成功但部署失败",
+      "commands": [
+        "az functionapp plan create --name fail-plan --resource-group test-rg --location eastus --sku S1",
+        "az functionapp create --name fail-function --resource-group test-rg --plan fail-plan --storage-account failstorage",
+        "az functionapp deployment source config-zip --name fail-function --resource-group test-rg --src nonexistent.zip"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [2]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：函数应用不存在",
+      "commands": [
+        "az functionapp show --name nonexistent-function --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

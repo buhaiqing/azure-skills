@@ -1,0 +1,34 @@
+{
+  "skill": "azure-servicebus-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Service Bus 操作场景：创建命名空间 → 创建队列 → 发送消息 → 接收消息 → 删除",
+      "commands": [
+        "az servicebus namespace create --name test-sb-namespace --resource-group test-rg --location eastus",
+        "az servicebus queue create --name test-queue --namespace-name test-sb-namespace --resource-group test-rg",
+        "az servicebus queue show --name test-queue --namespace-name test-sb-namespace --resource-group test-rg",
+        "az servicebus namespace delete --name test-sb-namespace --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：命名空间创建成功但队列创建失败",
+      "commands": [
+        "az servicebus namespace create --name fail-sb-namespace --resource-group test-rg --location eastus",
+        "az servicebus queue create --name fail-queue --namespace-name fail-sb-namespace --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：命名空间不存在",
+      "commands": [
+        "az servicebus namespace show --name nonexistent-sb-namespace --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

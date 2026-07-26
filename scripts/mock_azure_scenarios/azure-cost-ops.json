@@ -1,0 +1,33 @@
+{
+  "skill": "azure-cost-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Cost Management 操作场景：查询成本分析 → 导出预算 → 列出查询",
+      "commands": [
+        "az cost analysis query --scope subscriptions/00000000-0000-0000-0000-000000000000 --from-date 2026-07-01 --to-date 2026-07-31",
+        "az cost budget create --name test-budget --resource-group test-rg --amount 1000 --time-grain Monthly",
+        "az cost query list --scope subscriptions/00000000-0000-0000-0000-000000000000"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：成本查询成功但预算创建失败",
+      "commands": [
+        "az cost analysis query --scope subscriptions/00000000-0000-0000-0000-000000000000 --from-date 2026-07-01 --to-date 2026-07-31",
+        "az cost budget create --name fail-budget --resource-group nonexistent-rg --amount 1000 --time-grain Monthly"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：无效的订阅范围",
+      "commands": [
+        "az cost analysis query --scope subscriptions/nonexistent-sub --from-date 2026-07-01 --to-date 2026-07-31"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "skill": "azure-sqldb-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 SQL Database 操作场景：创建服务器 → 创建数据库 → 列出数据库 → 查询审核 → 删除",
+      "commands": [
+        "az sql server create --name test-sql-server --resource-group test-rg --admin-user sqladmin --admin-password TestPassword123!",
+        "az sql db create --name test-sql-server --resource-group test-rg --db-name test-db",
+        "az sql db list --name test-sql-server --resource-group test-rg",
+        "az sql db show --name test-sql-server --resource-group test-rg --db-name test-db",
+        "az sql server delete --name test-sql-server --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：服务器创建成功但数据库创建失败",
+      "commands": [
+        "az sql server create --name fail-sql-server --resource-group test-rg --admin-user sqladmin --admin-password TestPassword123!",
+        "az sql db create --name fail-sql-server --resource-group test-rg --db-name test-db"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：服务器不存在",
+      "commands": [
+        "az sql server show --name nonexistent-sql-server --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

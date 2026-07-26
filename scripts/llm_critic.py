@@ -48,6 +48,8 @@ def _build_critic_prompt(
     # Rubric section — inline as structured text, not nested JSON
     lines.append("## Rubric thresholds")
     for dim, cfg in sorted(rubric.items()):
+        if not isinstance(cfg, dict):
+            continue
         t = cfg.get("threshold", 0.5)
         lines.append(f"  {dim}: pass if >= {t}")
     lines.append("")
@@ -183,7 +185,7 @@ def _rule_based_score(
         blocking = True
 
     return {
-        "scores": {dim: scores.get(dim, 0.5) for dim in rubric},
+        "scores": {dim: scores.get(dim, 0.5) for dim in rubric if isinstance(rubric.get(dim), dict)},
         "suggestions": suggestions[:3],
         "blocking": blocking,
         "critic_type": "rule_based",

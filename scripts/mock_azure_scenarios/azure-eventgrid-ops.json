@@ -1,0 +1,34 @@
+{
+  "skill": "azure-eventgrid-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Event Grid 操作场景：创建主题 → 列出订阅 → 发布事件 → 删除",
+      "commands": [
+        "az eventgrid topic create --name test-topic --resource-group test-rg --location eastus",
+        "az eventgrid topic show --name test-topic --resource-group test-rg",
+        "az eventgrid event-subscription list --resource-group test-rg",
+        "az eventgrid topic delete --name test-topic --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：主题创建成功但订阅列表失败",
+      "commands": [
+        "az eventgrid topic create --name fail-topic --resource-group test-rg --location eastus",
+        "az eventgrid event-subscription list --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：主题不存在",
+      "commands": [
+        "az eventgrid topic show --name nonexistent-topic --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

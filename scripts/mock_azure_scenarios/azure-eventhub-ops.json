@@ -1,0 +1,34 @@
+{
+  "skill": "azure-eventhub-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Event Hubs 操作场景：创建命名空间 → 创建事件中心 → 列出实体 → 删除",
+      "commands": [
+        "az eventhubs namespace create --name test-namespace --resource-group test-rg --location eastus",
+        "az eventhubs eventhub create --name test-hub --namespace-name test-namespace --resource-group test-rg",
+        "az eventhubs eventhub show --name test-hub --namespace-name test-namespace --resource-group test-rg",
+        "az eventhubs namespace delete --name test-namespace --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：命名空间创建成功但事件中心创建失败",
+      "commands": [
+        "az eventhubs namespace create --name fail-namespace --resource-group test-rg --location eastus",
+        "az eventhubs eventhub create --name fail-hub --namespace-name fail-namespace --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：命名空间不存在",
+      "commands": [
+        "az eventhubs namespace show --name nonexistent-namespace --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

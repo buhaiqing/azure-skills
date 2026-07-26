@@ -1,0 +1,34 @@
+{
+  "skill": "azure-apim-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 APIM 操作场景：创建服务 → 查询 → 列出 API → 删除",
+      "commands": [
+        "az apim create --name test-apim --resource-group test-rg --location eastus",
+        "az apim show --name test-apim --resource-group test-rg",
+        "az apim api list --service-name test-apim --resource-group test-rg",
+        "az apim delete --name test-apim --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：APIM 服务创建成功但 API 列表获取失败",
+      "commands": [
+        "az apim create --name fail-apim --resource-group test-rg --location eastus",
+        "az apim api list --service-name fail-apim --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：APIM 服务不存在",
+      "commands": [
+        "az apim show --name nonexistent-apim --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

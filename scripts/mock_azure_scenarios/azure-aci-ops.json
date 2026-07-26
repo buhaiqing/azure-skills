@@ -1,0 +1,34 @@
+{
+  "skill": "azure-aci-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 ACI 操作场景：创建容器组 → 查询 → 日志 → 删除",
+      "commands": [
+        "az container create --name test-container --resource-group test-rg --image nginx",
+        "az container show --name test-container --resource-group test-rg",
+        "az container logs --name test-container --resource-group test-rg",
+        "az container delete --name test-container --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：容器组创建成功但日志获取失败",
+      "commands": [
+        "az container create --name fail-container --resource-group test-rg --image nginx",
+        "az container logs --name fail-container --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：容器组不存在",
+      "commands": [
+        "az container show --name nonexistent-container --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

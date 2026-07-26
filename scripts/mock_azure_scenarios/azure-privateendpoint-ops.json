@@ -1,0 +1,34 @@
+{
+  "skill": "azure-privateendpoint-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Private Endpoint 操作场景：创建私有端点 → 查询连接状态 → 列出连接 → 删除",
+      "commands": [
+        "az network private-endpoint create --name test-pe --resource-group test-rg --vnet-name test-vnet --subnet test-subnet --connection-name test-connection --private-connection-resource-id /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/teststorage",
+        "az network private-endpoint show --name test-pe --resource-group test-rg",
+        "az network private-endpoint list --resource-group test-rg",
+        "az network private-endpoint delete --name test-pe --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：私有端点创建成功但查询失败",
+      "commands": [
+        "az network private-endpoint create --name fail-pe --resource-group test-rg --vnet-name test-vnet --subnet test-subnet --connection-name fail-connection --private-connection-resource-id /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/failstorage",
+        "az network private-endpoint show --name fail-pe --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：私有端点不存在",
+      "commands": [
+        "az network private-endpoint show --name nonexistent-pe --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

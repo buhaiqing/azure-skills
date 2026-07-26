@@ -1,0 +1,248 @@
+{
+  "version": "1.0.0",
+  "description": "Azure service dependency graph for cross-skill orchestration. An edge A→B means 'A depends on B' (diagnose B first when A fails).",
+  "nodes": {
+    "azure-vm-ops": {
+      "service": "Virtual Machines",
+      "type": "compute",
+      "direct_deps": ["azure-vnet-ops", "azure-nsg-ops", "azure-loadbalancer-ops", "azure-monitor-ops"],
+      "description": "VM provisioning, lifecycle, and configuration"
+    },
+    "azure-aks-ops": {
+      "service": "Azure Kubernetes Service",
+      "type": "compute",
+      "direct_deps": ["azure-vm-ops", "azure-vnet-ops", "azure-nsg-ops", "azure-loadbalancer-ops", "azure-acr-ops", "azure-keyvault-ops", "azure-monitor-ops"],
+      "description": "AKS cluster management, node pools, upgrades"
+    },
+    "azure-aci-ops": {
+      "service": "Container Instances",
+      "type": "compute",
+      "direct_deps": ["azure-acr-ops", "azure-vnet-ops", "azure-monitor-ops"],
+      "description": "Serverless container instances"
+    },
+    "azure-function-ops": {
+      "service": "Azure Functions",
+      "type": "compute",
+      "direct_deps": ["azure-blobstorage-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "Serverless functions, triggers, bindings"
+    },
+    "azure-appservice-ops": {
+      "service": "App Service",
+      "type": "compute",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops", "azure-keyvault-ops", "azure-blobstorage-ops"],
+      "description": "Web apps, API apps, function apps (multi-tenant)"
+    },
+    "azure-blobstorage-ops": {
+      "service": "Blob Storage",
+      "type": "storage",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops"],
+      "description": "Blob containers, lifecycle, access tiers"
+    },
+    "azure-file-storage-ops": {
+      "service": "Azure Files",
+      "type": "storage",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops", "azure-blobstorage-ops"],
+      "description": "File shares, SMB/NFS protocols"
+    },
+    "azure-queue-storage-ops": {
+      "service": "Queue Storage",
+      "type": "storage",
+      "direct_deps": ["azure-blobstorage-ops", "azure-monitor-ops"],
+      "description": "Storage queues for async messaging"
+    },
+    "azure-backup-ops": {
+      "service": "Azure Backup",
+      "type": "backup",
+      "direct_deps": ["azure-vm-ops", "azure-blobstorage-ops", "azure-keyvault-ops", "azure-monitor-ops"],
+      "description": "Backup vault, protection policies, restore"
+    },
+    "azure-site-recovery-ops": {
+      "service": "Site Recovery",
+      "type": "backup",
+      "direct_deps": ["azure-vm-ops", "azure-blobstorage-ops", "azure-keyvault-ops", "azure-vnet-ops", "azure-monitor-ops"],
+      "description": "Disaster recovery, replication, failover"
+    },
+    "azure-sqldb-ops": {
+      "service": "Azure SQL Database",
+      "type": "data",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "SQL DB, elastic pools, geo-replication"
+    },
+    "azure-postgres-ops": {
+      "service": "Azure Database for PostgreSQL",
+      "type": "data",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "PostgreSQL flexible server, replicas, backups"
+    },
+    "azure-cosmos-ops": {
+      "service": "Cosmos DB",
+      "type": "data",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "Cosmos DB accounts, databases, containers"
+    },
+    "azure-redis-ops": {
+      "service": "Azure Cache for Redis",
+      "type": "data",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops"],
+      "description": "Redis cache instances, clustering, persistence"
+    },
+    "azure-vnet-ops": {
+      "service": "Virtual Network",
+      "type": "networking",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "VNets, subnets, peering, DNS configuration"
+    },
+    "azure-nsg-ops": {
+      "service": "Network Security Groups",
+      "type": "networking",
+      "direct_deps": ["azure-vnet-ops", "azure-monitor-ops"],
+      "description": "NSG rules, ASGs, network filtering"
+    },
+    "azure-loadbalancer-ops": {
+      "service": "Load Balancer",
+      "type": "networking",
+      "direct_deps": ["azure-vnet-ops", "azure-nsg-ops", "azure-monitor-ops"],
+      "description": "L4 load balancing, NAT rules, backend pools"
+    },
+    "azure-appgateway-ops": {
+      "service": "Application Gateway",
+      "type": "networking",
+      "direct_deps": ["azure-vnet-ops", "azure-nsg-ops", "azure-keyvault-ops", "azure-monitor-ops"],
+      "description": "L7 load balancing, WAF, SSL termination"
+    },
+    "azure-frontdoor-ops": {
+      "service": "Azure Front Door",
+      "type": "networking",
+      "direct_deps": ["azure-appgateway-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "Global L7 load balancer, CDN, WAF policy"
+    },
+    "azure-trafficmanager-ops": {
+      "service": "Traffic Manager",
+      "type": "networking",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "DNS-based traffic routing, endpoint monitoring"
+    },
+    "azure-dns-ops": {
+      "service": "Azure DNS",
+      "type": "networking",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "DNS zones, record sets, private DNS"
+    },
+    "azure-privateendpoint-ops": {
+      "service": "Private Endpoint",
+      "type": "networking",
+      "direct_deps": ["azure-vnet-ops", "azure-dns-ops", "azure-monitor-ops"],
+      "description": "Private endpoints, private link service"
+    },
+    "azure-keyvault-ops": {
+      "service": "Key Vault",
+      "type": "security",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "Key vault, secrets, certificates, access policies"
+    },
+    "azure-acr-ops": {
+      "service": "Container Registry",
+      "type": "compute",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "Container registry, repositories, tasks"
+    },
+    "azure-apim-ops": {
+      "service": "API Management",
+      "type": "integration",
+      "direct_deps": ["azure-keyvault-ops", "azure-monitor-ops", "azure-vnet-ops", "azure-appgateway-ops"],
+      "description": "API gateway, products, subscriptions, policies"
+    },
+    "azure-servicebus-ops": {
+      "service": "Service Bus",
+      "type": "messaging",
+      "direct_deps": ["azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "Queues, topics, subscriptions, dead-letter handling"
+    },
+    "azure-eventhub-ops": {
+      "service": "Event Hubs",
+      "type": "messaging",
+      "direct_deps": ["azure-monitor-ops", "azure-keyvault-ops", "azure-blobstorage-ops"],
+      "description": "Event hubs, consumer groups, capture, throughput"
+    },
+    "azure-eventgrid-ops": {
+      "service": "Event Grid",
+      "type": "messaging",
+      "direct_deps": ["azure-monitor-ops", "azure-servicebus-ops", "azure-eventhub-ops"],
+      "description": "Event subscriptions, topics, system topics"
+    },
+    "azure-monitor-ops": {
+      "service": "Azure Monitor",
+      "type": "observability",
+      "direct_deps": [],
+      "description": "Metrics, logs, alerts, action groups (foundational dependency)"
+    },
+    "azure-audit-ops": {
+      "service": "Azure Audit",
+      "type": "observability",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "Activity logs, diagnostic settings, compliance"
+    },
+    "azure-cost-ops": {
+      "service": "Cost Management",
+      "type": "governance",
+      "direct_deps": ["azure-monitor-ops"],
+      "description": "Cost analysis, budgets, recommendations"
+    }
+  },
+  "rca_paths": [
+    {
+      "id": "rca-001",
+      "symptom": "AKS cluster not reachable",
+      "diagnosis_chain": ["azure-aks-ops", "azure-vm-ops", "azure-nsg-ops", "azure-loadbalancer-ops", "azure-monitor-ops"],
+      "description": "AKS connectivity issue: check cluster → node VM health → NSG rules → LB health → Monitor metrics"
+    },
+    {
+      "id": "rca-002",
+      "symptom": "VM cannot connect to internet",
+      "diagnosis_chain": ["azure-vm-ops", "azure-nsg-ops", "azure-vnet-ops", "azure-loadbalancer-ops", "azure-monitor-ops"],
+      "description": "VM outbound connectivity: check VM → NSG outbound rules → VNet gateway → LB outbound → Monitor"
+    },
+    {
+      "id": "rca-003",
+      "symptom": "Web application (App Gateway) returns 502/503",
+      "diagnosis_chain": ["azure-appgateway-ops", "azure-keyvault-ops", "azure-vnet-ops", "azure-monitor-ops"],
+      "description": "App Gateway backend error: check AppGW health → SSL cert expiry → VNet/backend connectivity → Monitor alerts"
+    },
+    {
+      "id": "rca-004",
+      "symptom": "Storage account not accessible",
+      "diagnosis_chain": ["azure-blobstorage-ops", "azure-vnet-ops", "azure-nsg-ops", "azure-privateendpoint-ops", "azure-monitor-ops"],
+      "description": "Storage access failure: check storage account → VNet service endpoints → NSG rules → Private Endpoint → Monitor"
+    },
+    {
+      "id": "rca-005",
+      "symptom": "Database connection timeout",
+      "diagnosis_chain": ["azure-sqldb-ops", "azure-vnet-ops", "azure-nsg-ops", "azure-keyvault-ops", "azure-monitor-ops"],
+      "description": "DB connectivity: check SQL DB → VNet/firewall rules → NSG → Key Vault (connection string) → Monitor metrics"
+    },
+    {
+      "id": "rca-006",
+      "symptom": "Container instance fails to start",
+      "diagnosis_chain": ["azure-aci-ops", "azure-acr-ops", "azure-vnet-ops", "azure-monitor-ops"],
+      "description": "ACI start failure: check ACI → ACR (image pull) → VNet/subnet → Monitor logs"
+    },
+    {
+      "id": "rca-007",
+      "symptom": "Front Door endpoint unhealthy",
+      "diagnosis_chain": ["azure-frontdoor-ops", "azure-appgateway-ops", "azure-monitor-ops", "azure-keyvault-ops"],
+      "description": "Front Door health: check FD origin health → App Gateway backend → Monitor → SSL cert"
+    },
+    {
+      "id": "rca-008",
+      "symptom": "Function app execution timeout",
+      "diagnosis_chain": ["azure-function-ops", "azure-blobstorage-ops", "azure-keyvault-ops", "azure-monitor-ops"],
+      "description": "Function timeout: check function app → storage account (trigger binding) → Key Vault → Monitor metrics"
+    },
+    {
+      "id": "rca-009",
+      "symptom": "Key Vault access denied",
+      "diagnosis_chain": ["azure-keyvault-ops", "azure-vnet-ops", "azure-privateendpoint-ops", "azure-audit-ops", "azure-monitor-ops"],
+      "description": "Key Vault auth failure: check KV access policy → VNet service endpoint → Private Endpoint → Audit logs → Monitor"
+    }
+  ]
+}

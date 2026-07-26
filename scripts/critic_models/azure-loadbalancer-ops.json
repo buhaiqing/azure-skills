@@ -1,0 +1,53 @@
+{
+  "skill": "azure-loadbalancer-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Load Balancer operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Load balancer provisioningState is Succeeded or Failed",
+        "frontendIPConfigurations have valid private or public IP assignments",
+        "backendAddressPools reference valid VM NICs or IP configurations",
+        "loadBalancingRules match the expected frontend/backend/probe combination"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete Load Balancer operations include pre-confirmation show command",
+        "No credential or sensitive data in stdout/stderr",
+        "Load balancer deletion warns about traffic disruption to all backend pools",
+        "Inbound NAT rule removal checks for impact on existing VM RDP/SSH access"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Backend pool member addition is idempotent (VM already in pool is not an error)",
+        "Probe creation checks for probe name conflicts",
+        "Delete operations on already-deleted load balancers return success"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Frontend IP configurations and allocation methods are documented",
+        "Health probe configuration and backend pool membership are logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Load balancer name follows Azure naming conventions",
+        "SKU (Basic/Standard) is specified for Load Balancer creation"
+      ]
+    }
+  }
+}

@@ -25,7 +25,7 @@ from typing import Any, Optional
 
 # 本地模块（scripts/ 目录）
 from state_diff import diff, DiffResult
-from state_observer import observe, ObserveResult
+from state_observer import observe, ObserveResult, observe_cost, observe_budget, CostObservation
 from self_healing.loader import load_policy
 from escalation import escalate, EscalationContext
 from report_finding import report_finding
@@ -42,6 +42,7 @@ class FeedbackResult:
     trace_id: str
     message: str
     escalation: Optional[str]
+    cost_observation: Optional[dict] = None  # CostObserver result, if enabled
 
 
 # ------------------------------------------------------------------
@@ -212,13 +213,26 @@ def run_with_feedback(
     max_heal_attempts: int = 2,
     trace_id: Optional[str] = None,
     dry_run: bool = False,
+    observe_cost_enabled: bool = False,
+    subscription_id: Optional[str] = None,
 ) -> FeedbackResult:
     """
     完整 L4 闭环：执行 → observe → diff → 自我修复 → 升人工
+
+    Args:
+        observe_cost_enabled: 若为 True，闭环完成后自动查询订阅成本
+        subscription_id: Azure 订阅 ID（observe_cost_enabled=True 时必须提供）
     """
     tid = trace_id or str(uuid.uuid4())
     heal_attempts = 0
     escalation_msg: Optional[str] = None
+
+    def _finalize(fb: FeedbackResult) -> FeedbackResult:
+        """统一后处理：persist trace + 可选成本观测"""
+        _persist_trace(tid, fb)
+        if observe_cost_enabled and subscription_id:
+            fb = _observe_and_attach_cost(fb, subscription_id, skill, operation)
+        return fb
 
     # 1. Human gate — risky 操作不自动执行
     if risky:
@@ -235,8 +249,7 @@ def run_with_feedback(
             message="Risky operation — human gate enforced",
             escalation=escalation_msg,
         )
-        _persist_trace(tid, result)
-        return result
+        return _finalize(result)
 
     # 2. 执行命令
     cmd_list = command.split()
@@ -267,13 +280,12 @@ def run_with_feedback(
                 message=f"Command failed: {exec_result.stderr[:120].strip()}",
                 escalation=escalation_msg,
             )
-            _persist_trace(tid, fb_result)
             report_finding(skill=skill, operation=operation,
                           failure_type="command_failed",
                           context={"exit_code": exec_result.returncode,
                                    "stderr": exec_result.stderr[:200]},
                           trace_id=tid)
-            return fb_result
+            return _finalize(fb_result)
 
     # 3. 加载策略
     policy = load_policy(skill)
@@ -308,12 +320,11 @@ def run_with_feedback(
                 message=f"Observe failed: {obs.error}",
                 escalation=escalation_msg,
             )
-            _persist_trace(tid, fb_result)
             report_finding(skill=skill, operation=operation,
                           failure_type="observe_failed",
                           context={"error": obs.error},
                           trace_id=tid)
-            return fb_result
+            return _finalize(fb_result)
 
     # 5. Diff — 比对 desired vs actual
     diff_result = diff(desired_state, actual_state, operation)
@@ -326,8 +337,7 @@ def run_with_feedback(
             message=f"[success] {diff_result.message}",
             escalation=None,
         )
-        _persist_trace(tid, fb_result)
-        return fb_result
+        return _finalize(fb_result)
 
     # 6. Self-healing
     heal_rules = op_policy.get("healing_rules", [])
@@ -349,12 +359,11 @@ def run_with_feedback(
             message=f"[escalated] {diff_result.message} (no heal policy)",
             escalation=escalation_msg,
         )
-        _persist_trace(tid, fb_result)
         report_finding(skill=skill, operation=operation,
                       failure_type="no_heal_policy",
                       context={"diff_fields": [d.field for d in diff_result.diffs]},
                       trace_id=tid)
-        return fb_result
+        return _finalize(fb_result)
 
     heal_history: list = []
     trend_history: list = []
@@ -399,8 +408,7 @@ def run_with_feedback(
                         message=f"[healed] {diff_result.message}",
                         escalation=None,
                     )
-                    _persist_trace(tid, fb_result)
-                    return fb_result
+                    return _finalize(fb_result)
         if not applied_any:
             break
 
@@ -422,13 +430,55 @@ def run_with_feedback(
         message=f"[escalated] {diff_result.message}",
         escalation=escalation_msg,
     )
-    _persist_trace(tid, fb_result)
     report_finding(skill=skill, operation=operation,
                   failure_type="heal_exhausted",
                   context={"diff_fields": [d.field for d in diff_result.diffs],
                            "heal_attempts": heal_attempts},
                   trace_id=tid)
-    return fb_result
+    return _finalize(fb_result)
+
+
+# ------------------------------------------------------------------
+# CostObserver 集成
+# ------------------------------------------------------------------
+
+def _observe_and_attach_cost(
+    result: FeedbackResult,
+    subscription_id: Optional[str],
+    skill: str,
+    operation: str,
+) -> FeedbackResult:
+    """观测成本并附加到 FeedbackResult。失败时不阻塞闭环结果。"""
+    if not subscription_id:
+        result.message += " (cost: no subscription_id)"
+        return result
+
+    try:
+        cost_obs = observe_cost(subscription_id)
+        result.cost_observation = {
+            "current_cost": cost_obs.current_cost,
+            "previous_cost": cost_obs.previous_cost,
+            "cost_change_pct": round(cost_obs.cost_change_pct, 2),
+            "error": cost_obs.error,
+        }
+        if cost_obs.error:
+            result.message += f" (cost observe failed: {cost_obs.error})"
+        else:
+            change = cost_obs.cost_change_pct
+            if change > 20:
+                result.message += f" (⚠️ cost surged {change:.1f}% — consider SKU downgrade or idle resource cleanup)"
+            elif change > 10:
+                result.message += f" (cost up {change:.1f}% — monitoring)"
+            else:
+                result.message += f" (cost change: {change:+.1f}%)"
+    except Exception as exc:
+        result.cost_observation = {
+            "current_cost": 0, "previous_cost": 0,
+            "cost_change_pct": 0, "error": str(exc),
+        }
+        result.message += f" (cost error: {exc})"
+
+    return result
 
 
 # ------------------------------------------------------------------
@@ -444,6 +494,10 @@ if __name__ == "__main__":
     parser.add_argument("--trace-id", default=None)
     parser.add_argument("--risky", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--observe-cost", action="store_true",
+                        help="Enable CostObserver: query subscription cost after loop")
+    parser.add_argument("--subscription-id", default=None,
+                        help="Azure subscription ID for cost observation")
     args = parser.parse_args()
 
     desired = json.loads(args.desired_state)
@@ -455,6 +509,8 @@ if __name__ == "__main__":
         risky=args.risky,
         trace_id=args.trace_id,
         dry_run=args.dry_run,
+        observe_cost_enabled=args.observe_cost,
+        subscription_id=args.subscription_id,
     )
     print(json.dumps(asdict(result), indent=2, ensure_ascii=False))
     sys.exit(0 if result.status in ("success", "healed") else 1)

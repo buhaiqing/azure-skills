@@ -1,0 +1,34 @@
+{
+  "skill": "azure-backup-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Backup 操作场景：创建备份保管库 → 启用备份 → 列出恢复点 → 删除",
+      "commands": [
+        "az backup vault create --name test-backup-vault --resource-group test-rg --location eastus",
+        "az backup item set --vault-name test-backup-vault --resource-group test-rg --container-name test-vm --item-name test-vm --policy-name DefaultPolicy",
+        "az backup recoverypoint list --vault-name test-backup-vault --resource-group test-rg --container-name test-vm --item-name test-vm",
+        "az backup vault delete --name test-backup-vault --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：备份保管库创建成功但恢复点列表失败",
+      "commands": [
+        "az backup vault create --name fail-backup-vault --resource-group test-rg --location eastus",
+        "az backup recoverypoint list --vault-name fail-backup-vault --resource-group test-rg --container-name test-vm --item-name test-vm"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：备份保管库不存在",
+      "commands": [
+        "az backup vault show --name nonexistent-backup-vault --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

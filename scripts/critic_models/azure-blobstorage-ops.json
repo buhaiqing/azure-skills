@@ -1,0 +1,53 @@
+{
+  "skill": "azure-blobstorage-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Blob Storage operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Storage account provisioningState is Succeeded",
+        "Container name matches valid naming pattern (lowercase, no special chars)",
+        "Blob properties (contentType, contentLength, accessTier) match expected values",
+        "Storage account kind (StorageV2/BlobStorage) matches the requested type"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete container/account operations include pre-confirmation show command",
+        "No credential or storage account keys in stdout/stderr",
+        "Storage account deletion warns about all data being unrecoverable",
+        "Public access level changes require explicit confirmation"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Container create operations handle existing container gracefully",
+        "Blob upload operations with same path overwrite rather than error",
+        "Delete operations on already-deleted containers return success"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Storage account endpoints (blob/table/queue/file) are logged",
+        "Access tier and replication configuration are documented"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Storage account name is globally unique (check for existing)",
+        "--kind and --sku parameters are specified for account creation"
+      ]
+    }
+  }
+}

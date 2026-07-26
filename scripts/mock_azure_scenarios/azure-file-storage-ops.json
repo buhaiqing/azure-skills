@@ -1,0 +1,35 @@
+{
+  "skill": "azure-file-storage-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 File Storage 操作场景：创建存储账户 → 创建文件共享 → 上传文件 → 列出共享 → 删除",
+      "commands": [
+        "az storage account create --name teststorage --resource-group test-rg --sku Standard_LRS",
+        "az storage share create --name test-share --account-name teststorage",
+        "az storage file upload --share-name test-share --source /tmp/test.txt --account-name teststorage",
+        "az storage share list --account-name teststorage",
+        "az storage account delete --name teststorage --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：存储账户创建成功但文件上传失败",
+      "commands": [
+        "az storage account create --name failstorage --resource-group test-rg --sku Standard_LRS",
+        "az storage file upload --share-name nonexistent-share --source /tmp/test.txt --account-name failstorage"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：存储账户不存在",
+      "commands": [
+        "az storage account show --name nonexistent-storage --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

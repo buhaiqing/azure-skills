@@ -14,6 +14,7 @@ Environment:
     AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
 """
 
+import argparse
 import json
 import os
 import subprocess
@@ -272,14 +273,53 @@ def critic_score(trace: dict, rubric: dict) -> dict:
 
 # --- Main Orchestrator ---
 
-def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> dict:
-    """Main GCL loop: G → C → Decide → (loop|return)."""
-    if not check_credentials():
-        return {"status": "ABORT", "reason": "Credential check failed"}
+def _load_critic_model(skill: str) -> object | None:
+    """Load LLM CriticModel for skill if rubric JSON exists."""
+    rubric_path = REPO_ROOT / "scripts" / "critic_models" / f"{skill}.json"
+    if not rubric_path.exists():
+        return None
+    try:
+        from llm_critic import CriticModel
+        return CriticModel(provider="openai", model_name="gpt-4o-mini")
+    except ImportError:
+        return None
+
+
+def orchestrate(skill: str, user_request: str, rubric: dict | None = None,
+                critic_mode: str = "rule", dry_run: bool = False) -> dict:
+    """Main GCL loop: G → C → Decide → (loop|return).
+
+    Args:
+        skill: Azure skill name (e.g. 'azure-vm-ops')
+        user_request: The user request / command to execute
+        rubric: Rubric dict, loaded from skill rubric or default
+        critic_mode: 'rule' for built-in rule-based, 'llm' for LLM critic
+        dry_run: If True, skip actual az command execution (use mock output)
+    """
+    if not dry_run:
+        if not check_credentials():
+            return {"status": "ABORT", "reason": "Credential check failed"}
+    else:
+        print("[GCL] Dry-run mode — skipping credential check")
 
     rubric = rubric or DEFAULT_RUBRIC
     max_iter = rubric.get("max_iter", MAX_ITER)
     skill_required = skill in GCL_REQUIRED_SKILLS
+
+    # Load LLM critic if requested
+    llm_critic = None
+    if critic_mode == "llm":
+        # Load skill-specific rubric JSON for LLM critic
+        llm_rubric_path = REPO_ROOT / "scripts" / "critic_models" / f"{skill}.json"
+        if llm_rubric_path.exists():
+            with open(llm_rubric_path) as f:
+                raw_rubric = json.load(f)
+                # Flatten: extract dimensions from nested structure
+                rubric = raw_rubric.get("dimensions", raw_rubric)
+                rubric.setdefault("max_iter", max_iter)
+        llm_critic = _load_critic_model(skill)
+        if llm_critic is None:
+            print(f"[GCL] WARNING: No LLM critic rubric for {skill}, falling back to rule-based")
 
     trace_id = uuid.uuid4().hex[:8]
     trace = {
@@ -287,6 +327,7 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
         "skill": skill,
         "request": user_request,
         "rubric_version": rubric.get("rubric_version", "v1"),
+        "critic_mode": critic_mode,
         "iterations": [],
         "final": {},
     }
@@ -295,17 +336,25 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
                 ["AZURE_SUBSCRIPTION_ID", "AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET"]}
 
     for iteration in range(1, max_iter + 1):
-        print(f"\n[GCL] Iteration {iteration}/{max_iter} — skill={skill}")
+        print(f"\n[GCL] Iteration {iteration}/{max_iter} — skill={skill} (critic={critic_mode})")
 
         # --- GENERATOR ---
-        resolved_cmd = resolve_placeholders(user_request, env_vars, {}, {})
-        # Split the resolved request into shell args
-        cmd_parts = resolved_cmd.split()
-        if not cmd_parts:
-            print("[GCL] Empty command — using default `az account show`")
-            cmd_parts = ["az", "account", "show", "--output", "json"]
-
-        gen_result = run_command(cmd_parts)
+        if dry_run:
+            # Mock generator output for dry-run testing
+            gen_result = {
+                "command": user_request,
+                "exit_code": 0,
+                "stdout": json.dumps({"status": "dry_run_mock", "name": "test-resource"}),
+                "stderr": "",
+                "elapsed_sec": 0.01,
+            }
+        else:
+            resolved_cmd = resolve_placeholders(user_request, env_vars, {}, {})
+            cmd_parts = resolved_cmd.split()
+            if not cmd_parts:
+                print("[GCL] Empty command — using default `az account show`")
+                cmd_parts = ["az", "account", "show", "--output", "json"]
+            gen_result = run_command(cmd_parts)
 
         iter_entry = {
             "iter": iteration,
@@ -315,13 +364,28 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
         }
 
         # --- CRITIC ---
-        critic_result = critic_score(trace, rubric)
-        iter_entry["critic"] = {
-            "scores": critic_result["scores"],
-            "suggestions": critic_result["suggestions"],
-            "blocking": critic_result["blocking"],
-        }
+        if llm_critic is not None:
+            # Use LLM critic
+            raw_result = llm_critic.score(gen_result, rubric, trace)
+            critic_result = {
+                "scores": raw_result["scores"],
+                "suggestions": raw_result["suggestions"],
+                "blocking": raw_result["blocking"],
+                "critic_type": raw_result.get("critic_type", "llm"),
+                "fallback_reason": raw_result.get("fallback_reason"),
+            }
+        else:
+            # Use built-in rule-based critic
+            raw_result = critic_score(trace, rubric)
+            critic_result = {
+                "scores": raw_result["scores"],
+                "suggestions": raw_result["suggestions"],
+                "blocking": raw_result["blocking"],
+                "critic_type": "rule_based",
+                "fallback_reason": None,
+            }
 
+        iter_entry["critic"] = critic_result
         trace["iterations"].append(iter_entry)
 
         # --- DECIDE ---
@@ -389,22 +453,45 @@ def orchestrate(skill: str, user_request: str, rubric: dict | None = None) -> di
 # --- CLI Entry Point ---
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python gcl_runner.py <skill_name> [rubric_json] \"<user_request>\"")
-        print("")
-        print("Examples:")
-        print("  python gcl_runner.py azure-vm-ops '{\"rubric_version\":\"v1\"}' \"az vm show --name my-vm --resource-group my-rg --output json\"")
-        print("  python gcl_runner.py azure-aks-ops '{}' \"az aks list --output json\"")
+    parser = argparse.ArgumentParser(
+        description="GCL (Generator-Critic-Loop) Runner for Azure Skills",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python gcl_runner.py azure-vm-ops -- 'az vm show --name my-vm --resource-group my-rg --output json'\n"
+            "  python gcl_runner.py azure-aks-ops --critic llm --dry-run -- 'az aks list --output json'\n"
+            "  python gcl_runner.py azure-vm-ops --critic llm --rubric '{\"rubric_version\":\"v1\"}' -- 'az vm list --output json'"
+        ),
+    )
+    parser.add_argument("skill", help="Skill name, e.g. azure-vm-ops")
+    parser.add_argument("--critic", choices=["rule", "llm"], default="rule",
+                        help="Critic mode: rule-based or LLM-powered (default: rule)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Dry-run mode: skip actual az execution, use mock output")
+    parser.add_argument("--rubric", default="{}",
+                        help="Rubric JSON string (optional, loaded from skill if empty)")
+    parser.add_argument("command", nargs="*", help="Azure CLI command to execute")
+
+    args, unknown = parser.parse_known_args()
+    # Collect remaining args (handles `--` separator)
+    if unknown:
+        args.command = list(args.command) + unknown
+        # Remove leading `--` if present
+        if args.command and args.command[0] == "--":
+            args.command = args.command[1:]
+
+    skill = args.skill
+    user_request = " ".join(args.command) if args.command else ""
+
+    if not user_request:
+        parser.print_help()
         sys.exit(1)
 
-    skill = sys.argv[1]
-    rubric_json = sys.argv[2] if len(sys.argv) > 2 else "{}"
-    user_request = " ".join(sys.argv[3:]) if len(sys.argv) > 3 else ""
-
-    rubric = json.loads(rubric_json)
+    rubric = json.loads(args.rubric) if args.rubric != "{}" else DEFAULT_RUBRIC.copy()
     rubric.setdefault("max_iter", MAX_ITER)
 
-    result = orchestrate(skill, user_request, rubric)
+    result = orchestrate(skill, user_request, rubric,
+                         critic_mode=args.critic, dry_run=args.dry_run)
     print(json.dumps(result, indent=2))
 
 

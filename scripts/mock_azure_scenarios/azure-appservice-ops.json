@@ -1,0 +1,36 @@
+{
+  "skill": "azure-appservice-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 App Service 操作场景：创建 Web App → 查询 → 列出部署槽 → 删除",
+      "commands": [
+        "az appservice plan create --name test-plan --resource-group test-rg --sku B1",
+        "az webapp create --name test-webapp --resource-group test-rg --plan test-plan",
+        "az webapp show --name test-webapp --resource-group test-rg",
+        "az webapp deployment slot list --name test-webapp --resource-group test-rg",
+        "az webapp delete --name test-webapp --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：Web App 创建成功但部署槽列表失败",
+      "commands": [
+        "az appservice plan create --name fail-plan --resource-group test-rg --sku S1",
+        "az webapp create --name fail-webapp --resource-group test-rg --plan fail-plan",
+        "az webapp deployment slot list --name fail-webapp --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [2]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：Web App 不存在",
+      "commands": [
+        "az webapp show --name nonexistent-webapp --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

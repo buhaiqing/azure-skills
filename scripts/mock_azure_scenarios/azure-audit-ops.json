@@ -1,0 +1,33 @@
+{
+  "skill": "azure-audit-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Audit 操作场景：查询审计日志 → 列出策略 → 导出日志",
+      "commands": [
+        "az audit log show --resource-group test-rg --start-time 2026-07-01",
+        "az audit policy list --resource-group test-rg",
+        "az audit log export --resource-group test-rg --storage-account teststorage"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：审计日志查询成功但导出失败",
+      "commands": [
+        "az audit log show --resource-group test-rg --start-time 2026-07-01",
+        "az audit log export --resource-group test-rg --storage-account nonexistent-storage"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：资源组不存在",
+      "commands": [
+        "az audit log show --resource-group nonexistent-rg --start-time 2026-07-01"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

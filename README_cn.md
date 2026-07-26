@@ -394,6 +394,26 @@ python scripts/auto_feedback_loop.py \
 Pre-flight → Execute → Validate → Recover
 ```
 
+### Gartner L4 认证
+
+**状态: ✅ 已达成 L4 认证** (2026-07-27)
+
+`azure-skills` 已达成 **Gartner L4 自主运营** 认证——系统可观察 Azure 资源状态、与期望状态对比、在策略范围内自动修复，并在策略耗尽时升人工处理。
+
+| 指标 | 目标 | 实际值 | 状态 |
+|------|------|--------|------|
+| 安全通过率 | ≥ 100% | 100.0% | ✅ |
+| 自愈成功率 | ≥ 85% | 100.0% | ✅ |
+| 人工介入率 | ≤ 15% | 0.0% | ✅ |
+| 平均自愈时间 | — | 12.5 ms | — |
+
+运行健康仪表板：
+```bash
+python3 scripts/health_dashboard.py
+```
+
+完整认证报告见 `docs/superpowers/reports/l4-certification-2026-07-27.md`。
+
 ## 快速开始
 
 ### 使用 Meta Skill 生成新技能

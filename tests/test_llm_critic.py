@@ -29,11 +29,11 @@ def test_llm_critic_module_importable():
 # ============================================================
 
 def test_critic_model_provider_selection():
-    """Must support 'openai', 'azure_openai', 'anthropic' as valid providers."""
+    """Must support 'openai', 'azure_openai', 'anthropic', 'qwen' as valid providers."""
     from llm_critic import CriticModel
 
     # Valid providers
-    for provider in ["openai", "azure_openai", "anthropic"]:
+    for provider in ["openai", "azure_openai", "anthropic", "qwen"]:
         model = CriticModel(provider=provider, model_name="test")
         assert model.provider == provider
 
@@ -51,7 +51,7 @@ def test_critic_model_fallback_when_no_api_key(monkeypatch):
     from llm_critic import CriticModel
 
     # Remove all LLM API keys
-    for env_var in ["OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "ANTHROPIC_API_KEY"]:
+    for env_var in ["OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DASHSCOPE_API_KEY"]:
         monkeypatch.delenv(env_var, raising=False)
 
     model = CriticModel(provider="openai", model_name="gpt-4o-mini")

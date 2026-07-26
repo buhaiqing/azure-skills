@@ -3,8 +3,28 @@
   "operations": {
     "cost_query": {
       "risky": false,
-      "healing_rules": [],
-      "_reason": "read-only query — no state to correct or wait for"
+      "health_check": {
+        "api": "az costmanagement query",
+        "args_template": ["costmanagement", "query", "--scope", "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}", "--timeframe", "MonthToDate", "--output", "json"],
+        "parse_field": "properties.rows[0][0]",
+        "expected": ""
+      },
+      "healing_rules": [
+        {
+          "condition_type": "rate_of_change",
+          "condition_field": "properties.rows[0][0]",
+          "threshold_value": 0.2,
+          "trend_window": 2,
+          "heal_action": "az costmanagement query",
+          "heal_args_template": ["costmanagement", "query", "--scope", "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}", "--timeframe", "TheLastMonth", "--output", "json"],
+          "max_attempts": 1,
+          "backoff_sec": 10,
+          "heal_reason": "Cost surge detected (>20% rate of change). Triggering detailed cost analysis."
+        }
+      ],
+      "escalate_on": ["quota_exceeded", "authentication_failed"],
+      "risky_actions": [],
+      "_reason": "Cost surge detection via rate_of_change. Healing action triggers detailed analysis report."
     },
     "budget_create": {
       "risky": false,
@@ -28,6 +48,30 @@
       "risky": false,
       "healing_rules": [],
       "_reason": "read-only query — no state to correct or wait for"
+    },
+    "cost_trend_alert": {
+      "risky": false,
+      "health_check": {
+        "api": "az costmanagement query",
+        "args_template": ["costmanagement", "query", "--scope", "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}", "--timeframe", "MonthToDate", "--output", "json"],
+        "parse_field": "properties.rows[0][0]",
+        "expected": ""
+      },
+      "healing_rules": [
+        {
+          "condition_type": "trend_increasing",
+          "condition_field": "properties.rows[0][0]",
+          "trend_window": 3,
+          "heal_action": "az monitor metrics list",
+          "heal_args_template": ["monitor", "metrics", "list", "--resource", "/subscriptions/{{env.AZURE_SUBSCRIPTION_ID}}", "--metric", "Percentage CPU", "--interval", "1d", "--output", "json"],
+          "max_attempts": 1,
+          "backoff_sec": 10,
+          "heal_reason": "Cost trend increasing for 3 consecutive periods. Recommend reviewing resource utilization and scaling down idle resources."
+        }
+      ],
+      "escalate_on": ["authentication_failed"],
+      "risky_actions": [],
+      "_reason": "3-period trend detection. Alerts on sustained cost increase, suggests optimization actions."
     }
   }
 }

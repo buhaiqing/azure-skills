@@ -1,0 +1,34 @@
+{
+  "skill": "azure-site-recovery-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 Site Recovery 操作场景：创建保管库 → 启用复制 → 列出复制项 → 故障切换 → 删除",
+      "commands": [
+        "az site-recovery vault create --name test-vault --resource-group test-rg --location eastus",
+        "az site-recovery vault show --name test-vault --resource-group test-rg",
+        "az site-recovery replication-item list --vault-name test-vault --resource-group test-rg",
+        "az site-recovery vault delete --name test-vault --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：保管库创建成功但复制项列表失败",
+      "commands": [
+        "az site-recovery vault create --name fail-vault --resource-group test-rg --location eastus",
+        "az site-recovery replication-item list --vault-name fail-vault --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：保管库不存在",
+      "commands": [
+        "az site-recovery vault show --name nonexistent-vault --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

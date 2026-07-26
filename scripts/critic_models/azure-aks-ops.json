@@ -1,0 +1,53 @@
+{
+  "skill": "azure-aks-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Kubernetes Service operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Cluster provisioningState is Succeeded or Failed (not empty/null)",
+        "kubernetesVersion is a valid AKS supported version",
+        "nodeCount and vmSize match the requested agent pool configuration",
+        "dnsPrefix and fqdn are present for a successfully created cluster"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete/stop cluster operations include pre-confirmation show command",
+        "No credential or sensitive data in stdout/stderr",
+        "AKS cluster deletion warns about node resource group cleanup implications",
+        "Scaling to 0 node pools requires explicit confirmation gate"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Create operations check for resource group existence before cluster creation",
+        "Scale operations merge with existing node pool config (not replace)",
+        "Delete operations on already-deleted clusters return success (not error)"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Cluster state (provisioningState, powerState) before and after operation is documented",
+        "kubeconfig retrieval context and credential expiry are logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "--name is provided for cluster operations",
+        "Location parameter matches the resource group location when creating"
+      ]
+    }
+  }
+}

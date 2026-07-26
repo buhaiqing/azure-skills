@@ -1,0 +1,53 @@
+{
+  "skill": "azure-frontdoor-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Front Door (CDN/WAF) operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Front Door profile provisioningState is Succeeded or Failed",
+        "endpoints and routes correctly map to origin groups and origins",
+        "WAF policy association matches the expected Front Door endpoint",
+        "caching rules and compression settings match the requested configuration"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete Front Door profile/endpoint operations include pre-confirmation show command",
+        "WAF policy deletion warns about unprotected endpoints",
+        "No credential or sensitive data in stdout/stderr",
+        "Purge cache operations specify the correct endpoint paths"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Origin group updates merge rather than replace existing origin configurations",
+        "Route creation checks for path pattern conflicts with existing routes",
+        "Purge cache operations on already-purged paths return success"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Front Door endpoint hostnames and routing rules are documented",
+        "WAF policy mode (Detection/Prevention) and custom rules are logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Front Door profile name follows Azure naming conventions",
+        "SKU tier (Standard/Premium) is specified for profile creation"
+      ]
+    }
+  }
+}

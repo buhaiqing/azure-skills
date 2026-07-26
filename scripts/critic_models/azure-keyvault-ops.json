@@ -1,0 +1,53 @@
+{
+  "skill": "azure-keyvault-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Key Vault operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Key Vault provisioningState is Succeeded or Failed",
+        "vaultUri and tenantId are present for a successfully created vault",
+        "SKU (Standard/Premium) matches the requested tier",
+        "Soft-delete and purge protection settings match the requested configuration"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete Key Vault operations include pre-confirmation show command",
+        "No credential or secret values in stdout/stderr (only references)",
+        "Key Vault purge operations warn about permanent data loss",
+        "Access policy changes verify principal ID and permission set before applying"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Secret/key create operations check for existing names and version appropriately",
+        "Access policy updates merge rather than replace existing policies",
+        "Delete operations on soft-deleted vaults check recovery context"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Access policy assignments (principal, permissions) are documented",
+        "Key/secret metadata (expiry, enabled, contentType) is logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Vault name is globally unique (check for existing)",
+        "RBAC vs access-policy mode is explicitly selected for vault creation"
+      ]
+    }
+  }
+}

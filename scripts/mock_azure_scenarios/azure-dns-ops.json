@@ -1,0 +1,34 @@
+{
+  "skill": "azure-dns-ops",
+  "scenarios": [
+    {
+      "name": "normal_operation",
+      "description": "正常 DNS 操作场景：创建 DNS 区域 → 添加记录集 → 列出记录 → 删除",
+      "commands": [
+        "az network dns zone create --name test.example.com --resource-group test-rg",
+        "az network dns record-set a create --name test --zone-name test.example.com --resource-group test-rg --ttl 3600",
+        "az network dns record-set a show --name test --zone-name test.example.com --resource-group test-rg",
+        "az network dns zone delete --name test.example.com --resource-group test-rg --yes"
+      ],
+      "expected": "success"
+    },
+    {
+      "name": "partial_failure",
+      "description": "部分失败场景：DNS 区域创建成功但记录集查询失败",
+      "commands": [
+        "az network dns zone create --name fail.example.com --resource-group test-rg",
+        "az network dns record-set a show --name nonexistent --zone-name fail.example.com --resource-group test-rg"
+      ],
+      "expected": "partial_fail",
+      "fail_at": [1]
+    },
+    {
+      "name": "full_failure",
+      "description": "完全失败场景：DNS 区域不存在",
+      "commands": [
+        "az network dns zone show --name nonexistent.example.com --resource-group test-rg"
+      ],
+      "expected": "full_fail"
+    }
+  ]
+}

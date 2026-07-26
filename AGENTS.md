@@ -72,6 +72,26 @@ After **every** Task (any discrete unit of work — a code edit, a skill change,
 
 This is a hard rule, not a suggestion. A Task is only "done" once a full critical-review round comes back clean. This applies regardless of whether the task also triggers the GCL loop or the 2-round self-review above — they are complementary, not substitutes.
 
+## Token Efficiency Gate for AGENTS.md Changes
+
+> **Rule**: Every time `AGENTS.md` is modified, the changing Agent MUST review the change from a Token Efficiency (TE) perspective before committing.
+
+**Why**: `AGENTS.md` is loaded into every conversation context — every line added or kept burns tokens on every subsequent task. Unlike skills (scoped to their execution) or docs (loaded on demand), AGENTS.md is always in context. Accumulated "obvious" additions become chronic overhead.
+
+**Checklist** (apply to every change, including additions):
+
+| # | Check | Rule |
+|---|-------|------|
+| TE-AGENTS-1 | **Necessity**: Is this line actually needed in `AGENTS.md`, or could it live in a more targeted doc (`references/`, `docs/`, skill-specific `SKILL.md`)? | If scoped to one skill → it belongs in that skill, not AGENTS.md |
+| TE-AGENTS-2 | **Duplication**: Does this content already exist somewhere accessible (e.g. `cadl.md`, `governance-review.md`, skill `references/`)? | If yes → link, don't duplicate |
+| TE-AGENTS-3 | **Bloat**: Does this paragraph contain prose that could be a table, or a table that could be one line? | Prefer compact formats (tables over paragraphs, one-liners over tables when only 2-3 items) |
+| TE-AGENTS-4 | **Self-contained vs. reference**: Is this a new rule, or just a pointer to an existing rule? | New rules belong here; pointers belong in a "See also" section |
+| TE-AGENTS-5 | **Line count guard**: After the change, does `AGENTS.md` exceed 500 lines? | If yes → audit for items that could move to user-level AGENTS.md (`~/.config/opencode/AGENTS.md`) |
+
+**Trigger**: This gate fires on **every** edit to `AGENTS.md` — no minimum change size. Even a one-line fix must pass the TE review for that line.
+
+**Override**: If a change is clearly TE-compliant (e.g. fixing a typo, updating a date, adding one bullet to an existing list), note `TE-AGENTS: FAST-PASS` in the commit message and skip detailed review.
+
 ## Language — reply in Chinese (mandatory)
 
 All replies to the user MUST be written in **Chinese (中文)**. Code, commands, file paths, and technical identifiers stay as-is; prose, explanations, and summaries must be in Chinese.
@@ -351,6 +371,42 @@ does not exempt a sloppy skill update.
 任何实质任务完成后，Agent 必须走完「提取 → 判定落点 → 写入 → 门禁」闭环才能结束（任务不做沉淀 = 任务未完成）。完整机制、触发条件、Skill 侧钩子与反模式见：
 
 - **`azure-skill-generator/references/cadl.md`** — CADL 完整规范
+
+### 13.1 大Task完成后复利工程评审（CADL-Review）
+
+> **目的**：每个大Task完成后，评审是否有可复用资产可沉淀到 Agent 记忆体系中，形成复利效应，避免后续踩同样的坑。
+
+**触发条件**（满足任一即触发）：
+- Task 耗时 > 30 分钟
+- 跨 > 3 个文件或 > 1 个技能协作
+- 评审/修复循环 ≥ 2 轮
+- 发现 repo 级别的坑或设计缺陷
+- 用户明确标注"可复用"或"值得记住"
+
+**评审维度**：
+
+| 维度 | 检查项 | 沉淀落点 |
+|------|--------|----------|
+| **Pattern** | 是否有跨场景可复用的处理模式？ | `memory/patterns.md` 或对应 AGENTS.md |
+| **Anti-Pattern** | 踩了哪些坑？根因是什么？ | `memory/feedback_*.md` |
+| **Tool/Command** | 是否有新工具或命令组合值得固化？ | `memory/tools_*.md` |
+| **Workflow** | 是否有更优的执行路径？ | 用户级 AGENTS.md 的 workflow 条目 |
+| **Schema/Contract** | 是否有跨文件一致的契约可抽象？ | 对应 `references/` 或 AGENTS.md |
+
+**评审输出格式**（每项 ≤ 3 行）：
+```
+## [CADL-Review] <Task 名称> — <日期>
+
+### 可复用资产
+- <资产描述> → 落点: <文件>
+
+### Anti-Pattern 发现
+- <坑描述> → 根因: <原因> → 避免方式: <做法>
+```
+
+**门禁**：评审结果写入 memory 后方可标记 Task 为完成。未触发条件时跳过，但在大Task复盘时主动问自己"有什么值得记住？"。
+
+> **Why**：只靠 CADL 机制被动触发不够——很多可复用资产在日常开发中被忽略，直到第二次踩坑才想起来。这条规则强制在每个大Task结尾做一次主动复盘，把隐性知识显性化，形成复利。
 
 要点速记：
 - **触发**：多步/跨文件、跨 Skill 协作、评审/修复循环、发现 repo 坑、验证归因、用户给可复用偏好。

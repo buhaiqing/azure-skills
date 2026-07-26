@@ -1,0 +1,53 @@
+{
+  "skill": "azure-vm-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure VM operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "VM resource ID matches /subscriptions/.../virtualMachines/<name> pattern",
+        "provisioningState is Succeeded or Failed (not empty/null)",
+        "powerState matches expected state (VM running/stopped/deallocated)",
+        "vmSize is a valid Azure VM SKU and matches the requested size"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete/stop/deallocate operations include pre-confirmation show command",
+        "No credential or sensitive data in stdout/stderr",
+        "--yes flag present for all delete operations",
+        "Deallocate operation warns about VM public IP and disk cost implications"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Create operations check for resource existence before creation",
+        "Delete operations on already-deleted resources return success (not error)",
+        "Tag updates merge rather than replace existing tags"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Resource state before and after operation is documented",
+        "OS disk and data disk configuration is logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "Azure resource naming conventions are followed (no spaces, valid chars)",
+        "Location parameter matches the resource group location"
+      ]
+    }
+  }
+}

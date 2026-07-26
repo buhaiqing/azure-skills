@@ -1,0 +1,53 @@
+{
+  "skill": "azure-vnet-ops",
+  "rubric_version": "1.0",
+  "description": "LLM Critic rubric for Azure Virtual Network operations",
+  "max_iterations": 2,
+  "dimensions": {
+    "correctness": {
+      "threshold": 0.5,
+      "checks": [
+        "Virtual Network provisioningState is Succeeded or Failed",
+        "addressPrefixes match the requested CIDR range(s)",
+        "subnet addressPrefixes are within the VNet address space and non-overlapping",
+        "DNS servers and VNet peering connections match the requested configuration"
+      ]
+    },
+    "safety": {
+      "threshold": 1.0,
+      "checks": [
+        "Delete VNet/subnet operations include pre-confirmation show command",
+        "No credential or sensitive data in stdout/stderr",
+        "VNet deletion warns about all dependent resources (NICs, NSGs, peerings)",
+        "Subnet deletion checks for existing NIC attachments before proceeding"
+      ]
+    },
+    "idempotency": {
+      "threshold": 0.5,
+      "checks": [
+        "Re-running the same command produces consistent output",
+        "Subnet creation with existing name returns appropriate error (not duplicate)",
+        "VNet peering creation checks for existing peering before creating duplicate",
+        "Delete operations on already-deleted VNets return success"
+      ]
+    },
+    "traceability": {
+      "threshold": 0.5,
+      "checks": [
+        "Command, exit_code, stdout, and stderr are all captured",
+        "Timestamp and iteration count are recorded",
+        "Address space and subnet CIDR ranges are documented",
+        "VNet peering state (Connected/Disconnected) and DNS configuration are logged"
+      ]
+    },
+    "spec_compliance": {
+      "threshold": 0.5,
+      "checks": [
+        "All commands include --output json flag",
+        "Resource group is specified with --resource-group",
+        "--address-prefixes and --subnet-prefixes are specified for VNet creation",
+        "--location parameter is specified for VNet creation"
+      ]
+    }
+  }
+}
