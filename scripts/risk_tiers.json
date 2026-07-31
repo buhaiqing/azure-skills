@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "description": "MS L400 risk tiers for azure-skills operations",
+  "tiers": {
+    "R0": {
+      "name": "read_only",
+      "auto_heal": true,
+      "gcl_required": false,
+      "max_heal_attempts": 3,
+      "human_confirm": false,
+      "examples": ["list", "show", "get", "query", "diagnose"]
+    },
+    "R1": {
+      "name": "mutable_reversible",
+      "auto_heal": true,
+      "gcl_required": true,
+      "max_heal_attempts": 2,
+      "human_confirm": false,
+      "examples": ["create", "update", "start", "restart", "scale_up"]
+    },
+    "R2": {
+      "name": "destructive",
+      "auto_heal": false,
+      "gcl_required": true,
+      "max_heal_attempts": 0,
+      "human_confirm": true,
+      "gcl_max_iter": 2,
+      "examples": ["delete", "purge", "deallocate", "stop", "scale_to_zero", "terminate"]
+    }
+  },
+  "operation_overrides": {
+    "azure-vm-ops": {
+      "vm_create": "R1",
+      "vm_show": "R0",
+      "vm_list": "R0",
+      "vm_delete": "R2",
+      "vm_deallocate": "R2",
+      "vm_stop": "R2"
+    },
+    "azure-aks-ops": {
+      "aks_create": "R1",
+      "aks_list": "R0",
+      "aks_show": "R0",
+      "aks_delete": "R2",
+      "aks_stop": "R2"
+    },
+    "azure-blobstorage-ops": {
+      "account_create": "R1",
+      "account_list": "R0",
+      "container_delete": "R2",
+      "account_delete": "R2"
+    },
+    "azure-appgateway-ops": {
+      "ag_create": "R1",
+      "ag_list": "R0",
+      "ag_delete": "R2"
+    },
+    "azure-loadbalancer-ops": {
+      "lb_create": "R1",
+      "lb_list": "R0",
+      "lb_delete": "R2"
+    },
+    "azure-frontdoor-ops": {
+      "profile_create": "R1",
+      "afd_list": "R0",
+      "endpoint_create": "R1",
+      "profile_delete": "R2",
+      "endpoint_purge": "R2"
+    },
+    "azure-vnet-ops": {
+      "vnet_create": "R1",
+      "vnet_list": "R0",
+      "vnet_delete": "R2"
+    },
+    "azure-keyvault-ops": {
+      "kv_create": "R1",
+      "kv_list": "R0",
+      "kv_delete": "R2",
+      "secret_purge": "R2"
+    }
+  },
+  "default_by_keyword": [
+    {"pattern": "delete|purge|deallocate|terminate|scale.?0|stop", "tier": "R2"},
+    {"pattern": "create|update|start|restart|scale|set|add", "tier": "R1"},
+    {"pattern": "list|show|get|query|diagnose|check", "tier": "R0"}
+  ]
+}

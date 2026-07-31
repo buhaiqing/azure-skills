@@ -31,6 +31,11 @@ This document defines lightweight governance for `azure-*-ops` skills in this re
 - [ ] **Polling**: Interval and max wait stated for LRO (Long Running Operations)
 - [ ] **Resource Group**: All operations include resource group parameter where required
 - [ ] **Location**: Location parameter documented and validated
+- [ ] **RAI — data minimization**: Skill does not request or log PII / secrets beyond `{{env.*}}` placeholders
+- [ ] **RAI — human confirmation boundary**: R2/destructive ops require explicit human gate (see `scripts/risk_tiers.json`)
+- [ ] **RAI — trace redaction**: Traces mask credentials (`***`); no raw secrets in audit-results
+- [ ] **RAI — no credential fishing**: Never instruct user to paste secrets into chat; env-only
+- [ ] **Risk tier**: Operation mapped to R0/R1/R2 or covered by keyword defaults in `risk_tiers.json`
 
 ## Adversarial Scenarios
 
@@ -86,6 +91,20 @@ This document defines lightweight governance for `azure-*-ops` skills in this re
 | RBAC | AccessDenied → HALT; document required RBAC role |
 | Activity Log | Document Activity Log usage for troubleshooting |
 | Subscription | Verify subscription ID is valid before operations |
+
+## Responsible AI (RAI) — Skill Lifecycle Gates
+
+Embed before merge (MS Level 400 governance):
+
+| Gate | Check |
+|------|-------|
+| Data minimization | No PII fields in observe/heal payloads beyond resource IDs |
+| Human oversight | R2 ops → human confirm; Safety=0 → ABORT |
+| Trace hygiene | Mask secrets in GCL / auto_feedback traces |
+| Transparency | Escalation messages include command, exit code, Trace ID |
+| Fairness of automation | Auto-heal only within declared healing_rules; no silent privilege escalation |
+
+Generator hook: when scaffolding a skill, copy risk-tier Quality Gate blurb into `SKILL.md` and register ops in `scripts/risk_tiers.json` `operation_overrides` for core paths.
 
 ## Review Process
 

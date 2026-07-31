@@ -1,0 +1,61 @@
+{
+  "description": "MS L400 Technology pillar — production evidence (read-only). Destructive ops NEVER included. Requires AZURE_* env + az login for --env=live.",
+  "skills": [
+    {
+      "skill": "azure-vm-ops",
+      "operation": "vm_show",
+      "tier": "R0",
+      "command": "az vm list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-aks-ops",
+      "operation": "aks_list",
+      "tier": "R0",
+      "command": "az aks list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-blobstorage-ops",
+      "operation": "account_list",
+      "tier": "R0",
+      "command": "az storage account list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-appgateway-ops",
+      "operation": "ag_list",
+      "tier": "R0",
+      "command": "az network application-gateway list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-loadbalancer-ops",
+      "operation": "lb_list",
+      "tier": "R0",
+      "command": "az network lb list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-frontdoor-ops",
+      "operation": "afd_list",
+      "tier": "R0",
+      "command": "az afd profile list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-vnet-ops",
+      "operation": "vnet_list",
+      "tier": "R0",
+      "command": "az network vnet list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-keyvault-ops",
+      "operation": "kv_list",
+      "tier": "R0",
+      "command": "az keyvault list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    }
+  ]
+}

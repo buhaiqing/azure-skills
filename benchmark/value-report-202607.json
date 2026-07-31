@@ -1,0 +1,18 @@
+{
+  "report_time": "2026-07-31T16:42:50.387667+00:00",
+  "kpis": {
+    "auto_heal_success_rate_pct": 100.0,
+    "escalation_rate_pct": 0.0,
+    "estimated_heal_events": 27,
+    "estimated_escalations": 0,
+    "estimated_hours_saved": 6.75,
+    "estimated_escalation_hours": 0.0,
+    "net_hours_benefit": 6.75,
+    "trace_files": 123,
+    "scenarios_in_health_report": 93
+  },
+  "assumptions": {
+    "hours_per_heal": 0.25,
+    "hours_per_escalation": 0.5
+  }
+}

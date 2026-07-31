@@ -35,21 +35,15 @@ def _load_json(path: Path) -> dict[str, Any]:
 def _send_to_azure_monitor(data: dict[str, Any], resource_id: str | None = None) -> bool:
     """Write L4 metrics to Azure Monitor via az CLI.
 
-    Uses: az monitor app-insights metrics create
-    Environment: AZURE_SUBSCRIPTION_ID, AZURE_APP_INSIGHTS_RESOURCE_ID (optional, uses --resource-id if set)
+    Always writes ``audit-results/azure-monitor-payload.json`` for offline evidence.
+    Live ingest requires AZURE_SUBSCRIPTION_ID + AZURE_APP_INSIGHTS_RESOURCE_ID (or --resource-id).
     """
     subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID", "")
-    if not subscription_id:
-        print("[WARN] AZURE_SUBSCRIPTION_ID not set, skipping Azure Monitor output", file=sys.stderr)
-        return False
-
     l4_targets = data.get("l4_targets", {})
-    metrics_data = data.get("metrics", {})
     total = data.get("total_scenarios", 0)
     passed = data.get("passed", 0)
     failed = data.get("failed", 0)
 
-    # Build metric list
     metrics = [
         ("l4_safety_pass_rate", l4_targets.get("safety_pass_rate", {}).get("actual", 0), "0-100"),
         ("l4_auto_heal_success_rate", l4_targets.get("auto_heal_success_rate", {}).get("actual", 0), "0-100"),
@@ -59,10 +53,23 @@ def _send_to_azure_monitor(data: dict[str, Any], resource_id: str | None = None)
         ("l4_scenarios_failed", failed, ""),
     ]
 
-    # Use provided resource_id or fall back to env var
     app_insights_id = resource_id or os.environ.get("AZURE_APP_INSIGHTS_RESOURCE_ID", "")
+
+    payload_path = REPO_ROOT / "audit-results" / "azure-monitor-payload.json"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "resource_id": app_insights_id or None,
+        "subscription_id": subscription_id or None,
+        "metrics": {name: value for name, value, _ in metrics},
+    }
+    payload_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"[INFO] Wrote Monitor payload: {payload_path}")
+
+    if not subscription_id:
+        print("[WARN] AZURE_SUBSCRIPTION_ID not set, skipping live Azure Monitor ingest", file=sys.stderr)
+        return False
     if not app_insights_id:
-        print("[WARN] AZURE_APP_INSIGHTS_RESOURCE_ID not set and no --resource-id provided, skipping Azure Monitor", file=sys.stderr)
+        print("[WARN] AZURE_APP_INSIGHTS_RESOURCE_ID not set and no --resource-id provided, skipping live ingest", file=sys.stderr)
         return False
 
     cmd_base = [

@@ -3,14 +3,18 @@
 Usage::
 
     python3 scripts/run_all_scenarios.py
+    python3 scripts/run_all_scenarios.py --env=live   # delegates to live_canary.py
 
-Output: benchmark/l4-verify-2026-Q3.md
+Output: benchmark/l4-verify-2026-Q3.md (mock) or benchmark/l4-live-canary-*.md (live)
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import shlex
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -191,6 +195,26 @@ def generate_report(results: dict) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Run L4 verification scenarios")
+    parser.add_argument(
+        "--env",
+        choices=("mock", "live"),
+        default="mock",
+        help="mock = local MockAzure suite; live = read-only Azure canary",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --env=live, validate canary config only",
+    )
+    args = parser.parse_args()
+
+    if args.env == "live":
+        cmd = [sys.executable, str(Path(__file__).parent / "live_canary.py"), "--env=live"]
+        if args.dry_run:
+            cmd.append("--dry-run")
+        raise SystemExit(subprocess.call(cmd))
+
     mock = MockAzure()
     results = run_all_scenarios(mock, SCENARIOS_DIR)
 

@@ -213,6 +213,8 @@ When generating any `azure-*-ops` skill, append the following line to the end of
 
 This makes every generated skill self-trigger the CADL loop after use.
 
+Also: register core operations in `scripts/risk_tiers.json` `operation_overrides` (R0/R1/R2) and pass RAI checklist in [governance-review.md](references/governance-review.md) before merge.
+
 ## See Also
 
 - [Azure CLI Documentation](https://docs.microsoft.com/cli/azure/)

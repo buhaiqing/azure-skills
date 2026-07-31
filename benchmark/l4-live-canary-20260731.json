@@ -1,0 +1,74 @@
+{
+  "mode": "dry_run",
+  "report_time": "2026-07-31T16:42:22.634445+00:00",
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "skill": "azure-vm-ops",
+      "operation": "vm_show",
+      "tier": "R0",
+      "command_template": "az vm list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-aks-ops",
+      "operation": "aks_list",
+      "tier": "R0",
+      "command_template": "az aks list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-blobstorage-ops",
+      "operation": "account_list",
+      "tier": "R0",
+      "command_template": "az storage account list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-appgateway-ops",
+      "operation": "ag_list",
+      "tier": "R0",
+      "command_template": "az network application-gateway list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-loadbalancer-ops",
+      "operation": "lb_list",
+      "tier": "R0",
+      "command_template": "az network lb list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-frontdoor-ops",
+      "operation": "afd_list",
+      "tier": "R0",
+      "command_template": "az afd profile list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-vnet-ops",
+      "operation": "vnet_list",
+      "tier": "R0",
+      "command_template": "az network vnet list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    },
+    {
+      "skill": "azure-keyvault-ops",
+      "operation": "kv_list",
+      "tier": "R0",
+      "command_template": "az keyvault list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "status": "dry_run_ok",
+      "detail": "requires env: AZURE_RESOURCE_GROUP"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ description: azure-skills L4 自动化闭环完整文档
 ```
 manual/
 ├── index.md                 # 文档中心（本文）
+├── user-guide.md           # 端到端用户指南（MS L400）
 ├── quick-start.md          # 5 分钟快速入门
 ├── architecture.md         # 系统架构设计
 ├── l4闭环.md               # L4 自动化闭环
@@ -24,13 +25,17 @@ manual/
 ├── troubleshooting.md       # 故障排查
 ├── best-practices.md       # 最佳实践
 ├── api-reference.md        # API 参考
-└── extension.md            # 扩展指南
+├── extension.md            # 扩展指南
+├── governance-federation.md # 联邦治理 / 风险分级
+├── human-agent-ops-playbook.md # 人机协作运维
+└── adoption-tiers.md       # sandbox → enterprise 采纳
 ```
 
 ## 🚀 快速链接
 
 | 场景 | 文档 | 关键命令 |
 |------|------|----------|
+| 完整路径（推荐） | [用户指南](./user-guide.md) | `python scripts/live_canary.py --dry-run` |
 | 第一次使用 | [快速入门](./quick-start.md) | `python scripts/auto_feedback_loop.py --skill azure-vm-ops ...` |
 | 理解架构 | [系统架构](./architecture.md) | — |
 | 自动修复 | [L4 闭环](./l4闭环.md) | `--desired-state '{"powerState": "VM running"}'` |
@@ -38,6 +43,8 @@ manual/
 | 跨服务问题 | [编排引擎](./orchestrator.md) | `--diagnose "AKS node not ready"` |
 | 经验复用 | [记忆层](./memory.md) | `store.recommend()` |
 | 查看健康 | [仪表板](./dashboard.md) | `python scripts/health_dashboard.py` |
+| 人机协作 | [Ops Playbook](./human-agent-ops-playbook.md) | `risk_tiers.py --skill ...` |
+| 组织采纳 | [采纳分级](./adoption-tiers.md) | sandbox → enterprise |
 | 本地测试 | [Mock 验证](./mock.md) | `python scripts/run_all_scenarios.py` |
 | 配置环境 | [环境配置](./configuration.md) | `cp .env.example .env` |
 

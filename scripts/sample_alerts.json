@@ -1,0 +1,16 @@
+[
+  {
+    "name": "vm-cpu-high",
+    "description": "High CPU on VM sample",
+    "resourceType": "Microsoft.Compute/virtualMachines"
+  },
+  {
+    "name": "aks-node-not-ready",
+    "description": "AKS node NotReady",
+    "resourceType": "Microsoft.ContainerService/managedClusters"
+  },
+  {
+    "name": "unknown-widget",
+    "description": "No matching skill"
+  }
+]

@@ -121,6 +121,8 @@ az aks delete --name "{{user.aks_name}}" --resource-group "{{user.resource_group
 
 This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8` for the spec.
 
+Risk tiers: R0 read / R1 mutable / R2 destructive — see [`scripts/risk_tiers.json`](../scripts/risk_tiers.json); enforced by auto_feedback_loop.
+
 | Parameter | Value |
 |-----------|-------|
 | GCL | **required** |

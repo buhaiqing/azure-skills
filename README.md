@@ -415,6 +415,29 @@ python3 scripts/health_dashboard.py
 
 See `docs/superpowers/reports/l4-certification-2026-07-27.md` for the full certification report.
 
+### Microsoft Level 400 Capable (repo)
+
+**Status: ✅ Capable (repo)** — see DoD in [`docs/superpowers/plans/ms-l400-roadmap.md`](docs/superpowers/plans/ms-l400-roadmap.md).
+
+Distinct from Gartner L4: adds live canary path, Skill ALM CI, risk tiers (R0/R1/R2), proactive `watch_and_heal`, value KPIs, and adoption enablement. Does **not** claim customer Organization & Culture = 400.
+
+| Artifact | Command / path |
+|----------|----------------|
+| Maturity baseline | [`ms-agentic-maturity-baseline.md`](docs/superpowers/reports/ms-agentic-maturity-baseline.md) |
+| Live canary | `python3 scripts/live_canary.py --dry-run` / `--env=live` |
+| Risk tiers | `python3 scripts/risk_tiers.py --skill azure-vm-ops --operation vm_delete` |
+| Value report | `python3 scripts/value_report.py` |
+| User guide | [`manual/user-guide.md`](manual/user-guide.md) |
+| Adoption tiers | [`manual/adoption-tiers.md`](manual/adoption-tiers.md) |
+
+### How to roll out in an organization
+
+1. Start in **sandbox**: read-only canary + mock suite ([adoption-tiers](manual/adoption-tiers.md))
+2. Name a Champion: own `risk_tiers.json` and escalation routing ([governance-federation](manual/governance-federation.md))
+3. In team env, run weekly eval: `python3 scripts/eval_weekly.py` + `value_report.py`
+4. Enterprise gate: 8-core live canary pass + dual confirm for R2
+5. Full path: [manual/user-guide.md](manual/user-guide.md)
+
 ## Quick Start
 
 ### Generate New Skills with Meta Skill

@@ -110,6 +110,8 @@ Use `az network vnet peering create|update|delete|list ... --output json` as CLI
 
 This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quality gate. See `AGENTS.md §3–§8`.
 
+Risk tiers: R0 read / R1 mutable / R2 destructive — see [`scripts/risk_tiers.json`](../scripts/risk_tiers.json); enforced by auto_feedback_loop.
+
 | Parameter | Value |
 |-----------|-------|
 | GCL | **required** |

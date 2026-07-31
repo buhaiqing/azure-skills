@@ -1,0 +1,53 @@
+name: Skill ALM
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  validate-heal-policies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate self-healing policies
+        run: python3 scripts/self_healing/validate.py
+
+  mock-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run mock L4 scenarios
+        run: python3 scripts/run_all_scenarios.py
+      - name: Collect metrics
+        run: python3 scripts/metrics_collector.py
+      - name: Live canary dry-run
+        run: python3 scripts/live_canary.py --dry-run
+
+  governance-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No literal secrets in skills
+        run: |
+          set -euo pipefail
+          if grep -RInE 'ClientSecret=[A-Za-z0-9+/=]{16,}|AccountKey=[A-Za-z0-9+/=]{20,}' \
+               --include='*.md' --include='*.yaml' --include='*.yml' --include='*.json' \
+               azure-*-ops 2>/dev/null; then
+            echo "Possible secret literal found"
+            exit 1
+          fi
+          echo "Secret scan OK"
+      - name: Placeholder convention spot-check
+        run: |
+          if grep -RInE 'client_secret:\s*[A-Za-z0-9]{20,}' azure-*-ops/assets 2>/dev/null; then
+            echo "Rendered secret in assets"
+            exit 1
+          fi
+          echo "Placeholder scan OK"

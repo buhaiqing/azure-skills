@@ -29,6 +29,7 @@ from state_observer import observe, ObserveResult, observe_cost, observe_budget,
 from self_healing.loader import load_policy
 from escalation import escalate, EscalationContext
 from report_finding import report_finding
+from risk_tiers import apply_tier_gates
 
 
 TRACE_DIR = Path(__file__).parent.parent / "audit-results"
@@ -227,6 +228,15 @@ def run_with_feedback(
     heal_attempts = 0
     escalation_msg: Optional[str] = None
 
+    # Risk tier gates (MS L400) — R2 / human_confirm forces risky path
+    gates = apply_tier_gates(skill, operation, risky_flag=risky)
+    if gates["force_risky"]:
+        risky = True
+    if not gates["auto_heal"]:
+        max_heal_attempts = 0
+    else:
+        max_heal_attempts = min(max_heal_attempts, gates["max_heal_attempts"]) or gates["max_heal_attempts"]
+
     def _finalize(fb: FeedbackResult) -> FeedbackResult:
         """统一后处理：persist trace + 可选成本观测"""
         _persist_trace(tid, fb)
@@ -234,7 +244,7 @@ def run_with_feedback(
             fb = _observe_and_attach_cost(fb, subscription_id, skill, operation)
         return fb
 
-    # 1. Human gate — risky 操作不自动执行
+    # 1. Human gate — risky / R2 操作不自动执行
     if risky:
         escalation_msg = (
             f"⚠️  Risky operation '{operation}' in {skill} requires human confirmation.\n"

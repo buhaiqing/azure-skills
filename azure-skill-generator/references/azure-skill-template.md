@@ -122,6 +122,12 @@ az [service] [resource] show --name "{{user.resource_name}}" --resource-group "{
 # User must type exact resource name to confirm
 ```
 
+## Quality Gate
+
+Risk tiers: R0 read / R1 mutable / R2 destructive — see [`scripts/risk_tiers.json`](../../scripts/risk_tiers.json); enforced by `auto_feedback_loop`. Register new ops in `operation_overrides` before merge.
+
+This skill participates in the **Generator-Critic-Loop (GCL)** when required by skill class (see root `AGENTS.md`).
+
 ## Reference Files
 
 - [Azure CLI Usage](references/azure-cli-usage.md)

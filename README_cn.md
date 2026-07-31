@@ -414,6 +414,29 @@ python3 scripts/health_dashboard.py
 
 完整认证报告见 `docs/superpowers/reports/l4-certification-2026-07-27.md`。
 
+### Microsoft Level 400 Capable (repo)
+
+**状态: ✅ Capable（repo）** — DoD 见 [`docs/superpowers/plans/ms-l400-roadmap.md`](docs/superpowers/plans/ms-l400-roadmap.md)。
+
+与 Gartner L4 不同：补充 live canary、Skill ALM CI、风险分级（R0/R1/R2）、主动 `watch_and_heal`、价值 KPI 与采纳启用包。**不**声称客户组织的 Organization & Culture = 400。
+
+| 产物 | 命令 / 路径 |
+|------|-------------|
+| 成熟度基线 | [`ms-agentic-maturity-baseline.md`](docs/superpowers/reports/ms-agentic-maturity-baseline.md) |
+| Live canary | `python3 scripts/live_canary.py --dry-run` / `--env=live` |
+| 风险分级 | `python3 scripts/risk_tiers.py --skill azure-vm-ops --operation vm_delete` |
+| 价值报告 | `python3 scripts/value_report.py` |
+| 用户指南 | [`manual/user-guide.md`](manual/user-guide.md) |
+| 采纳分级 | [`manual/adoption-tiers.md`](manual/adoption-tiers.md) |
+
+### 如何在组织内推广
+
+1. 从 **sandbox** 开始：只读 canary + mock suite（见 [adoption-tiers](manual/adoption-tiers.md)）
+2. 指定 Champion：维护 `risk_tiers.json` 与升人工通道（[governance-federation](manual/governance-federation.md)）
+3. Team 环境启用周评估：`python3 scripts/eval_weekly.py` + `value_report.py`
+4. Enterprise 晋升门槛：8 核心 skill live canary 通过 + R2 双人确认
+5. 完整路径见 [manual/user-guide.md](manual/user-guide.md)
+
 ## 快速开始
 
 ### 使用 Meta Skill 生成新技能

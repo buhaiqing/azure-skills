@@ -422,6 +422,7 @@ does not exempt a sloppy skill update.
 - [docs/link-integrity.md](./docs/link-integrity.md) — LI-1~LI-4 链接检测
 - `azure-skill-generator/references/cadl.md` — 复利资产沉淀机制 (CADL) 完整规范
 - `azure-skill-generator/references/governance-review.md` — build-time governance review
+- [docs/superpowers/reports/ms-agentic-maturity-baseline.md](./docs/superpowers/reports/ms-agentic-maturity-baseline.md) — Microsoft Level 400 vs Gartner L4 baseline
 
 ### 15. CADL Finding — Gartner L4 自动化闭环
 
