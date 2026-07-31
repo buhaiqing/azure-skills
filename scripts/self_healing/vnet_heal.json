@@ -13,7 +13,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "provisioningState",
           "condition_value": "Succeeded",
-          "heal_action": "az network vnet wait",
+          "heal_action": "network vnet wait",
           "heal_args_template": ["network", "vnet", "wait", "--name", "{{vnet_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
           "max_attempts": 4,
           "backoff_sec": 30
@@ -34,7 +34,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "provisioningState",
           "condition_value": "Succeeded",
-          "heal_action": "az network vnet subnet wait",
+          "heal_action": "network vnet subnet wait",
           "heal_args_template": ["network", "vnet", "subnet", "wait", "--vnet-name", "{{vnet_name}}", "--name", "{{subnet_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
           "max_attempts": 4,
           "backoff_sec": 30

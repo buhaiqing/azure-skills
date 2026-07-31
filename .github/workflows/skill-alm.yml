@@ -29,6 +29,8 @@ jobs:
         run: python3 scripts/metrics_collector.py
       - name: Live canary dry-run
         run: python3 scripts/live_canary.py --dry-run
+      - name: MS L400 unit tests
+        run: python3 -m pytest tests/test_ms_l400.py tests/test_auto_feedback_loop.py -q
 
   governance-scan:
     runs-on: ubuntu-latest

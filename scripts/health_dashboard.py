@@ -33,10 +33,12 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _send_to_azure_monitor(data: dict[str, Any], resource_id: str | None = None) -> bool:
-    """Write L4 metrics to Azure Monitor via az CLI.
+    """Export L4 metrics payload for Azure Monitor / App Insights ingest.
 
-    Always writes ``audit-results/azure-monitor-payload.json`` for offline evidence.
-    Live ingest requires AZURE_SUBSCRIPTION_ID + AZURE_APP_INSIGHTS_RESOURCE_ID (or --resource-id).
+    Always writes ``audit-results/azure-monitor-payload.json``.
+    ``az monitor app-insights metrics create`` does **not** exist — live push
+    must use App Insights ingestion endpoint / OpenTelemetry / REST customMetrics
+    outside this CLI helper. This function only prepares the payload contract.
     """
     subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID", "")
     l4_targets = data.get("l4_targets", {})
@@ -61,44 +63,28 @@ def _send_to_azure_monitor(data: dict[str, Any], resource_id: str | None = None)
         "resource_id": app_insights_id or None,
         "subscription_id": subscription_id or None,
         "metrics": {name: value for name, value, _ in metrics},
+        "ingest_note": (
+            "Payload only — use App Insights REST/OpenTelemetry for live push; "
+            "az CLI has no 'app-insights metrics create'."
+        ),
     }
     payload_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"[INFO] Wrote Monitor payload: {payload_path}")
 
-    if not subscription_id:
-        print("[WARN] AZURE_SUBSCRIPTION_ID not set, skipping live Azure Monitor ingest", file=sys.stderr)
-        return False
-    if not app_insights_id:
-        print("[WARN] AZURE_APP_INSIGHTS_RESOURCE_ID not set and no --resource-id provided, skipping live ingest", file=sys.stderr)
-        return False
+    if not subscription_id or not app_insights_id:
+        print(
+            "[WARN] AZURE_SUBSCRIPTION_ID / App Insights resource id incomplete; "
+            "payload written for offline/custom ingest only",
+            file=sys.stderr,
+        )
+        return True  # payload export succeeded
 
-    cmd_base = [
-        "az", "monitor", "app-insights", "metrics",
-        "create",
-        "--resource-id", app_insights_id,
-        "--interval", "PT1M",
-    ]
-
-    success = True
-    for metric_name, value, _description in metrics:
-        cmd = cmd_base + [
-            "--metric", metric_name,
-            "--value", str(value),
-        ]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                print(f"[WARN] Failed to send metric {metric_name}: {result.stderr.strip()}", file=sys.stderr)
-                success = False
-        except Exception as exc:
-            print(f"[WARN] Exception sending metric {metric_name}: {exc}", file=sys.stderr)
-            success = False
-
-    return success
+    print(
+        "[INFO] Live metric ingest via az is unsupported; ship payload with your "
+        "App Insights pipeline (see ingest_note in JSON).",
+        file=sys.stderr,
+    )
+    return True
 
 
 def _load_trend_reports(trend_dir: Path, days: int = 7) -> list[dict[str, Any]]:

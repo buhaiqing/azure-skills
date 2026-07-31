@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -29,20 +30,28 @@ BENCHMARK = REPO_ROOT / "benchmark"
 _ENV_RE = re.compile(r"\{\{env\.(\w+)\}\}")
 
 
-def _expand(cmd: str, env: dict[str, str]) -> str:
-    def repl(m: re.Match[str]) -> str:
-        key = m.group(1)
-        if key not in env or not env[key]:
-            raise ValueError(f"Missing env: {key}")
-        return env[key]
+def _expand_to_argv(cmd_template: str, env: dict[str, str]) -> list[str]:
+    """Expand {{env.X}} per-token so values never re-split into extra flags."""
+    parts = shlex.split(cmd_template)
+    out: list[str] = []
+    for part in parts:
+        def repl(m: re.Match[str]) -> str:
+            key = m.group(1)
+            if key not in env or not env[key]:
+                raise ValueError(f"Missing env: {key}")
+            val = env[key]
+            if val.startswith("-"):
+                raise ValueError(f"env {key} must not start with '-' (flag injection)")
+            return val
 
-    return _ENV_RE.sub(repl, cmd)
+        out.append(_ENV_RE.sub(repl, part))
+    return out
 
 
-def _run_az(command: str, timeout: int = 60) -> tuple[int, str, str]:
+def _run_az(argv: list[str], timeout: int = 60) -> tuple[int, str, str]:
     try:
         r = subprocess.run(
-            command.split(),
+            argv,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -70,6 +79,7 @@ def run_canary(*, dry_run: bool, env_mode: str) -> dict:
         "AZURE_SUBSCRIPTION_ID": os.environ.get("AZURE_SUBSCRIPTION_ID", ""),
     }
     results: list[dict] = []
+    mode = "dry_run" if dry_run or env_mode != "live" else "live"
 
     for item in skills:
         entry = {
@@ -80,8 +90,7 @@ def run_canary(*, dry_run: bool, env_mode: str) -> dict:
             "status": "pending",
             "detail": "",
         }
-        if dry_run or env_mode != "live":
-            # Config contract check only
+        if mode == "dry_run":
             missing = [m.group(1) for m in _ENV_RE.finditer(item["command"])]
             entry["status"] = "dry_run_ok"
             entry["detail"] = f"requires env: {', '.join(sorted(set(missing)))}"
@@ -89,14 +98,14 @@ def run_canary(*, dry_run: bool, env_mode: str) -> dict:
             continue
 
         try:
-            cmd = _expand(item["command"], env)
+            argv = _expand_to_argv(item["command"], env)
         except ValueError as exc:
             entry["status"] = "skipped"
             entry["detail"] = str(exc)
             results.append(entry)
             continue
 
-        code, out, err = _run_az(cmd)
+        code, out, err = _run_az(argv)
         if code != 0:
             entry["status"] = "fail"
             entry["detail"] = (err or out)[:200]
@@ -108,14 +117,15 @@ def run_canary(*, dry_run: bool, env_mode: str) -> dict:
             entry["detail"] = "observe+diff ok (list)"
         results.append(entry)
 
-    passed = sum(1 for r in results if r["status"] in ("pass", "dry_run_ok"))
+    live_passed = sum(1 for r in results if r["status"] == "pass")
+    contract_ok = sum(1 for r in results if r["status"] == "dry_run_ok")
     failed = sum(1 for r in results if r["status"] == "fail")
     skipped = sum(1 for r in results if r["status"] == "skipped")
     return {
-        "mode": "dry_run" if dry_run or env_mode != "live" else "live",
+        "mode": mode,
         "report_time": datetime.now(timezone.utc).isoformat(),
         "total": len(results),
-        "passed": passed,
+        "passed": live_passed if mode == "live" else contract_ok,
         "failed": failed,
         "skipped": skipped,
         "results": results,
@@ -174,6 +184,10 @@ def main() -> None:
     print(f"report: {path}")
     if summary["failed"] > 0:
         sys.exit(1)
+    # Live mode with zero passes (all skipped/missing env) is a false-positive success
+    if summary["mode"] == "live" and summary["passed"] == 0:
+        print("ERROR: live canary produced zero passes (check AZURE_RESOURCE_GROUP)", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

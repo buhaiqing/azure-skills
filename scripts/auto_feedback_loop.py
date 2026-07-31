@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -88,8 +89,17 @@ def _expand_vars(template: str | list, env: dict) -> str | list:
     return template
 
 
+def _heal_argv(action: str, args: list) -> list[str]:
+    """Build az argv; prefer args_template; never double-prefix ``az``."""
+    tokens: list[str] = [str(a) for a in args] if args else action.split()
+    if tokens and tokens[0] == "az":
+        tokens = tokens[1:]
+    return ["az"] + tokens
+
+
 def _apply_heal_rule(rule: dict, actual: dict, parsed: Optional[str], env: dict,
-                     trend_history: Optional[list[dict]] = None) -> tuple[bool, str]:
+                     trend_history: Optional[list[dict]] = None,
+                     *, dry_run: bool = False) -> tuple[bool, str]:
     """判断条件是否满足，满足则执行 heal action。返回 (applied, message)
     
     condition_type 支持：
@@ -156,19 +166,26 @@ def _apply_heal_rule(rule: dict, actual: dict, parsed: Optional[str], env: dict,
         else:
             condition_met = False
 
-    if condition_met:
-        action = rule.get("heal_action", "")
-        args = _expand_vars(rule.get("heal_args_template", []), env)
-        cmd = action.split() + args
-        try:
-            result = subprocess.run(
-                ["az"] + cmd,
-                capture_output=True, text=True, timeout=120,
-            )
-            return True, f"heal applied: {action} -> exit={result.returncode}"
-        except Exception as exc:
-            return True, f"heal applied but failed: {exc}"
-    return False, "condition not met"
+    if not condition_met:
+        return False, "condition not met"
+
+    action = rule.get("heal_action", "")
+    raw_args = _expand_vars(rule.get("heal_args_template", []), env)
+    args_list = raw_args if isinstance(raw_args, list) else []
+    cmd = _heal_argv(action, args_list)
+    if dry_run:
+        return True, f"heal planned (dry-run): {' '.join(cmd)}"
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode == 0:
+            return True, f"heal applied: {' '.join(cmd)}"
+        err = (result.stderr or result.stdout or "").strip()[:200]
+        return False, f"heal failed exit={result.returncode}: {err}"
+    except Exception as exc:
+        return False, f"heal exception: {exc}"
 
 
 def _persist_trace(trace_id: str, result: FeedbackResult):
@@ -235,7 +252,8 @@ def run_with_feedback(
     if not gates["auto_heal"]:
         max_heal_attempts = 0
     else:
-        max_heal_attempts = min(max_heal_attempts, gates["max_heal_attempts"]) or gates["max_heal_attempts"]
+        # Do not use `or` — caller may pass explicit 0 to disable heal
+        max_heal_attempts = min(max_heal_attempts, gates["max_heal_attempts"])
 
     def _finalize(fb: FeedbackResult) -> FeedbackResult:
         """统一后处理：persist trace + 可选成本观测"""
@@ -261,8 +279,25 @@ def run_with_feedback(
         )
         return _finalize(result)
 
+    # dry_run: no az execute / observe / heal side effects (MS L400 safety)
+    if dry_run:
+        gcl_note = ""
+        if gates.get("gcl_required"):
+            gcl_note = " [gcl_required: wrap with gcl_runner for production]"
+        return _finalize(FeedbackResult(
+            status="planned",
+            actual_state={},
+            heal_attempts=0,
+            trace_id=tid,
+            message=(
+                f"[dry-run] planned {skill}/{operation} tier={gates['tier']}; "
+                f"no az calls{gcl_note}"
+            ),
+            escalation=None,
+        ))
+
     # 2. 执行命令
-    cmd_list = command.split()
+    cmd_list = shlex.split(command)
     if not dry_run:
         exec_result = subprocess.run(
             cmd_list,
@@ -382,7 +417,8 @@ def run_with_feedback(
         for rule in heal_rules:
             rule_name = rule.get("heal_action", "unknown")
             ok, msg = _apply_heal_rule(rule, actual_state, parsed_val, {},
-                                        trend_history if trend_history else None)
+                                        trend_history if trend_history else None,
+                                        dry_run=False)
             heal_history.append({
                 "attempt": attempt,
                 "rule_name": rule_name,
@@ -523,4 +559,4 @@ if __name__ == "__main__":
         subscription_id=args.subscription_id,
     )
     print(json.dumps(asdict(result), indent=2, ensure_ascii=False))
-    sys.exit(0 if result.status in ("success", "healed") else 1)
+    sys.exit(0 if result.status in ("success", "healed", "planned") else 1)

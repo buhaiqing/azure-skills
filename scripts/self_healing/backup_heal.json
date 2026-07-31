@@ -24,7 +24,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "provisioningState",
           "condition_value": "Succeeded",
-          "heal_action": "az backup vault wait",
+          "heal_action": "backup vault wait",
           "heal_args_template": ["backup", "vault", "wait", "--name", "{{vault_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
           "max_attempts": 4,
           "backoff_sec": 30

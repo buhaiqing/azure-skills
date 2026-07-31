@@ -42,12 +42,12 @@ def _count_traces() -> dict[str, int]:
             data = json.loads(p.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        status = str(data.get("gcl_status", "")).upper()
-        if "PASS" in status:
+        # Only count explicit heal / escalate statuses — never GCL PASS
+        status = str(data.get("gcl_status", "")).lower()
+        if status == "healed":
             counts["healed_hint"] += 1
-        if "SAFETY" in status or "FAIL" in status:
+        elif status in ("escalated", "safety_fail"):
             counts["escalated_hint"] += 1
-    # also FeedbackResult-style traces if present
     for p in AUDIT.glob("*.json"):
         if p.name.startswith("gcl-trace"):
             continue
@@ -71,34 +71,42 @@ def build_report(hours_heal: float, hours_esc: float) -> dict:
 
     auto_heal_rate = targets.get("auto_heal_success_rate", {}).get("actual")
     if auto_heal_rate is None:
-        auto_heal_rate = metrics.get("auto_heal_success_rate", 0)
+        auto_heal_rate = metrics.get("auto_heal_success_rate")
     esc_rate = targets.get("escalation_rate", {}).get("actual")
     if esc_rate is None:
-        esc_rate = metrics.get("escalation_rate", 0)
+        esc_rate = metrics.get("escalation_rate")
     total = health.get("total_scenarios", 0)
-    # Estimate heal events from suite pass semantics + traces
-    heals = max(traces["healed_hint"], int(total * (float(auto_heal_rate) / 100.0) * 0.3))
-    escalations = max(traces["escalated_hint"], int(total * (float(esc_rate) / 100.0)))
 
-    hours_saved = heals * hours_heal
-    hours_escalation_cost = escalations * hours_esc
+    # Strict: only explicit healed/escalated trace counts — no synthetic inflate
+    heals = traces["healed_hint"]
+    escalations = traces["escalated_hint"]
+    data_sufficient = heals > 0 or escalations > 0 or traces["traces"] > 0
+
+    hours_saved = heals * hours_heal if data_sufficient else None
+    hours_escalation_cost = escalations * hours_esc if data_sufficient else None
+    net = None
+    if hours_saved is not None and hours_escalation_cost is not None:
+        net = round(hours_saved - hours_escalation_cost, 2)
 
     return {
         "report_time": datetime.now(timezone.utc).isoformat(),
         "kpis": {
-            "auto_heal_success_rate_pct": auto_heal_rate,
-            "escalation_rate_pct": esc_rate,
-            "estimated_heal_events": heals,
-            "estimated_escalations": escalations,
-            "estimated_hours_saved": round(hours_saved, 2),
-            "estimated_escalation_hours": round(hours_escalation_cost, 2),
-            "net_hours_benefit": round(hours_saved - hours_escalation_cost, 2),
+            "auto_heal_success_rate_pct": auto_heal_rate if auto_heal_rate is not None else "n/a",
+            "escalation_rate_pct": esc_rate if esc_rate is not None else "n/a",
+            "estimated_heal_events": heals if data_sufficient else "n/a",
+            "estimated_escalations": escalations if data_sufficient else "n/a",
+            "estimated_hours_saved": round(hours_saved, 2) if hours_saved is not None else "n/a",
+            "estimated_escalation_hours": (
+                round(hours_escalation_cost, 2) if hours_escalation_cost is not None else "n/a"
+            ),
+            "net_hours_benefit": net if net is not None else "n/a",
             "trace_files": traces["traces"],
             "scenarios_in_health_report": total,
         },
         "assumptions": {
             "hours_per_heal": hours_heal,
             "hours_per_escalation": hours_esc,
+            "counting_rule": "only gcl_status/status == healed|escalated; never GCL PASS",
         },
     }
 
@@ -115,8 +123,8 @@ def write_markdown(report: dict) -> Path:
         "## Business KPIs (MS L400)\n",
         "| KPI | Value |",
         "|-----|-------|",
-        f"| Auto-heal success rate | {k['auto_heal_success_rate_pct']}% |",
-        f"| Escalation rate | {k['escalation_rate_pct']}% |",
+        f"| Auto-heal success rate | {k['auto_heal_success_rate_pct']} |",
+        f"| Escalation rate | {k['escalation_rate_pct']} |",
         f"| Estimated heal events | {k['estimated_heal_events']} |",
         f"| Estimated escalations | {k['estimated_escalations']} |",
         f"| Estimated hours saved | {k['estimated_hours_saved']} |",
@@ -126,6 +134,7 @@ def write_markdown(report: dict) -> Path:
         "## Assumptions\n",
         f"- Hours per successful heal: {a['hours_per_heal']}",
         f"- Hours per escalation: {a['hours_per_escalation']}",
+        f"- Counting: {a.get('counting_rule', '')}",
         "",
         "> Cost anomaly interception: enable `--observe-cost` on "
         "`auto_feedback_loop.py` and review `cost_heal.json` hits in traces.\n",

@@ -13,7 +13,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "state",
           "condition_value": "Running",
-          "heal_action": "az webapp start",
+          "heal_action": "webapp start",
           "heal_args_template": ["webapp", "start", "--name", "{{webapp_name}}", "--resource-group", "{{resource_group}}"],
           "max_attempts": 2,
           "backoff_sec": 30

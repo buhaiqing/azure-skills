@@ -13,7 +13,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "provisioningState",
           "condition_value": "Succeeded",
-          "heal_action": "az network lb wait",
+          "heal_action": "network lb wait",
           "heal_args_template": ["network", "lb", "wait", "--name", "{{lb_name}}", "--resource-group", "{{resource_group}}", "--created", "--interval", "30", "--timeout", "600"],
           "max_attempts": 4,
           "backoff_sec": 30

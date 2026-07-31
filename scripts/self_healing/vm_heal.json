@@ -13,7 +13,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "statuses[1].displayStatus",
           "condition_value": "VM running",
-          "heal_action": "az vm start",
+          "heal_action": "vm start",
           "heal_args_template": ["vm", "start", "--name", "{{vm_name}}", "--resource-group", "{{resource_group}}"],
           "max_attempts": 3,
           "backoff_sec": 30
@@ -22,7 +22,7 @@
           "condition_type": "field_not_equal",
           "condition_field": "statuses[0].code",
           "condition_value": "ProvisioningState/succeeded",
-          "heal_action": "az vm restart",
+          "heal_action": "vm restart",
           "heal_args_template": ["vm", "restart", "--name", "{{vm_name}}", "--resource-group", "{{resource_group}}"],
           "max_attempts": 2,
           "backoff_sec": 60
@@ -41,7 +41,7 @@
       "escalate_on": []
     },
     "vm_stop": {
-      "risky": false,
+      "risky": true,
       "healing_rules": []
     },
     "vm_delete": {

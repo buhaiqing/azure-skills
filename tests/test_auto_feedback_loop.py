@@ -15,7 +15,7 @@ class MockArgs:
     dry_run: bool = True
 
 def test_dry_run_no_execution():
-    """dry_run mode should not execute az, should return status without crashing."""
+    """dry_run mode should not execute az, should return planned."""
     result = run_with_feedback(
         skill="azure-vm-ops",
         operation="vm_create",
@@ -24,8 +24,10 @@ def test_dry_run_no_execution():
         risky=False,
         dry_run=True,
     )
-    assert result.status in ("success", "escalated", "failed")
+    assert result.status == "planned"
     assert result.trace_id is not None
+    assert "dry-run" in result.message.lower() or "planned" in result.message.lower()
+
 
 def test_risky_operation_returns_escalated():
     """risky=True operations should return escalated without executing."""

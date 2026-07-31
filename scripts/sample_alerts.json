@@ -10,6 +10,11 @@
     "resourceType": "Microsoft.ContainerService/managedClusters"
   },
   {
+    "name": "requested-vm_delete",
+    "description": "Destructive delete vm request — must escalate R2",
+    "resourceType": "Microsoft.Compute/virtualMachines"
+  },
+  {
     "name": "unknown-widget",
     "description": "No matching skill"
   }
