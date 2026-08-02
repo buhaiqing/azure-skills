@@ -482,6 +482,19 @@ az network vnet subnet list --vnet-name my-vnet --resource-group my-rg --output 
 # App Service 示例
 az appservice plan create --name my-plan --resource-group my-rg --location eastus --sku B1 --is-linux --output json
 az webapp create --name my-webapp --resource-group my-rg --plan my-plan --runtime "PYTHON:3.11" --output json
+# AKS 示例
+az aks create --name my-aks --resource-group my-rg --location eastus --node-count 3 --generate-ssh-keys --output json
+az aks get-credentials --name my-aks --resource-group my-rg
+
+# Blob Storage 示例
+az storage account create --name mystorage --resource-group my-rg --location eastus --sku Standard_LRS --kind StorageV2 --output json
+az storage container create --name my-container --account-name mystorage
+az storage blob upload --account-name mystorage --container-name my-container --name myblob --file myfile.txt
+
+# Virtual Machine 示例
+az vm create --name my-vm --resource-group my-rg --location eastus --image Ubuntu2204 --size Standard_DS2_v2 --generate-ssh-keys --output json
+az vm list --resource-group my-rg --output json
+az vm stop --name my-vm --resource-group my-rg  # 停止并取消分配（停止计费）
 ```
 
 ## 环境设置
