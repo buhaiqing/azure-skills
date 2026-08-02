@@ -2,14 +2,14 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure API docs |
-| ResourceNotFound | 404 | Resource does not exist | Verify resource ID |
-| AccessDenied | 403 | RBAC permission insufficient | HALT; add Monitoring Reader/Contributor role |
-| QuotaExceeded | 400 | Alert/action group limit reached | HALT; request quota increase |
-| ThrottlingException | 429 | Rate limit exceeded | Backoff; retry 3x |
-| InternalError | 500 | Azure service error | Retry 3x; HALT |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure API docs |
+| ResourceNotFound (404) | Resource does not exist -> Verify resource ID |
+| AccessDenied (403) | RBAC permission insufficient -> HALT; add Monitoring Reader/Contributor role |
+| QuotaExceeded (400) | Alert/action group limit reached -> HALT; request quota increase |
+| ThrottlingException (429) | Rate limit exceeded -> Backoff; retry 3x |
+| InternalError (500) | Azure service error -> Retry 3x; HALT |
 
 ## Diagnostic Order
 

@@ -214,11 +214,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
-credential = DefaultAzureCredential()
-client = CosmosDBManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = CosmosDBManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 account = client.database_accounts.get(
     resource_group_name="{{user.resource_group}}",

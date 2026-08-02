@@ -2,21 +2,21 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| `InvalidParameter` | 400 | Request validation failed | Fix args per Azure API docs |
-| `InvalidPublisherEmail` | 400 | Publisher email malformed | HALT; ask user for valid email |
-| `ResourceNameInvalid` | 400 | APIM name has invalid characters | HALT; names must be 1-50 alphanum + hyphens |
-| `CheckNameNotAvailable` | 400 | Name conflict (globally unique) | HALT; ask user for different name |
-| `MismatchedResourceId` | 400 | URL resource ID mismatch | Verify RG and resource name |
-| `AccessDenied` | 403 | RBAC insufficient | HALT; document required RBAC role |
-| `ResourceNotFound` | 404 | Service / API / Product does not exist | Verify resource ID |
-| `QuotaExceeded` | 400/402 | Service limit reached | HALT; user requests quota increase via Azure support |
-| `ThrottlingException` | 429 | Rate limit exceeded | Backoff; retry 3x with exponential backoff |
-| `InternalError` | 500 | Azure service error | Retry 3x; HALT |
-| `ServiceUnavailable` | 503 | APIM control plane down | Retry 3x; HALT |
-| `VNetInvalidSubnet` | 400 | Subnet ID invalid or already used | HALT; check subnet ID |
-| `CertificateInvalid` | 400 | Custom hostname SSL cert invalid | HALT; re-upload valid cert |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| `InvalidParameter` (400) | Request validation failed -> Fix args per Azure API docs |
+| `InvalidPublisherEmail` (400) | Publisher email malformed -> HALT; ask user for valid email |
+| `ResourceNameInvalid` (400) | APIM name has invalid characters -> HALT; names must be 1-50 alphanum + hyphens |
+| `CheckNameNotAvailable` (400) | Name conflict (globally unique) -> HALT; ask user for different name |
+| `MismatchedResourceId` (400) | URL resource ID mismatch -> Verify RG and resource name |
+| `AccessDenied` (403) | RBAC insufficient -> HALT; document required RBAC role |
+| `ResourceNotFound` (404) | Service / API / Product does not exist -> Verify resource ID |
+| `QuotaExceeded` (400/402) | Service limit reached -> HALT; user requests quota increase via Azure support |
+| `ThrottlingException` (429) | Rate limit exceeded -> Backoff; retry 3x with exponential backoff |
+| `InternalError` (500) | Azure service error -> Retry 3x; HALT |
+| `ServiceUnavailable` (503) | APIM control plane down -> Retry 3x; HALT |
+| `VNetInvalidSubnet` (400) | Subnet ID invalid or already used -> HALT; check subnet ID |
+| `CertificateInvalid` (400) | Custom hostname SSL cert invalid -> HALT; re-upload valid cert |
 
 ## Diagnostic Order
 

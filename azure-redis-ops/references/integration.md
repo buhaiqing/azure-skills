@@ -184,11 +184,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.redis import RedisManagementClient
 
-credential = DefaultAzureCredential()
-client = RedisManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = RedisManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 redis = client.redis.get(
     resource_group_name="{{user.resource_group}}",

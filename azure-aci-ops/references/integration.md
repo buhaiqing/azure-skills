@@ -85,10 +85,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 import os
 
-client = ContainerInstanceManagementClient(
-    DefaultAzureCredential(),
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = ContainerInstanceManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 ```
 
 ### Create
@@ -97,11 +95,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = ContainerInstanceManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = ContainerInstanceManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 poller = client.container_groups.begin_create_or_update(
     resource_group_name='{{user.resource_group}}',

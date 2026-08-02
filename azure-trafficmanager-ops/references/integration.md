@@ -143,11 +143,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.trafficmanager import TrafficManagerManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = TrafficManagerManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = TrafficManagerManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 profile = client.profiles.create_or_update(
     resource_group_name='{{user.resource_group}}',

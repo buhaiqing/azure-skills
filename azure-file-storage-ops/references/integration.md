@@ -135,11 +135,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = StorageManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = StorageManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 ```
 
 ### File Share Operations (Management Plane)

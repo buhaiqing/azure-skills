@@ -75,11 +75,7 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**
 #### Pre-flight
 | Check | Method | On Failure |
 |-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription valid | `az account list --output json` | Suggest valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
+<!-- 通用 5 步 Pre-flight 见 [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share](../../azure-skill-generator/references/azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share) -->
 | Image pullable | Verify registry access (private → delegate `azure-acr-ops`) | HALT if auth missing |
 
 #### Execute — Azure CLI (Primary)

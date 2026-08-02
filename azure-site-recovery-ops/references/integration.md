@@ -65,15 +65,9 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.recoveryservicessiterecovery import SiteRecoveryManagementClient
 import os
 
-credential = DefaultAzureCredential()
-
-# Site Recovery management client
-# Note: resource_group_name and vault_name are NOT accepted in constructor;
-# they must be passed to each operation method.
-sr_client = SiteRecoveryManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+# Note: resource_group_name and vault_name are NOT accepted in constructor; pass to each operation method.
+sr_client = SiteRecoveryManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # The SDK also supports per-operation parameters:
 # sr_client.replication_protected_items.get(

@@ -65,12 +65,7 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**. CL
 ### Operation: Create Function App
 
 #### Pre-flight
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI / Credentials / Subscription | `az --version`; `az account show`; `az account list` | Install CLI / configure env / suggest sub |
-| Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
-| Location valid | `az account list-locations --output json` | Suggest valid location |
-| Storage account (Consumption only) | `az storage account show --name {{user.storage_account}} --resource-group {{user.resource_group}}` | HALT; storage required |
+<!-- 通用 5 步 Pre-flight 见 [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share](../../azure-skill-generator/references/azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share) -->
 
 #### Execute — Azure CLI (Primary)
 ```bash

@@ -2,22 +2,22 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure REST API docs |
-| InvalidResourceName | 400 | Queue name invalid | Fix naming convention (3-63 chars, lowercase) |
-| QueueNotFound | 404 | Queue does not exist | Verify queue name |
-| QueueAlreadyExists | 409 | Queue already exists | Use different name or check existing |
-| MessageNotFound | 404 | Message not found (expired or deleted) | Verify message ID and pop receipt |
-| AuthenticationFailed | 403 | Invalid credentials or permissions | Check keys/SAS/Azure AD |
-| AuthorizationFailed | 403 | RBAC permission insufficient | Add required role |
-| AccessDenied | 403 | Access policy denies operation | Check queue access policy |
-| QuotaExceeded | 400/402 | Storage limit reached | HALT; request quota increase |
-| ServiceQuotaExceededException | 400 | Request rate exceeded | Retry with exponential backoff |
-| ThrottlingException | 429 | Rate limit exceeded | Backoff, retry 3x |
-| InternalError | 500 | Azure service error | Retry 3x; HALT with correlation ID |
-| ServiceUnavailable | 503 | Service temporarily down | Retry 3x; HALT |
-| OperationTimedOut | 500 | Operation timeout | Retry with smaller batch size |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure REST API docs |
+| InvalidResourceName (400) | Queue name invalid -> Fix naming convention (3-63 chars, lowercase) |
+| QueueNotFound (404) | Queue does not exist -> Verify queue name |
+| QueueAlreadyExists (409) | Queue already exists -> Use different name or check existing |
+| MessageNotFound (404) | Message not found (expired or deleted) -> Verify message ID and pop receipt |
+| AuthenticationFailed (403) | Invalid credentials or permissions -> Check keys/SAS/Azure AD |
+| AuthorizationFailed (403) | RBAC permission insufficient -> Add required role |
+| AccessDenied (403) | Access policy denies operation -> Check queue access policy |
+| QuotaExceeded (400/402) | Storage limit reached -> HALT; request quota increase |
+| ServiceQuotaExceededException (400) | Request rate exceeded -> Retry with exponential backoff |
+| ThrottlingException (429) | Rate limit exceeded -> Backoff, retry 3x |
+| InternalError (500) | Azure service error -> Retry 3x; HALT with correlation ID |
+| ServiceUnavailable (503) | Service temporarily down -> Retry 3x; HALT |
+| OperationTimedOut (500) | Operation timeout -> Retry with smaller batch size |
 
 ## Diagnostic Order
 

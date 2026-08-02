@@ -241,11 +241,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.servicebus import ServiceBusManagementClient
 
-credential = DefaultAzureCredential()
-client = ServiceBusManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = ServiceBusManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # Get namespace
 namespace = client.namespaces.get(

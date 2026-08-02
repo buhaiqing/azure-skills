@@ -63,13 +63,7 @@ Detailed commands, SDK snippets, and design detail live in `references/`.
 Every operation: **Pre-flight → Execute → Validate → Recover**. Detailed commands and SDK in `references/`.
 
 ### Pre-flight (shared)
-| Check | Method | On Failure |
-|-------|--------|------------|
-| CLI | `az --version` | Install CLI 2.0+ |
-| Credentials | `az account show` | HALT; configure env |
-| Subscription | `az account list -o json` | Suggest valid sub |
-| RG | `az group show -n {{user.resource_group}}` | Create or suggest |
-| Storage Account | `az storage account show -n {{user.storage_account_name}} -g {{user.resource_group}}` | Delegate to `azure-blobstorage-ops` |
+<!-- 通用 5 步 Pre-flight 见 [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share](../../azure-skill-generator/references/azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share) -->
 
 ### Operations (CREATE / SHOW / LIST / UPDATE / SNAPSHOT)
 

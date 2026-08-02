@@ -350,11 +350,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.eventgrid import EventGridManagementClient
 
-credential = DefaultAzureCredential()
-client = EventGridManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = EventGridManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # Create topic (LRO)
 poller = client.topics.begin_create_or_update(

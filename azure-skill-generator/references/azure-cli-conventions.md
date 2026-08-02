@@ -145,6 +145,19 @@ Replace these examples with verified paths from actual Azure CLI runs:
 // JSON path: .value[0].name
 ```
 
+## Pre-flight Checks (canonical, all azure-*-ops share)
+
+Every Skill's first 5 rows of the per-operation Pre-flight table MUST be these rows (verbatim); only service-specific items (image, VNet, SKU, etc.) may differ.
+
+| # | Check | Method | On Failure |
+|---|-------|--------|------------|
+| 1 | CLI available | `az --version` | Install Azure CLI 2.0+ |
+| 2 | Credentials | `az account show` | HALT; configure env (`{{env.AZURE_*}}`) |
+| 3 | Subscription valid | `az account list --output json` | Suggest valid subscription |
+| 4 | Resource Group exists | `az group show --name {{user.resource_group}}` | Create or suggest existing |
+| 5 | Location valid | `az account list-locations --output json` | Suggest valid location |
+
+In `SKILL.md`, write the table inline ONLY for the 5 generic rows above; link here with a one-liner: `通用 5 步 Pre-flight: see [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share]`. Add service-specific rows below.
 ## Idempotency
 
 Azure CLI commands are generally idempotent for:

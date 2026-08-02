@@ -233,11 +233,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.cdn import CdnManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = CdnManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = CdnManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 profile = client.profiles.begin_create(
     resource_group_name='{{user.resource_group}}',

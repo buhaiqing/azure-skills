@@ -104,11 +104,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.apimanagement import ApiManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = ApiManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = ApiManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # Verify subscription access
 sub = client.api_management_service.list_by_resource_group(

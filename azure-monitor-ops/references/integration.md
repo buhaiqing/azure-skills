@@ -193,11 +193,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.monitor import MonitorManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = MonitorManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = MonitorManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # Get metric definitions
 definitions = client.metrics.list(

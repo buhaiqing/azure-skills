@@ -12,28 +12,32 @@ Azure SDK for Python is the official SDK. Use as **fallback** when Azure CLI fai
 | **EnvironmentCredential** | Explicit env vars only | CI/CD pipelines |
 | **ServicePrincipalCredential** | Explicit client ID/secret | Legacy; prefer DefaultAzureCredential |
 
-## Bootstrap Pattern
+## Common Client Bootstrap (canonical source)
+
+**All `azure-*-ops/references/integration.md` MUST link here instead of inlining.**
+Standard 4-line pattern:
 
 ```python
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.[service] import [ServiceMgmtClient]
 import os
 
-# Credential initialization (auto-detects)
 credential = DefaultAzureCredential()
+client = [ServiceMgmtClient](credential, os.environ.get('AZURE_SUBSCRIPTION_ID'))
+```
 
-# Client initialization
-client = [ServiceMgmtClient](
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+| Variant | When | One-liner form |
+|---------|------|----------------|
+| `os.environ["..."]` (no default) | Required at import time | `os.environ["AZURE_SUBSCRIPTION_ID"]` |
+| `os.environ.get('...')` (with default) | Optional in tests | `os.environ.get('AZURE_SUBSCRIPTION_ID')` |
+| `subscription_id=...` as named kwarg | Always; matches SDK signature | `ComputeManagementClient(credential, subscription_id=...)` |
 
-# Verify subscription access
-try:
-    subscription = client.subscriptions.get(os.environ.get('AZURE_SUBSCRIPTION_ID'))
-    print(f"Connected to: {subscription.display_name}")
-except Exception as e:
-    raise RuntimeError(f"Credential verification failed: {e}")
+**In `integration.md`, use this one-liner + link, never re-inline the 4-line block:**
+
+```python
+from azure.identity import DefaultAzureCredential
+client = ComputeManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# bootstrap rationale + verify: see azure-sdk-usage.md#common-client-bootstrap
 ```
 
 ## Required Environment Variables
@@ -47,30 +51,25 @@ except Exception as e:
 
 ## Operation Patterns
 
+> Assumes `client` already created via [Common Client Bootstrap](#common-client-bootstrap). Re-import the credential/client only if operating in a fresh interpreter (tests, notebooks).
+
 ### Create Operation (Long Running)
 
 ```python
-from azure.mgmt.[service] import [ServiceMgmtClient]
 from azure.identity import DefaultAzureCredential
+from azure.mgmt.[service] import [ServiceMgmtClient]
+# bootstrap: see [Common Client Bootstrap](#common-client-bootstrap)
+client = [ServiceMgmtClient](DefaultAzureCredential(), subscription_id='{{env.AZURE_SUBSCRIPTION_ID}}')
 
-credential = DefaultAzureCredential()
-client = [ServiceMgmtClient](credential, subscription_id='{{env.AZURE_SUBSCRIPTION_ID}}')
-
-# LRO pattern (begin_create_or_update returns poller)
 poller = client.[resources].begin_create_or_update(
     resource_group_name='{{user.resource_group}}',
     resource_name='{{user.resource_name}}',
     parameters={
         'location': '{{user.location}}',
-        # Additional parameters per Azure REST API docs
         'tags': {'Environment': 'production'},
     }
 )
-
-# Wait for completion (blocking)
-result = poller.result()
-
-# Extract resource ID
+result = poller.result()  # blocking; raises on Failed
 resource_id = result.id
 ```
 

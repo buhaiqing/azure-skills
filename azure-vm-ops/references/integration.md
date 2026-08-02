@@ -89,8 +89,8 @@ az account show --output json
 # List all sizes in location
 az vm list-skus --location "{{location}}" --output json
 
-# Filter by size name
-az vm list-skus --location "{{location}}" --size Standard_DS --output json
+# Filter by size family: e.g. Standard_DS, Standard_E, Standard_F
+az vm list-skus --location "{{user.location}}" --size "{{user.vm_size_family}}" --output json
 
 # Check quota usage
 az vm list-usage --location "{{location}}" --output json
@@ -148,15 +148,9 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
 import os
 
-credential = DefaultAzureCredential()
-compute_client = ComputeManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-network_client = NetworkManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+compute_client = ComputeManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+network_client = NetworkManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 ```
 
 ### Create VM with SDK
@@ -195,12 +189,12 @@ vm = compute_client.virtual_machines.begin_create_or_update(
                 }
             }
         },
-        'hardware_profile': {'vm_size': 'Standard_DS2_v2'},
+        'hardware_profile': {'vm_size': '{{user.vm_size}}'},
         'storage_profile': {
             'image_reference': {
-                'publisher': 'Canonical',
-                'offer': 'UbuntuServer',
-                'sku': '22_04-lts',
+                'publisher': '{{user.image_publisher}}',  # discover: az vm image list --publisher {{user.image_publisher}}
+                'offer': '{{user.image_offer}}',
+                'sku': '{{user.image_sku}}',
                 'version': 'latest'
             },
             'os_disk': {
@@ -365,29 +359,30 @@ az vm extension set \
 ## Quick Reference Commands
 
 ```bash
+# Discover: `az vm list-skus --location {{user.location}} --output json` and `az vm image list --publisher {{user.image_publisher}} --offer {{user.image_offer}} --sku {{user.image_sku}} --output json`
 # Create Linux VM
-az vm create --name myVM --resource-group myRG --location eastus --image Ubuntu2204 --size Standard_DS2_v2 --admin-username azureuser --generate-ssh-keys
+az vm create --name {{user.vm_name}} --resource-group {{user.resource_group}} --location {{user.location}} --image {{user.image}} --size {{user.vm_size}} --admin-username {{user.admin_username}} --generate-ssh-keys
 
 # Create Windows VM
-az vm create --name myVM --resource-group myRG --location eastus --image Win2022Datacenter --size Standard_DS2_v2 --admin-username azureuser --admin-password "{{password}}"
+az vm create --name {{user.vm_name}} --resource-group {{user.resource_group}} --location {{user.location}} --image {{user.image}} --size {{user.vm_size}} --admin-username {{user.admin_username}} --admin-password "{{user.admin_password}}"
 
 # List VMs
 az vm list --output json
 
 # Show VM details
-az vm show --name myVM --resource-group myRG --output json
+az vm show --name {{user.vm_name}} --resource-group {{user.resource_group}} --output json
 
 # Start VM
-az vm start --name myVM --resource-group myRG
+az vm start --name {{user.vm_name}} --resource-group {{user.resource_group}}
 
 # Stop VM (deallocate - stops billing)
-az vm stop --name myVM --resource-group myRG
+az vm stop --name {{user.vm_name}} --resource-group {{user.resource_group}}
 
 # Resize VM
-az vm resize --name myVM --resource-group myRG --size Standard_DS3_v2
+az vm resize --name {{user.vm_name}} --resource-group {{user.resource_group}} --size {{user.new_vm_size}}
 
 # Delete VM
-az vm delete --name myVM --resource-group myRG --yes
+az vm delete --name {{user.vm_name}} --resource-group {{user.resource_group}} --yes
 ```
 
 ## Project-based Setup (pyproject.toml)
@@ -417,7 +412,7 @@ az vm create \
   --name "{{user.vm_name}}" \
   --resource-group "{{user.resource_group}}" \
   --location "{{user.location}}" \
-  --image Ubuntu2204 \
+  --image "{{user.image}}" \
   --size "{{user.vm_size}}" \
   --admin-username azureuser \
   --generate-ssh-keys \
@@ -428,7 +423,7 @@ az vm create \
   --name "{{user.vm_name}}" \
   --resource-group "{{user.resource_group}}" \
   --location "{{user.location}}" \
-  --image Win2022Datacenter \
+  --image "{{user.image}}" \
   --size "{{user.vm_size}}" \
   --admin-username azureuser \
   --admin-password "{{user.admin_password}}" \
@@ -439,7 +434,7 @@ az vm create \
   --name "{{user.vm_name}}" \
   --resource-group "{{user.resource_group}}" \
   --location "{{user.location}}" \
-  --image Ubuntu2204 \
+  --image "{{user.image}}" \
   --size "{{user.vm_size}}" \
   --vnet-name "{{user.vnet_name}}" \
   --subnet "{{user.subnet_name}}" \
@@ -452,7 +447,7 @@ az vm create \
   --name "{{user.vm_name}}" \
   --resource-group "{{user.resource_group}}" \
   --location "{{user.location}}" \
-  --image Ubuntu2204 \
+  --image "{{user.image}}" \
   --size "{{user.vm_size}}" \
   --admin-username azureuser \
   --generate-ssh-keys \

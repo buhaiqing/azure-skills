@@ -367,23 +367,23 @@ source .venv/bin/activate
 ## Quick Reference Commands
 
 ```bash
-# Create basic AKS cluster
-az aks create --name myAKS --resource-group myRG --location eastus --node-count 3
+# Create basic AKS cluster (discover: az account list-locations --query "[].name" -o tsv)
+az aks create --name {{user.aks_name}} --resource-group {{user.resource_group}} --location {{user.location}} --node-count {{user.node_count}}
 
 # Get credentials
-az aks get-credentials --name myAKS --resource-group myRG
+az aks get-credentials --name {{user.aks_name}} --resource-group {{user.resource_group}}
 
 # Scale nodes
-az aks scale --name myAKS --resource-group myRG --node-count 5
+az aks scale --name {{user.aks_name}} --resource-group {{user.resource_group}} --node-count {{user.new_node_count}}
 
 # Check cluster
-az aks show --name myAKS --resource-group myRG
+az aks show --name {{user.aks_name}} --resource-group {{user.resource_group}} --output json
 
 # List clusters
-az aks list
+az aks list --output json
 
 # Delete cluster
-az aks delete --name myAKS --resource-group myRG --yes
+az aks delete --name {{user.aks_name}} --resource-group {{user.resource_group}} --yes --no-wait
 ```
 
 ## Node Pool Operations
@@ -449,11 +449,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerservice import ContainerServiceClient
 import os
 
-credential = DefaultAzureCredential()
-client = ContainerServiceClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = ContainerServiceClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 cluster = client.managed_clusters.begin_create_or_update(
     resource_group_name='{{user.resource_group}}',

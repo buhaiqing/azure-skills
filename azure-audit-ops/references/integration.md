@@ -54,7 +54,8 @@ import os
 credential = DefaultAzureCredential()
 subscription_id = os.environ.get('AZURE_SUBSCRIPTION_ID')
 
-resource_client = ResourceManagementClient(credential, subscription_id)
+resource_client = ResourceManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 monitor_client = MonitorManagementClient(credential, subscription_id)
 auth_client = AuthorizationManagementClient(credential, subscription_id)
 ```
@@ -134,11 +135,8 @@ from azure.mgmt.monitor import MonitorManagementClient
 from datetime import datetime, timedelta
 import os
 
-credential = DefaultAzureCredential()
-client = MonitorManagementClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+client = MonitorManagementClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 end_time = datetime.utcnow()
 start_time = end_time - timedelta(days=7)

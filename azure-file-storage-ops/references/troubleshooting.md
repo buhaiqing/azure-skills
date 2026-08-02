@@ -2,22 +2,22 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure REST API docs |
-| InvalidResourceName | 400 | Share name invalid | Fix naming convention (3-63 chars, lowercase + hyphens) |
-| ShareAlreadyExists | 409 | Share name already exists in this account | Use different name |
-| ShareNotFound | 404 | Share does not exist | Verify share name and account |
-| AuthenticationFailed | 403 | Invalid credentials or permissions | Check keys/SAS/Azure AD |
-| AuthorizationFailed | 403 | RBAC permission insufficient | Add required role |
-| AccessDenied | 403 | Access denied | Check network rules or key validity |
-| QuotaExceeded | 400/402 | Storage limit reached | HALT; request quota increase |
-| ThrottlingException | 429 | Rate limit exceeded | Backoff, retry 3x |
-| InternalError | 500 | Azure service error | Retry 3x; HALT with correlation ID |
-| ServiceUnavailable | 503 | Service temporarily down | Retry 3x; HALT |
-| ShareSnapshotConflict | 409 | Snapshot operation conflict | Retry after existing snapshot settles |
-| ShareBeingDeleted | 409 | Share in deletion state | Wait and retry |
-| FeatureNotSupportedForShare | 400 | Operation not supported for NFS shares | Switch to SMB or check protocol compatibility |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure REST API docs |
+| InvalidResourceName (400) | Share name invalid -> Fix naming convention (3-63 chars, lowercase + hyphens) |
+| ShareAlreadyExists (409) | Share name already exists in this account -> Use different name |
+| ShareNotFound (404) | Share does not exist -> Verify share name and account |
+| AuthenticationFailed (403) | Invalid credentials or permissions -> Check keys/SAS/Azure AD |
+| AuthorizationFailed (403) | RBAC permission insufficient -> Add required role |
+| AccessDenied (403) | Access denied -> Check network rules or key validity |
+| QuotaExceeded (400/402) | Storage limit reached -> HALT; request quota increase |
+| ThrottlingException (429) | Rate limit exceeded -> Backoff, retry 3x |
+| InternalError (500) | Azure service error -> Retry 3x; HALT with correlation ID |
+| ServiceUnavailable (503) | Service temporarily down -> Retry 3x; HALT |
+| ShareSnapshotConflict (409) | Snapshot operation conflict -> Retry after existing snapshot settles |
+| ShareBeingDeleted (409) | Share in deletion state -> Wait and retry |
+| FeatureNotSupportedForShare (400) | Operation not supported for NFS shares -> Switch to SMB or check protocol compatibility |
 
 ## Diagnostic Order
 

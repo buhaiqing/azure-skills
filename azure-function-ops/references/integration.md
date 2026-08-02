@@ -80,11 +80,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.web import WebSiteManagementClient
 import os
 
-credential = DefaultAzureCredential()
-client = WebSiteManagementClient(
-    credential,
-    subscription_id=os.environ['AZURE_SUBSCRIPTION_ID']
-)
+client = WebSiteManagementClient(DefaultAzureCredential(), os.environ['AZURE_SUBSCRIPTION_ID'])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 ```
 
 > **LRO polling strategy**: Among the methods used here, only `begin_create_or_update(...)` is a

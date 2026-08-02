@@ -70,7 +70,7 @@ Pre-flight → Execute (CLI primary / SDK fallback) → Validate → Recover
 #### Pre-flight
 | Check | Method | On Failure |
 |-------|--------|------------|
-| CLI / credentials / RG / location | `az --version`, `az account show`, `az group show`, `az account list-locations` | Install / configure env / create RG / suggest location |
+<!-- 通用 5 步 Pre-flight 见 [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share](../../azure-skill-generator/references/azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share) -->
 | Name globally unique | `az apim check-name -n {{user.apim_name}} --output json` | HALT; pick different name |
 | Publisher email/name | Ask user; non-empty | HALT |
 

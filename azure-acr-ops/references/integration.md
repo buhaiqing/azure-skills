@@ -160,11 +160,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerregistry import ContainerRegistryManagementClient
 
-credential = DefaultAzureCredential()
-client = ContainerRegistryManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = ContainerRegistryManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 registry = client.registries.get(
     resource_group_name="{{user.resource_group}}",

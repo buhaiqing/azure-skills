@@ -65,19 +65,10 @@ from azure.mgmt.recoveryservices import RecoveryServicesClient
 from azure.mgmt.recoveryservicesbackup import RecoveryServicesBackupClient
 import os
 
-credential = DefaultAzureCredential()
-
-# Vault management client
-rs_client = RecoveryServicesClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
-
-# Backup operations client
-rs_backup_client = RecoveryServicesBackupClient(
-    credential,
-    subscription_id=os.environ.get('AZURE_SUBSCRIPTION_ID')
-)
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
+rs_client = RecoveryServicesClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
+rs_backup_client = RecoveryServicesBackupClient(DefaultAzureCredential(), os.environ.get('AZURE_SUBSCRIPTION_ID'))
 ```
 
 ## RBAC Roles

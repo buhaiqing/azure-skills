@@ -2,19 +2,19 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure REST API docs |
-| NameUnavailable | 400/409 | Function App name globally taken | Suggest alternative unique name |
-| StorageAccountNotFound | 400 | Consumption plan storage missing | HALT; provision via `azure-blobstorage-ops` |
-| AccessDenied | 403 | RBAC permission insufficient | HALT; user updates RBAC role |
-| AuthorizationFailed | 403 | Operation not permitted | HALT; check RBAC assignment |
-| ResourceNotFound | 404 | Function App not found | Verify name and resource group |
-| Conflict | 409 | App already exists or state conflict | Check current app state |
-| QuotaExceeded | 400/402 | Plan/instance quota reached | HALT; request quota increase |
-| ThrottlingException | 429 | Rate limit exceeded | Retry with exponential backoff |
-| InternalError | 500 | Azure service error | Retry 3x; HALT with correlation ID |
-| ServiceUnavailable | 503 | Service temporarily down | Retry 3x; HALT |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure REST API docs |
+| NameUnavailable (400/409) | Function App name globally taken -> Suggest alternative unique name |
+| StorageAccountNotFound (400) | Consumption plan storage missing -> HALT; provision via `azure-blobstorage-ops` |
+| AccessDenied (403) | RBAC permission insufficient -> HALT; user updates RBAC role |
+| AuthorizationFailed (403) | Operation not permitted -> HALT; check RBAC assignment |
+| ResourceNotFound (404) | Function App not found -> Verify name and resource group |
+| Conflict (409) | App already exists or state conflict -> Check current app state |
+| QuotaExceeded (400/402) | Plan/instance quota reached -> HALT; request quota increase |
+| ThrottlingException (429) | Rate limit exceeded -> Retry with exponential backoff |
+| InternalError (500) | Azure service error -> Retry 3x; HALT with correlation ID |
+| ServiceUnavailable (503) | Service temporarily down -> Retry 3x; HALT |
 
 ## Diagnostic Order
 

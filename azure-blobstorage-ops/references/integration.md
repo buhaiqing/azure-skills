@@ -326,24 +326,25 @@ az storage account show --name "{{account}}" --query "primaryEndpoints.web"
 ## Quick Reference Commands
 
 ```bash
+# Discover: `az account list-locations --query "[].name" -o tsv`; SKU list at `az storage account list-skus --output json`
 # Create storage account
-az storage account create --name mySA --resource-group myRG --location eastus --sku Standard_LRS --kind StorageV2
+az storage account create --name {{user.storage_account_name}} --resource-group {{user.resource_group}} --location {{user.location}} --sku {{user.storage_sku}} --kind StorageV2
 
 # Create container
-az storage container create --name myContainer --account-name mySA
+az storage container create --name {{user.container_name}} --account-name {{user.storage_account_name}} --auth-mode login
 
 # Upload blob
-az storage blob upload --account-name mySA --container-name myContainer --name myBlob --file myFile.txt
+az storage blob upload --account-name {{user.storage_account_name}} --container-name {{user.container_name}} --name {{user.blob_name}} --file {{user.source_file}}
 
 # Download blob
-az storage blob download --account-name mySA --container-name myContainer --name myBlob --file download.txt
+az storage blob download --account-name {{user.storage_account_name}} --container-name {{user.container_name}} --name {{user.blob_name}} --file {{user.dest_file}}
 
 # List blobs
-az storage blob list --account-name mySA --container-name myContainer
+az storage blob list --account-name {{user.storage_account_name}} --container-name {{user.container_name}} --output json
 
 # Delete blob
-az storage blob delete --account-name mySA --container-name myContainer --name myBlob
+az storage blob delete --account-name {{user.storage_account_name}} --container-name {{user.container_name}} --name {{user.blob_name}}
 
 # Delete storage account
-az storage account delete --name mySA --resource-group myRG --yes
+az storage account delete --name {{user.storage_account_name}} --resource-group {{user.resource_group}} --yes
 ```

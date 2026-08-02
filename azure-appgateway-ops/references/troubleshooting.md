@@ -2,16 +2,16 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure API docs |
-| InvalidSubnet | 400 | Subnet not dedicated for AGW | HALT; use dedicated subnet |
-| SubnetInUse | 400 | Subnet already used | HALT; create new dedicated subnet |
-| AccessDenied | 403 | RBAC permission insufficient | HALT; user updates RBAC role |
-| ResourceNotFound | 404 | Resource does not exist | Verify resource ID |
-| QuotaExceeded | 400 | Service limit reached | HALT; user requests quota increase |
-| ThrottlingException | 429 | Rate limit exceeded | Backoff; retry 3x |
-| InternalError | 500 | Azure service error | Retry 3x; HALT |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure API docs |
+| InvalidSubnet (400) | Subnet not dedicated for AGW -> HALT; use dedicated subnet |
+| SubnetInUse (400) | Subnet already used -> HALT; create new dedicated subnet |
+| AccessDenied (403) | RBAC permission insufficient -> HALT; user updates RBAC role |
+| ResourceNotFound (404) | Resource does not exist -> Verify resource ID |
+| QuotaExceeded (400) | Service limit reached -> HALT; user requests quota increase |
+| ThrottlingException (429) | Rate limit exceeded -> Backoff; retry 3x |
+| InternalError (500) | Azure service error -> Retry 3x; HALT |
 
 ## Diagnostic Order
 

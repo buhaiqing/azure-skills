@@ -226,11 +226,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.eventhub import EventHubManagementClient
 
-credential = DefaultAzureCredential()
-client = EventHubManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = EventHubManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 # Get namespace
 namespace = client.namespaces.get(

@@ -2,25 +2,25 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure REST API docs |
-| InvalidParameterValue | 400 | VM size or image invalid | Check supported sizes/images |
-| MissingParameter | 400 | Required field omitted | Add missing parameter |
-| AccessDenied | 403 | RBAC permission insufficient | HALT; user updates RBAC role |
-| AuthorizationFailed | 403 | Operation not permitted | HALT; check RBAC assignment |
-| ResourceNotFound | 404 | VM or resource not found | Verify VM name and resource group |
-| NotFound | 404 | Subscription/resource group not found | Verify subscription ID |
-| Conflict | 409 | VM already exists or state conflict | Check current VM state |
-| QuotaExceeded | 400/402 | VM quota limit reached | HALT; user requests quota increase |
-| ServiceQuotaExceededException | 400 | Regional quota limit | HALT; request support ticket |
-| ThrottlingException | 429 | Rate limit exceeded | Retry with exponential backoff |
-| RequestLimitExceeded | 429 | Too many requests | Backoff; reduce request rate |
-| InternalError | 500 | Azure service error | Retry 3x; HALT with correlation ID |
-| ServiceUnavailable | 503 | Service temporarily down | Retry 3x; HALT |
-| VMSizeNotAvailable | 400 | VM size not available in location | Suggest alternative VM size |
-| ImageNotFound | 400 | VM image not found | Suggest valid image |
-| InsufficientCapacity | 500 | Azure capacity unavailable | Try different location/size |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure REST API docs |
+| InvalidParameterValue (400) | VM size or image invalid -> Check supported sizes/images |
+| MissingParameter (400) | Required field omitted -> Add missing parameter |
+| AccessDenied (403) | RBAC permission insufficient -> HALT; user updates RBAC role |
+| AuthorizationFailed (403) | Operation not permitted -> HALT; check RBAC assignment |
+| ResourceNotFound (404) | VM or resource not found -> Verify VM name and resource group |
+| NotFound (404) | Subscription/resource group not found -> Verify subscription ID |
+| Conflict (409) | VM already exists or state conflict -> Check current VM state |
+| QuotaExceeded (400/402) | VM quota limit reached -> HALT; user requests quota increase |
+| ServiceQuotaExceededException (400) | Regional quota limit -> HALT; request support ticket |
+| ThrottlingException (429) | Rate limit exceeded -> Retry with exponential backoff |
+| RequestLimitExceeded (429) | Too many requests -> Backoff; reduce request rate |
+| InternalError (500) | Azure service error -> Retry 3x; HALT with correlation ID |
+| ServiceUnavailable (503) | Service temporarily down -> Retry 3x; HALT |
+| VMSizeNotAvailable (400) | VM size not available in location -> Suggest alternative VM size |
+| ImageNotFound (400) | VM image not found -> Suggest valid image |
+| InsufficientCapacity (500) | Azure capacity unavailable -> Try different location/size |
 
 ## Diagnostic Order
 

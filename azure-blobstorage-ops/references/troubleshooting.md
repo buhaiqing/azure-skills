@@ -2,23 +2,23 @@
 
 ## Common API Error Codes
 
-| Error Code | HTTP | Meaning | Agent Action |
-|------------|------|---------|--------------|
-| InvalidParameter | 400 | Request validation failed | Fix args per Azure REST API docs |
-| InvalidResourceName | 400 | Storage account/container name invalid | Fix naming convention |
-| StorageAccountAlreadyExists | 409 | Storage account name taken | Use different name |
-| StorageAccountNotFound | 404 | Storage account does not exist | Verify account name and RG |
-| ContainerNotFound | 404 | Container does not exist | Create container or fix name |
-| BlobNotFound | 404 | Blob does not exist | Verify blob name |
-| AuthenticationFailed | 403 | Invalid credentials or permissions | Check keys/SAS/Azure AD |
-| AuthorizationFailed | 403 | RBAC permission insufficient | Add required role |
-| AccessDenied | 403 | Public access disabled or insufficient | Check access configuration |
-| QuotaExceeded | 400/402 | Storage limit reached | HALT; request quota increase |
-| ServiceQuotaExceededException | 400 | Request rate exceeded | Retry with exponential backoff |
-| ThrottlingException | 429 | Rate limit exceeded | Backoff, retry 3x |
-| InternalError | 500 | Azure service error | Retry 3x; HALT with correlation ID |
-| ServiceUnavailable | 503 | Service temporarily down | Retry 3x; HALT |
-| OperationTimedOut | 500 | Operation timeout | Retry with smaller operations |
+| Code (HTTP) | Meaning -> Action |
+|-------------|-------------------|
+| InvalidParameter (400) | Request validation failed -> Fix args per Azure REST API docs |
+| InvalidResourceName (400) | Storage account/container name invalid -> Fix naming convention |
+| StorageAccountAlreadyExists (409) | Storage account name taken -> Use different name |
+| StorageAccountNotFound (404) | Storage account does not exist -> Verify account name and RG |
+| ContainerNotFound (404) | Container does not exist -> Create container or fix name |
+| BlobNotFound (404) | Blob does not exist -> Verify blob name |
+| AuthenticationFailed (403) | Invalid credentials or permissions -> Check keys/SAS/Azure AD |
+| AuthorizationFailed (403) | RBAC permission insufficient -> Add required role |
+| AccessDenied (403) | Public access disabled or insufficient -> Check access configuration |
+| QuotaExceeded (400/402) | Storage limit reached -> HALT; request quota increase |
+| ServiceQuotaExceededException (400) | Request rate exceeded -> Retry with exponential backoff |
+| ThrottlingException (429) | Rate limit exceeded -> Backoff, retry 3x |
+| InternalError (500) | Azure service error -> Retry 3x; HALT with correlation ID |
+| ServiceUnavailable (503) | Service temporarily down -> Retry 3x; HALT |
+| OperationTimedOut (500) | Operation timeout -> Retry with smaller operations |
 
 ## Diagnostic Order
 

@@ -69,11 +69,7 @@ Every operation follows: **Pre-flight → Execute → Validate → Recover**. Us
 #### Pre-flight
 | Check | Method | On Failure |
 |-------|--------|------------|
-| CLI available | `az --version` | Install Azure CLI 2.0+ |
-| Credentials | `az account show --output json` | HALT; configure env |
-| Subscription valid | `az account show --subscription {{env.AZURE_SUBSCRIPTION_ID}} --output json` | HALT; select valid subscription |
-| Resource Group exists | `az group show --name {{user.resource_group}} --output json` | Create or ask for existing Resource Group |
-| Location valid | `az account list-locations --output json` | Ask for valid Azure Location |
+<!-- 通用 5 步 Pre-flight 见 [azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share](../../azure-skill-generator/references/azure-cli-conventions.md#pre-flight-checks-canonical-all-azure--ops-share) -->
 | Subnet exists | `az network vnet subnet show --ids {{user.subnet_id}} --output json` | HALT; delegate subnet work to `azure-vnet-ops` |
 | Target resource exists | `az resource show --ids {{user.private_link_resource_id}} --output json` | HALT; delegate target lifecycle to service skill |
 | Group ID valid | Compare with target Private Link resource metadata | Ask for valid subresource group ID |

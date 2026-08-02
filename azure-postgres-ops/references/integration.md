@@ -184,11 +184,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.rdbms.postgresql_flexibleservers import PostgreSQLManagementClient
 
-credential = DefaultAzureCredential()
-client = PostgreSQLManagementClient(
-    credential,
-    subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
-)
+client = PostgreSQLManagementClient(DefaultAzureCredential(), os.environ["AZURE_SUBSCRIPTION_ID"])
+# client bootstrap: see ../../../azure-skill-generator/references/azure-sdk-usage.md#common-client-bootstrap
 
 server = client.servers.get(
     resource_group_name="{{user.resource_group}}",
