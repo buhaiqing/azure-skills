@@ -28,6 +28,7 @@ from typing import Any, Optional
 from state_diff import diff, DiffResult
 from state_observer import observe, ObserveResult, observe_cost, observe_budget, CostObservation
 from self_healing.loader import load_policy
+from memory.memory_store import MemoryStore
 from escalation import escalate, EscalationContext
 from report_finding import report_finding
 from risk_tiers import apply_tier_gates
@@ -35,6 +36,61 @@ from risk_tiers import apply_tier_gates
 
 TRACE_DIR = Path(__file__).parent.parent / "audit-results"
 
+# ------------------------------------------------------------------
+# Execution memory (C-1: closes the record -> recommend -> apply loop)
+# ------------------------------------------------------------------
+# Memory store is lazy + best-effort. If the storage dir is missing or
+# the JSONL file is corrupt, we silently fall back to the static JSON
+# policy. This keeps the auto_feedback_loop testable without setup.
+_memory_store: Optional[MemoryStore] = None
+
+def _get_memory_store() -> Optional[MemoryStore]:
+    global _memory_store
+    if _memory_store is not None:
+        return _memory_store
+    try:
+        storage_dir = Path(__file__).parent / "memory" / "data"
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        _memory_store = MemoryStore(storage_dir=storage_dir)
+    except Exception:
+        _memory_store = None
+    return _memory_store
+
+
+def _symptom_key(operation: str, diff_fields: list) -> str:
+    """Canonical (operation, fields) tuple as a single string for memory lookup."""
+    fields = ",".join(sorted(d.field for d in diff_fields))
+    return f"{operation}:{fields}" if fields else operation
+
+
+def _ranked_heal_rules(skill: str, symptom: str, default_rules: list) -> list:
+    """Reorder default_rules by memory recommendation (best success_rate first).
+
+    Fallback: if memory miss or store unavailable, return default_rules unchanged.
+    """
+    store = _get_memory_store()
+    if not store or not default_rules:
+        return default_rules
+    rec = store.recommend(skill, symptom)
+    if not rec:
+        return default_rules
+    rec_name = rec.get("strategy")
+    if not rec_name:
+        return default_rules
+    head = [r for r in default_rules if r.get("heal_action") == rec_name]
+    tail = [r for r in default_rules if r.get("heal_action") != rec_name]
+    return head + tail
+
+
+def _record_heal_outcome(skill: str, symptom: str, strategy: str, success: bool) -> None:
+    """Best-effort: persist a (skill, symptom, strategy, success) tuple to memory store."""
+    store = _get_memory_store()
+    if not store:
+        return
+    try:
+        store.record(skill, symptom, strategy, success)
+    except Exception:
+        pass  # never let memory failure break the heal loop
 
 @dataclass
 class FeedbackResult:
@@ -384,8 +440,10 @@ def run_with_feedback(
         )
         return _finalize(fb_result)
 
-    # 6. Self-healing
-    heal_rules = op_policy.get("healing_rules", [])
+    # 6. Self-healing — memory-ranked; same fallback if no memory
+    default_rules = op_policy.get("healing_rules", [])
+    symptom = _symptom_key(operation, diff_result.diffs)
+    heal_rules = _ranked_heal_rules(skill, symptom, default_rules)
     if not heal_rules:
         # 有 diff 但无修复策略，升人工
         ctx = EscalationContext(
@@ -399,10 +457,9 @@ def run_with_feedback(
         fb_result = FeedbackResult(
             status="escalated",
             actual_state=actual_state,
-            heal_attempts=0,
-            trace_id=tid,
+            heal_attempts=0, trace_id=tid,
             message=f"[escalated] {diff_result.message} (no heal policy)",
-            escalation=escalation_msg,
+            escalation=None,
         )
         report_finding(skill=skill, operation=operation,
                       failure_type="no_heal_policy",
@@ -426,6 +483,8 @@ def run_with_feedback(
                 "ok": ok,
                 "error": msg if not ok else None,
             })
+            # Persist outcome to memory store (best-effort, never break loop)
+            _record_heal_outcome(skill, symptom, rule_name, ok)
             if ok:
                 applied_any = True
                 heal_attempts = attempt
