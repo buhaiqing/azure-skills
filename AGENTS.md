@@ -76,7 +76,7 @@ This is a hard rule, not a suggestion. A Task is only "done" once a full critica
 
 > **Rule**: Every time `AGENTS.md` is modified, the changing Agent MUST review the change from a Token Efficiency (TE) perspective before committing.
 
-**Why**: `AGENTS.md` is loaded into every conversation context — every line added or kept burns tokens on every subsequent task. Unlike skills (scoped to their execution) or docs (loaded on demand), AGENTS.md is always in context. Accumulated "obvious" additions become chronic overhead.
+**Why**: `AGENTS.md` is always-in-context; every line burns tokens on every task. Accumulated "obvious" additions become chronic overhead.
 
 **Checklist** (apply to every change, including additions):
 
@@ -227,63 +227,21 @@ User Request
 It detects destructive ops, scores against the rubric, masks credentials, and persists traces.
 For batch lint: `python scripts/az_trace.py lint`.
 
-Every GCL run MUST persist a JSON trace.
-Schema aligns with Langfuse observation model (Trace → Span → Generation).
+Every GCL run MUST persist a JSON trace to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS-<id8>.json`. Schema:
 
 ```json
 {
-  "id": "uuid-v4",
-  "name": "azure-vm-ops GCL",
-  "version": "1.0.0",
-  "metadata": {
-    "skill": "azure-vm-ops",
-    "is_destructive": true,
-    "tool": "az_trace.py",
-    "tool_version": "1.0.0",
-    "scorer": "rule-based",
-    "python_version": "3.12.1",
-    "os": "darwin"
-  },
-  "gcl_status": "PASS",
-  "gcl_final_iter": 2,
-  "input": "az vm delete --name my-vm --resource-group my-rg --yes",
-  "spans": [
-    {
-      "name": "iter-1",
-      "start_time": "2026-07-18T12:02:16.328+00:00",
-      "end_time": "2026-07-18T12:02:16.333+00:00",
-      "metadata": { "command": "az vm delete ...", "exit_code": 0, "elapsed_sec": 0.012 },
-      "generation": {
-        "model": "rule-based-az-cli",
-        "model_parameters": {},
-        "input": "az vm delete ...",
-        "output": "{...}",
-        "usage": { "az_exit_code": 0, "az_elapsed_sec": 0.012 },
-        "metadata": { "az_args": {} }
-      },
-      "gcl_scores": { "correctness": 1, "safety": 1, "idempotency": 1, "traceability": 1, "spec_compliance": 1 },
-      "gcl_suggestions": [],
-      "gcl_decision": "PASS"
-    }
-  ]
+  "id": "uuid-v4", "name": "<skill> GCL", "gcl_status": "PASS|SAFETY_FAIL|MAX_ITER",
+  "spans": [{ "name": "iter-N", "start_time": "ISO8601", "end_time": "ISO8601",
+              "generation": { "model": "rule-based-az-cli", "input": "<az cmd>", "output": "{...}" },
+              "gcl_scores": { "correctness": 0|0.5|1, "safety": 0|1, "idempotency": 0|0.5|1,
+                              "traceability": 0|0.5|1, "spec_compliance": 0|0.5|1 },
+              "gcl_decision": "PASS|HALT" }]
 }
 ```
 
-Field mapping to Langfuse:
+Field mapping (→ Langfuse): `id`=Trace.id, `spans[]`=observations(type=span), `spans[].generation`=observation(type=generation), `gcl_scores`=Span.metadata, `gcl_status`=summary. **Safety=0 → ABORT immediately, never return partial result.**
 
-| This schema | Langfuse | Notes |
-|---|---|---|
-| `id` | Trace.id | UUID v4 |
-| `name` | Trace.name | e.g. `"azure-vm-ops GCL"` |
-| `metadata` | Trace.metadata | skill, tool, scorer, OS info |
-| `spans[]` | Trace.observations (type=span) | one per iteration |
-| `spans[].start_time / end_time` | Observation.start_time / end_time | ISO8601 |
-| `spans[].generation` | Observation (type=generation) | az command execution |
-| `spans[].generation.model` | Generation.model | `"rule-based-az-cli"`; upgrade to LLM Critic → fill model name |
-| `spans[].gcl_scores` | Span.metadata.gcl_scores | rubric scores |
-| `gcl_status` | computed summary | PASS / SAFETY_FAIL / MAX_ITER |
-
-Path: `./audit-results/gcl-trace-YYYYMMDD-HHMMSS-<id8>.json`.
 
 ### 7. Prompt Templates (mandatory per skill)
 
@@ -295,26 +253,7 @@ Each skill's `references/prompt-templates.md` MUST contain:
 > **Placeholder syntax** MUST follow the repository-wide convention (see **Hard rules → Variable convention**):
 > `{{env.*}}` / `{{user.*}}` / `{{output.*}}`. Bare `{...}` placeholders are NOT allowed in skill prompt templates.
 
-**Critic prompt must hide the raw user request** to prevent "answer-aligned" rubber-stamping.
-Recommended skeleton:
-
-```text
-You are an independent cloud-operation auditor.
-You will see one execution result and its trace. Score it STRICTLY against the rubric below.
-Do NOT consider the original user request — judge only what was actually done.
-
-rubric: {{output.rubric}}
-generator_output: {{output.generator_output}}
-trace: {{output.trace}}
-
-Return strict JSON:
-{
-  "scores": { "correctness": 0|0.5|1, "safety": 0|0.5|1, "idempotency": 0|0.5|1,
-              "traceability": 0|0.5|1, "spec_compliance": 0|0.5|1 },
-  "suggestions": ["≤ 3 concrete, executable improvements"],
-  "blocking": true|false
-}
-```
+**Critic prompt must hide the raw user request** (prevents answer-aligned rubber-stamping) and return strict JSON `{scores, suggestions, blocking}`. Concrete skeleton per skill: `references/prompt-templates.md` (mandatory).
 
 ### 8. Per-Skill Defaults (Azure)
 
@@ -408,12 +347,6 @@ does not exempt a sloppy skill update.
 
 > **Why**：只靠 CADL 机制被动触发不够——很多可复用资产在日常开发中被忽略，直到第二次踩坑才想起来。这条规则强制在每个大Task结尾做一次主动复盘，把隐性知识显性化，形成复利。
 
-要点速记：
-- **触发**：多步/跨文件、跨 Skill 协作、评审/修复循环、发现 repo 坑、验证归因、用户给可复用偏好。
-- **落点**：跨仓库有用 → 用户级 AGENTS.md（路径随运行时而定，如 `~/.config/opencode/AGENTS.md` 或 `~/.claude/CLAUDE.md`）；仅本仓库 → 根 `AGENTS.md`；skill 专属能力 → 独立 Skill（经 generator）。
-- **门禁**：写入前 `wc -l` 查行数，根 `AGENTS.md` ≥ 500 行先精简（复用用户级 AGENTS.md 的 `agent-md-size-guard` 行数门禁规则，该规则随运行时存放）。
-- **钩子**：`azure-skill-generator` 生成 skill 时须在 SKILL.md 末尾注入 CADL 触发行（见其 `Skill Output Hook` 节）。
-- **存量 skill**：既有 `azure-*-ops` 的触发信号由本节 + `cadl.md` 统一承载，**不在各 SKILL.md 重复嵌入**（避免 TE-6 跨文件重复、保持 SKILL.md 精简）；Agent 启动必读 AGENTS.md，故信号不丢失。
 
 ### 14. See also
 
@@ -424,11 +357,8 @@ does not exempt a sloppy skill update.
 - `azure-skill-generator/references/governance-review.md` — build-time governance review
 - [docs/superpowers/reports/ms-agentic-maturity-baseline.md](./docs/superpowers/reports/ms-agentic-maturity-baseline.md) — Microsoft Level 400 vs Gartner L4 baseline
 
-### 15. CADL Finding — Gartner L4 自动化闭环
+### 15. Historical findings
 
-> 来源：`feature/gartner-l4-auto-feedback-loop` 分支实现，2026-07-18
-
-- **Pattern**: L4 自动化闭环 = `observe`（ARM API）+ `diff`（desired vs actual）+ `heal`（策略 JSON）+ `escalate`（升人工）
-- **反模式**: 不要在 `auto_feedback_loop.py` 中硬编码修复策略；每新增一个 skill 都要改代码
-- **正确做法**: 策略外置到 `scripts/self_healing/<skill>_heal.json`，`loader.py` 读取注册表；新增 skill 只需加 JSON
-- **范围**: 本仓库（azure-skills）
+| Finding | Date | File |
+|---------|------|------|
+| Gartner L4 自动化闭环: 策略外置 + loader 注册表 (新增 skill 只需加 JSON) | 2026-07-18 | [docs/superpowers/findings/gartner-l4-auto-feedback-loop.md](./docs/superpowers/findings/gartner-l4-auto-feedback-loop.md) |
