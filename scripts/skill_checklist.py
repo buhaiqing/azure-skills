@@ -252,7 +252,9 @@ def check_step8_references(skill_dir: Path) -> List[ChecklistViolation]:
     ref_links = re.findall(r'\[.*?\]\((references/[^)]+)\)', content)
 
     for ref_path in ref_links:
-        full_path = skill_dir / ref_path
+        # Strip anchor (#anchor) and query (?query) parts
+        file_path = ref_path.split('#')[0].split('?')[0]
+        full_path = skill_dir / file_path
         if not full_path.exists():
             violations.append(ChecklistViolation(
                 8, f"Referenced file not found: {ref_path}"))

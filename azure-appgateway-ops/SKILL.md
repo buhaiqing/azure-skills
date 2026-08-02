@@ -151,3 +151,5 @@ python scripts/auto_feedback_loop.py \
 - [Application Gateway Docs](https://docs.microsoft.com/azure/application-gateway/)
 - [Azure CLI App Gateway Reference](https://docs.microsoft.com/cli/azure/network/application-gateway)
 - [WAF Configuration](https://docs.microsoft.com/azure/web-application-firewall/ag/ag-overview)
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

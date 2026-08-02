@@ -160,3 +160,5 @@ python scripts/auto_feedback_loop.py \
 
 - See `references/core-concepts.md` for Azure DNS documentation links
 
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。

@@ -155,3 +155,5 @@ python scripts/auto_feedback_loop.py \
 - [Rubric](references/rubric.md) — GCL scoring dimensions
 - [Prompt Templates](references/prompt-templates.md) — Generator + Critic prompts
 
+
+> 任务完成后按根 AGENTS.md 的「复利资产沉淀机制 (CADL)」复盘并沉淀可复用资产。
