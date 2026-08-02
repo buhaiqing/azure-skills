@@ -107,6 +107,39 @@ def _suggest_cadl_entry(skill: str, operation: str, failure_type: str) -> str:
                            f"Review {skill}/{operation} for recurring {failure_type} pattern")
 
 
+def write_patterns_to_memory(patterns: dict[str, Any], storage_dir: Path) -> int:
+    """Write mined patterns to memory_store as failure records.
+
+    Each pattern becomes a (skill, symptom, strategy) entry with success=False.
+    This seeds the memory store with known failure modes so auto_feedback_loop
+    can check if a current failure matches a known pattern.
+
+    Returns number of patterns written.
+    """
+    from memory.memory_store import MemoryStore
+
+    store = MemoryStore(storage_dir=storage_dir)
+    written = 0
+
+    for pattern in patterns.get("patterns", []):
+        skill = pattern["skill"]
+        operation = pattern["operation"]
+        failure_type = pattern["failure_type"]
+        recommendation = pattern["recommendation"]
+
+        # Symptom: operation + failure_type (e.g., "vm_create:heal_exhausted")
+        symptom = f"{operation}:{failure_type}"
+
+        # Strategy: the recommendation text (truncated to 100 chars for storage)
+        strategy = recommendation[:100] if len(recommendation) > 100 else recommendation
+
+        # Record as failure (success=False) — these are known failure patterns
+        store.record(skill, symptom, strategy, success=False)
+        written += 1
+
+    return written
+
+
 def write_patterns_report(patterns: dict[str, Any], output_dir: Path = OUTPUT_DIR):
     """将模式分析结果写入 .runtime/patterns/ 目录"""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -131,6 +164,12 @@ def main():
 
     patterns = mine_patterns(findings, min_frequency=args.min_frequency)
     path = write_patterns_report(patterns)
+
+    # Write patterns to memory store for auto_feedback_loop integration
+    memory_dir = Path(__file__).parent / "memory" / "data"
+    written = write_patterns_to_memory(patterns, memory_dir)
+    if written > 0:
+        print(f"   📝  Wrote {written} patterns to memory store ({memory_dir})")
 
     summary = patterns["summary"]
     print(f"✅  Pattern mining complete — {path}")
