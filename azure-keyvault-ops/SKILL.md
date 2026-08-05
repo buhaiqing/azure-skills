@@ -135,21 +135,15 @@ Persist GCL traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secr
 
 ## L4 Auto-Feedback Loop
 
-For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+For autonomous non-risky ops, wrap execution with `scripts/auto_feedback_loop.py`:
 
 ```bash
-python scripts/auto_feedback_loop.py \
-  --skill azure-keyvault-ops \
-  --operation vault_create \
-  --command "az keyvault create --name {{user.vault_name}} --resource-group {{user.resource_group}} ..." \
-  --desired-state '{"properties.provisioningState": "Succeeded"}' \
-  [--dry-run] [--trace-id <uuid>]
+python scripts/auto_feedback_loop.py --skill azure-keyvault-ops --operation <op> \
+  --command "az keyvault ..." --desired-state '<json>' [--dry-run] [--trace-id <uuid>]
 ```
 
-- **Non-risky operations** (vault_create, secret_set): auto-feedback loop active
-- **Risky operations** (delete/purge, secret/key/cert overwrite, RBAC change): always bypass loop and require explicit human confirmation
-- Healing policy: see [`scripts/self_healing/keyvault_heal.json`](../../scripts/self_healing/keyvault_heal.json)
-- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+- **Non-risky ops**: loop active. **Risky ops** (delete/purge, overwrite, RBAC change): bypass loop, require explicit human confirmation.
+- Healing: [`scripts/self_healing/keyvault_heal.json`](../../scripts/self_healing/keyvault_heal.json). Findings → `.runtime/findings/` (CADL auto-trigger).
 
 ## Reference Files
 

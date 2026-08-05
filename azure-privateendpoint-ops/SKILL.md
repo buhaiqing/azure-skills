@@ -128,21 +128,15 @@ This skill participates in the **Generator-Critic-Loop (GCL)** adversarial quali
 
 ## L4 Auto-Feedback Loop
 
-For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+For autonomous non-risky ops, wrap execution with `scripts/auto_feedback_loop.py`:
 
 ```bash
-python scripts/auto_feedback_loop.py \
-  --skill azure-privateendpoint-ops \
-  --operation pe_create \
-  --command "az network private-endpoint create --name {{user.pe_name}} --resource-group {{user.resource_group}} ..." \
-  --desired-state '{"provisioningState": "Succeeded"}' \
-  [--dry-run] [--trace-id <uuid>]
+python scripts/auto_feedback_loop.py --skill azure-privateendpoint-ops --operation <op> \
+  --command "az network private-endpoint ..." --desired-state '<json>' [--dry-run] [--trace-id <uuid>]
 ```
 
-- **Non-risky operations** (pe_create): auto-feedback loop active
-- **Risky operations** (delete): always bypass loop and require explicit human confirmation
-- Healing policy: see [`scripts/self_healing/privateendpoint_heal.json`](../../scripts/self_healing/privateendpoint_heal.json)
-- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+- **Non-risky ops**: loop active. **Risky ops** (delete): bypass loop, require explicit human confirmation.
+- Healing: [`scripts/self_healing/privateendpoint_heal.json`](../../scripts/self_healing/privateendpoint_heal.json). Findings → `.runtime/findings/` (CADL auto-trigger).
 
 ## Reference Files
 

@@ -132,21 +132,15 @@ Persist GCL traces to `./audit-results/gcl-trace-YYYYMMDD-HHMMSS.json` with secr
 
 ## L4 Auto-Feedback Loop
 
-For autonomous operation on non-risky operations, wrap skill execution with the L4 auto-feedback loop:
+For autonomous non-risky ops, wrap execution with `scripts/auto_feedback_loop.py`:
 
 ```bash
-python scripts/auto_feedback_loop.py \
-  --skill azure-postgres-ops \
-  --operation postgres_create \
-  --command "az postgres flexible-server create --name {{user.server_name}} --resource-group {{user.resource_group}} ..." \
-  --desired-state '{"provisioningState": "Succeeded"}' \
-  [--dry-run] [--trace-id <uuid>]
+python scripts/auto_feedback_loop.py --skill azure-postgres-ops --operation <op> \
+  --command "az postgres flexible-server ..." --desired-state '<json>' [--dry-run] [--trace-id <uuid>]
 ```
 
-- **Non-risky operations** (postgres_create): auto-feedback loop active
-- **Risky operations** (delete): always bypass loop and require explicit human confirmation
-- Healing policy: see [`scripts/self_healing/postgres_heal.json`](../../scripts/self_healing/postgres_heal.json)
-- Findings written to `.runtime/findings/` on escalation (CADL auto-trigger)
+- **Non-risky ops**: loop active. **Risky ops** (delete): bypass loop, require explicit human confirmation.
+- Healing: [`scripts/self_healing/postgres_heal.json`](../../scripts/self_healing/postgres_heal.json). Findings → `.runtime/findings/` (CADL auto-trigger).
 
 ## Reference Files
 
