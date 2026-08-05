@@ -117,9 +117,13 @@ Run from repo root: `python azure-skill-generator/scripts/setup_env.py [--check|
 
 ## Existing skills (do not duplicate scope)
 
-Network: `azure-loadbalancer-ops` (L4), `azure-appgateway-ops` (L7+WAF), `azure-frontdoor-ops` (global L7+CDN), `azure-trafficmanager-ops` (DNS).
-Compute/Container: `azure-vm-ops`, `azure-aks-ops`.
-Storage: `azure-blobstorage-ops`.
+Network: `azure-loadbalancer-ops` (L4 LB), `azure-appgateway-ops` (L7+WAF), `azure-frontdoor-ops` (global L7+CDN), `azure-trafficmanager-ops` (DNS routing), `azure-apim-ops` (API gateway), `azure-dns-ops` (DNS zones/records), `azure-nsg-ops` (NSG rules), `azure-privateendpoint-ops` (Private Link), `azure-vnet-ops` (virtual networks).
+Compute/Container: `azure-vm-ops`, `azure-aks-ops`, `azure-aci-ops` (Container Instances), `azure-appservice-ops` (Web Apps), `azure-function-ops` (Functions), `azure-acr-ops` (Container Registry).
+Storage: `azure-blobstorage-ops`, `azure-file-storage-ops` (File Shares), `azure-queue-storage-ops` (Queues), `azure-backup-ops` (Backup Vault).
+Database: `azure-sqldb-ops` (SQL DB), `azure-postgres-ops` (Postgres Flexible Server), `azure-cosmos-ops` (Cosmos DB), `azure-redis-ops` (Redis Cache).
+Messaging: `azure-eventgrid-ops`, `azure-eventhub-ops`, `azure-servicebus-ops`.
+Security: `azure-keyvault-ops` (secrets/keys/certs).
+DR/Ops: `azure-site-recovery-ops` (DR), `azure-cost-ops` (budgets), `azure-audit-ops` (read-only).
 Observability: `azure-monitor-ops`.
 Meta: `azure-skill-generator`.
 
@@ -268,6 +272,29 @@ Destructive workload → **required**, max_iter=2. Read-only / advisory → **op
 | `azure-loadbalancer-ops` | **required** | 2 | `az network lb delete` cuts traffic |
 | `azure-frontdoor-ops` | **required** | 2 | `az afd profile delete` / `az afd endpoint purge` |
 | `azure-trafficmanager-ops` | **required** | 2 | `az network traffic-manager profile delete` disrupts DNS routing |
+| `azure-keyvault-ops` | **required** | 2 | `az keyvault purge` is irreversible — destroys keys/secrets permanently |
+| `azure-redis-ops` | **required** | 2 | `az redis delete` is destructive (data loss unless `az redis export` was used) |
+| `azure-postgres-ops` | **required** | 2 | `az postgres flexible-server delete` / `az postgres server delete` is destructive (data loss) |
+| `azure-sqldb-ops` | **required** | 2 | `az sql server delete` / `az sql db delete` is destructive (data loss) |
+| `azure-servicebus-ops` | **required** | 2 | `az servicebus namespace delete` loses in-flight messages |
+| `azure-aci-ops` | **required** | 2 | `az container delete` is destructive |
+| `azure-acr-ops` | **required** | 2 | `az acr delete` is irreversible |
+| `azure-apim-ops` | **required** | 2 | `az apim delete` cuts API traffic |
+| `azure-appservice-ops` | **required** | 2 | `az webapp delete` is destructive |
+| `azure-audit-ops` | optional | 5 | strictly read-only — no create/update/delete issued |
+| `azure-backup-ops` | **required** | 2 | `az backup vault delete` is destructive |
+| `azure-cosmos-ops` | **required** | 2 | `az cosmosdb delete` / `az cosmosdb sql container delete` causes data loss |
+| `azure-cost-ops` | **required** | 2 | `az billing budget delete` is destructive |
+| `azure-dns-ops` | **required** | 2 | `az network dns zone delete` disrupts DNS delegation |
+| `azure-eventgrid-ops` | **required** | 2 | `az eventgrid topic delete` destroys event subscriptions |
+| `azure-eventhub-ops` | **required** | 2 | `az eventhub namespace delete` loses data/capture |
+| `azure-file-storage-ops` | **required** | 2 | `az storage share delete` is destructive (data loss) |
+| `azure-function-ops` | **required** | 2 | `az functionapp delete` is destructive |
+| `azure-nsg-ops` | **required** | 2 | `az network nsg delete` breaks security rules |
+| `azure-privateendpoint-ops` | **required** | 2 | `az network private-endpoint delete` breaks private connectivity |
+| `azure-queue-storage-ops` | **required** | 2 | `az storage queue delete` is destructive (in-flight messages lost) |
+| `azure-site-recovery-ops` | **required** | 2 | `az site-recovery vault delete` disables DR |
+| `azure-vnet-ops` | **required** | 2 | `az network vnet delete` breaks networking |
 | `azure-monitor-ops` | recommended | 3 | `az monitor alert-rule delete` / `az monitor action-group delete` |
 | `azure-skill-generator` | optional | 3 | meta; must enforce 2-round self-review |
 
