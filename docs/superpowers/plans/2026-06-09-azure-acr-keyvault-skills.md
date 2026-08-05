@@ -19,11 +19,11 @@
 - Read: `README.md`
 - Read: `README_cn.md`
 
-- [ ] **Step 1: Read representative files**
+- [x] **Step 1: Read representative files**
 
 Use `Read` on the listed files and note frontmatter shape, slim entrypoint pattern, AIOps/RCA file split, safety gates, GCL references, and README wording conventions.
 
-- [ ] **Step 2: Confirm no duplicate directories**
+- [x] **Step 2: Confirm no duplicate directories**
 
 Run: `test ! -e azure-acr-ops && test ! -e azure-keyvault-ops`
 Expected: exit 0 before creating new directories.
@@ -40,20 +40,20 @@ Expected: exit 0 before creating new directories.
 - Create: `azure-acr-ops/references/prompt-templates.md`
 - Create: `azure-acr-ops/assets/example-config.yaml`
 
-- [ ] **Step 1: Create directories**
+- [x] **Step 1: Create directories**
 
 Run: `mkdir -p azure-acr-ops/references azure-acr-ops/assets`
 Expected: directories exist.
 
-- [ ] **Step 2: Write slim `SKILL.md`**
+- [x] **Step 2: Write slim `SKILL.md`**
 
 Include YAML frontmatter, trigger/scope, variable convention, JSON paths, execution flow, operation map, safety gates, AIOps/RCA loading guidance, recovery matrix, quality gate, and reference links. Keep detailed commands and RCA rules out of `SKILL.md`.
 
-- [ ] **Step 3: Write focused references**
+- [x] **Step 3: Write focused references**
 
 Write the six reference files. Cover registry/repository/tag/manifest operations, AKS image pull RCA, identity/RBAC, firewall/private endpoint/DNS, retention/purge, AIOps correlation, rubric, and GCL prompts.
 
-- [ ] **Step 4: Write example config**
+- [x] **Step 4: Write example config**
 
 Use only `{{env.*}}` and `{{user.*}}` placeholders. Include registry, repository, AKS integration, network, AIOps, and safety sections.
 
@@ -69,20 +69,20 @@ Use only `{{env.*}}` and `{{user.*}}` placeholders. Include registry, repository
 - Create: `azure-keyvault-ops/references/prompt-templates.md`
 - Create: `azure-keyvault-ops/assets/example-config.yaml`
 
-- [ ] **Step 1: Create directories**
+- [x] **Step 1: Create directories**
 
 Run: `mkdir -p azure-keyvault-ops/references azure-keyvault-ops/assets`
 Expected: directories exist.
 
-- [ ] **Step 2: Write slim `SKILL.md`**
+- [x] **Step 2: Write slim `SKILL.md`**
 
 Include YAML frontmatter, trigger/scope, variable convention, JSON paths, execution flow, operation map, safety gates, AIOps/RCA loading guidance, recovery matrix, quality gate, and reference links. Keep detailed commands and RCA rules out of `SKILL.md`.
 
-- [ ] **Step 3: Write focused references**
+- [x] **Step 3: Write focused references**
 
 Write the six reference files. Cover vault/secret/key/certificate operations, RBAC vs access policy, managed identity 403 RCA, firewall/private endpoint/DNS, soft-delete/purge protection, certificate expiry, AIOps correlation, rubric, and GCL prompts.
 
-- [ ] **Step 4: Write example config**
+- [x] **Step 4: Write example config**
 
 Use only `{{env.*}}` and `{{user.*}}` placeholders. Include vault, object, identity, network, AIOps, and safety sections. Do not include secret values.
 
@@ -92,15 +92,15 @@ Use only `{{env.*}}` and `{{user.*}}` placeholders. Include vault, object, ident
 - Modify: `README.md`
 - Modify: `README_cn.md`
 
-- [ ] **Step 1: Add directories to project tree**
+- [x] **Step 1: Add directories to project tree**
 
 Add `azure-acr-ops` and `azure-keyvault-ops` entries with concise reference descriptions.
 
-- [ ] **Step 2: Add rows to Existing Skills**
+- [x] **Step 2: Add rows to Existing Skills**
 
 Add both skills with status complete in English and Chinese tables.
 
-- [ ] **Step 3: Keep language versions synchronized**
+- [x] **Step 3: Keep language versions synchronized**
 
 Ensure both READMEs mention AIOps/RCA coverage consistently.
 
@@ -109,11 +109,11 @@ Ensure both READMEs mention AIOps/RCA coverage consistently.
 **Files:**
 - Review all new `SKILL.md` and `references/*.md`
 
-- [ ] **Step 1: Apply pre-merge checklist**
+- [x] **Step 1: Apply pre-merge checklist**
 
 Check triggers, `SKILL.md` size, credentials, destructive gates, dual path, JSON paths, recovery, polling, Resource Group, Location, RBAC, and slim-entrypoint compliance.
 
-- [ ] **Step 2: Fix concrete issues immediately**
+- [x] **Step 2: Fix concrete issues immediately**
 
 Edit files until all Round 1 checklist findings are resolved.
 
@@ -122,11 +122,11 @@ Edit files until all Round 1 checklist findings are resolved.
 **Files:**
 - Review all new and modified files
 
-- [ ] **Step 1: Apply adversarial scenarios and token-efficiency checks**
+- [x] **Step 1: Apply adversarial scenarios and token-efficiency checks**
 
 Check safety refusals, credential handling, retry limits, API fidelity, cross-service delegation, no generic token-waste sections, and no bloated `SKILL.md` content.
 
-- [ ] **Step 2: Fix concrete issues immediately**
+- [x] **Step 2: Fix concrete issues immediately**
 
 Edit files until Round 2 has no unresolved findings.
 
@@ -135,21 +135,21 @@ Edit files until Round 2 has no unresolved findings.
 **Files:**
 - Check: all created/modified files
 
-- [ ] **Step 1: Verify required files exist**
+- [x] **Step 1: Verify required files exist**
 
 Run: `for d in azure-acr-ops azure-keyvault-ops; do test -f "$d/SKILL.md" && test -f "$d/references/core-concepts.md" && test -f "$d/references/troubleshooting.md" && test -f "$d/references/integration.md" && test -f "$d/references/aiops.md" && test -f "$d/references/rubric.md" && test -f "$d/references/prompt-templates.md" && test -f "$d/assets/example-config.yaml"; done`
 Expected: exit 0.
 
-- [ ] **Step 2: Verify slim `SKILL.md` size**
+- [x] **Step 2: Verify slim `SKILL.md` size**
 
 Run: `wc -l azure-acr-ops/SKILL.md azure-keyvault-ops/SKILL.md`
 Expected: each file near 100-150 lines; if above 160, move detail into references.
 
-- [ ] **Step 3: Verify no obvious secret literals**
+- [x] **Step 3: Verify no obvious secret literals**
 
 Run targeted searches for `TODO`, `TBD`, `AccountKey=`, `password:`, `client_secret:`, `secret_value`, and token-like literals in new files. Expected: only placeholders or explanatory text, no real secrets.
 
-- [ ] **Step 4: Review git diff**
+- [x] **Step 4: Review git diff**
 
 Run: `git diff --stat && git diff -- README.md README_cn.md`
 Expected: new skill directories, README updates, and this plan file only.
