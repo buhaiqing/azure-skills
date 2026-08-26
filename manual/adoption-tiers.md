@@ -25,6 +25,8 @@ MS Level 400 Organization enablement starter kit for azure-skills adopters.
 2. Train on-call to escalate via Trace ID (never re-run blind)
 3. Block promotion sandbox → enterprise until live canary passes for core skills
 
+See [coe-starter-kit](./coe-starter-kit/README.md) for the complete first-week action kit.
+
 ## Related
 
 - [governance-federation](./governance-federation.md)

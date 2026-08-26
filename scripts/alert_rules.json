@@ -1,0 +1,103 @@
+{
+  "version": "1.0.0",
+  "description": "Alert-to-heal mapping rules for watch_and_heal.py",
+  "alert_rules": [
+    {
+      "alert_name_pattern": "cpu|CPU|Processor",
+      "resource_type": "Microsoft.Compute/virtualMachines",
+      "heal_skill": "azure-vm-ops",
+      "heal_operation": "vm_restart",
+      "risk_tier": "R1",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "disk|Disk|DiskUsage|DiskSpace",
+      "resource_type": "Microsoft.Compute/virtualMachines",
+      "heal_skill": "azure-vm-ops",
+      "heal_operation": "vm_stop",
+      "risk_tier": "R2",
+      "auto_heal": false,
+      "human_confirm": true
+    },
+    {
+      "alert_name_pattern": "memory|Memory|MemoryUsage",
+      "resource_type": "Microsoft.Compute/virtualMachines",
+      "heal_skill": "azure-vm-ops",
+      "heal_operation": "vm_restart",
+      "risk_tier": "R1",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "network|Network|NetworkIn|NetworkOut",
+      "resource_type": "Microsoft.Compute/virtualMachines",
+      "heal_skill": "azure-vm-ops",
+      "heal_operation": "vm_show",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "application.?gateway|appgw|ApplicationGateway",
+      "resource_type": "Microsoft.Network/applicationGateways",
+      "heal_skill": "azure-appgateway-ops",
+      "heal_operation": "ag_restart",
+      "risk_tier": "R1",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "kubernetes|aks|AKS|k8s",
+      "resource_type": "Microsoft.ContainerService/managedClusters",
+      "heal_skill": "azure-aks-ops",
+      "heal_operation": "aks_show",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "load.?balancer|lb|LoadBalancer",
+      "resource_type": "Microsoft.Network/loadBalancers",
+      "heal_skill": "azure-loadbalancer-ops",
+      "heal_operation": "lb_list",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "frontdoor|FrontDoor|AFD",
+      "resource_type": "Microsoft.Cdn/profiles",
+      "heal_skill": "azure-frontdoor-ops",
+      "heal_operation": "afd_list",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "storage|Storage|StorageAccount",
+      "resource_type": "Microsoft.Storage/storageAccounts",
+      "heal_skill": "azure-blobstorage-ops",
+      "heal_operation": "account_list",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "redis|Redis|Cache",
+      "resource_type": "Microsoft.Cache/Redis",
+      "heal_skill": "azure-redis-ops",
+      "heal_operation": "redis_show",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "sql|SQL|SqlDatabase",
+      "resource_type": "Microsoft.Sql/servers/databases",
+      "heal_skill": "azure-sqldb-ops",
+      "heal_operation": "sql_db_show",
+      "risk_tier": "R0",
+      "auto_heal": true
+    },
+    {
+      "alert_name_pattern": "postgres|Postgres|PostgreSQL",
+      "resource_type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "heal_skill": "azure-postgres-ops",
+      "heal_operation": "postgres_show",
+      "risk_tier": "R0",
+      "auto_heal": true
+    }
+  ]
+}

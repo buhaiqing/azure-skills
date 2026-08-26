@@ -27,8 +27,8 @@ jobs:
         run: python3 scripts/run_all_scenarios.py
       - name: Collect metrics
         run: python3 scripts/metrics_collector.py
-      - name: Live canary dry-run
-        run: python3 scripts/live_canary.py --dry-run
+      - name: Live canary mock
+        run: python3 scripts/live_canary.py --env=mock
       - name: MS L400 unit tests
         run: python3 -m pytest tests/test_ms_l400.py tests/test_auto_feedback_loop.py -q
 
@@ -53,3 +53,52 @@ jobs:
             exit 1
           fi
           echo "Placeholder scan OK"
+
+  live-canary-gate:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Azure credentials
+        run: |
+          if [[ -z "${{ secrets.AZURE_RESOURCE_GROUP }}" ]]; then
+            echo "AZURE_RESOURCE_GROUP not set, skipping live canary"
+            exit 0
+          fi
+          echo "Azure credentials found, running live canary..."
+      - name: Run live canary
+        if: ${{ secrets.AZURE_RESOURCE_GROUP != '' }}
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+        run: python3 scripts/live_canary.py --env=live
+      - name: Verify pass rate
+        if: ${{ secrets.AZURE_RESOURCE_GROUP != '' }}
+        run: |
+          json_report=$(ls -t benchmark/l4-live-canary-*.json 2>/dev/null | head -1)
+          if [[ -z "$json_report" ]]; then
+            echo "No live canary JSON report found"
+            exit 1
+          export json_report
+          python3 - <<'EOF'
+          import json, sys, os
+          report = os.environ.get('json_report', '')
+          with open(report) as f:
+              data = json.load(f)
+          passed = data.get('passed', 0)
+          total = data.get('total', 0)
+          print(f"Live canary: {passed}/{total} passed")
+          if total == 0:
+              print("ERROR: total=0")
+              sys.exit(1)
+          percent = passed * 100 // total
+          print(f"Pass rate: {percent}%")
+          if percent < 80:
+              print(f"FAIL: pass rate {percent}% < 80%")
+              sys.exit(1)
+          print(f"PASS: pass rate {percent}% >= 80%")
+          EOF

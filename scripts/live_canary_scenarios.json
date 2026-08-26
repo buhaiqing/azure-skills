@@ -56,6 +56,55 @@
       "tier": "R0",
       "command": "az keyvault list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
       "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-redis-ops",
+      "operation": "redis_list",
+      "tier": "R0",
+      "command": "az redis list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-postgres-ops",
+      "operation": "postgres_list",
+      "tier": "R0",
+      "command": "az postgres flexible-server list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-cosmos-ops",
+      "operation": "cosmos_list",
+      "tier": "R0",
+      "command": "az cosmosdb list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-eventhub-ops",
+      "operation": "eventhubs_list",
+      "tier": "R0",
+      "command": "az eventhubs list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-servicebus-ops",
+      "operation": "servicebus_list",
+      "tier": "R0",
+      "command": "az servicebus namespace list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-sqldb-ops",
+      "operation": "sql_list",
+      "tier": "R0",
+      "command": "az sql server list --resource-group {{env.AZURE_RESOURCE_GROUP}} --output json",
+      "desired_check": "is_list"
+    },
+    {
+      "skill": "azure-files-storage-ops",
+      "operation": "fileshare_list",
+      "tier": "R0",
+      "command": "az storage share list --account-name {{env.AZURE_STORAGE_ACCOUNT}} --output json",
+      "desired_check": "is_list"
     }
   ]
 }
